@@ -232,7 +232,7 @@ export async function sendChatMessage(
       ...state.chatMessages,
       {
         role: "assistant",
-        content: [{ type: "text", text: "Error: " + error }],
+        content: [{ type: "text", text: "错误：" + error }],
         timestamp: Date.now(),
       },
     ];

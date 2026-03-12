@@ -3,6 +3,10 @@ import type { ChannelsState } from "./channels.types.ts";
 
 export type { ChannelsState };
 
+function formatChannelError(prefix: string, err: unknown): string {
+  return `${prefix}：${String(err)}`;
+}
+
 export async function loadChannels(state: ChannelsState, probe: boolean) {
   if (!state.client || !state.connected) {
     return;
@@ -20,7 +24,7 @@ export async function loadChannels(state: ChannelsState, probe: boolean) {
     state.channelsSnapshot = res;
     state.channelsLastSuccess = Date.now();
   } catch (err) {
-    state.channelsError = String(err);
+    state.channelsError = formatChannelError("加载频道状态失败", err);
   } finally {
     state.channelsLoading = false;
   }
@@ -43,7 +47,7 @@ export async function startWhatsAppLogin(state: ChannelsState, force: boolean) {
     state.whatsappLoginQrDataUrl = res.qrDataUrl ?? null;
     state.whatsappLoginConnected = null;
   } catch (err) {
-    state.whatsappLoginMessage = String(err);
+    state.whatsappLoginMessage = formatChannelError("启动 WhatsApp 登录失败", err);
     state.whatsappLoginQrDataUrl = null;
     state.whatsappLoginConnected = null;
   } finally {
@@ -69,7 +73,7 @@ export async function waitWhatsAppLogin(state: ChannelsState) {
       state.whatsappLoginQrDataUrl = null;
     }
   } catch (err) {
-    state.whatsappLoginMessage = String(err);
+    state.whatsappLoginMessage = formatChannelError("等待 WhatsApp 登录失败", err);
     state.whatsappLoginConnected = null;
   } finally {
     state.whatsappBusy = false;
@@ -83,11 +87,11 @@ export async function logoutWhatsApp(state: ChannelsState) {
   state.whatsappBusy = true;
   try {
     await state.client.request("channels.logout", { channel: "whatsapp" });
-    state.whatsappLoginMessage = "Logged out.";
+    state.whatsappLoginMessage = "已退出登录。";
     state.whatsappLoginQrDataUrl = null;
     state.whatsappLoginConnected = null;
   } catch (err) {
-    state.whatsappLoginMessage = String(err);
+    state.whatsappLoginMessage = formatChannelError("退出 WhatsApp 登录失败", err);
   } finally {
     state.whatsappBusy = false;
   }

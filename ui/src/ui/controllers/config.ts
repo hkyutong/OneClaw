@@ -36,6 +36,10 @@ export type ConfigState = {
   lastError: string | null;
 };
 
+function formatConfigError(prefix: string, err: unknown): string {
+  return `${prefix}：${String(err)}`;
+}
+
 export async function loadConfig(state: ConfigState) {
   if (!state.client || !state.connected) {
     return;
@@ -46,7 +50,7 @@ export async function loadConfig(state: ConfigState) {
     const res = await state.client.request<ConfigSnapshot>("config.get", {});
     applyConfigSnapshot(state, res);
   } catch (err) {
-    state.lastError = String(err);
+    state.lastError = formatConfigError("加载配置失败", err);
   } finally {
     state.configLoading = false;
   }
@@ -64,7 +68,7 @@ export async function loadConfigSchema(state: ConfigState) {
     const res = await state.client.request<ConfigSchemaResponse>("config.schema", {});
     applyConfigSchema(state, res);
   } catch (err) {
-    state.lastError = String(err);
+    state.lastError = formatConfigError("加载配置结构失败", err);
   } finally {
     state.configSchemaLoading = false;
   }
@@ -137,14 +141,14 @@ export async function saveConfig(state: ConfigState) {
     const raw = serializeFormForSubmit(state);
     const baseHash = state.configSnapshot?.hash;
     if (!baseHash) {
-      state.lastError = "Config hash missing; reload and retry.";
+      state.lastError = "缺少配置哈希，请重新加载后再试。";
       return;
     }
     await state.client.request("config.set", { raw, baseHash });
     state.configFormDirty = false;
     await loadConfig(state);
   } catch (err) {
-    state.lastError = String(err);
+    state.lastError = formatConfigError("保存配置失败", err);
   } finally {
     state.configSaving = false;
   }
@@ -160,7 +164,7 @@ export async function applyConfig(state: ConfigState) {
     const raw = serializeFormForSubmit(state);
     const baseHash = state.configSnapshot?.hash;
     if (!baseHash) {
-      state.lastError = "Config hash missing; reload and retry.";
+      state.lastError = "缺少配置哈希，请重新加载后再试。";
       return;
     }
     await state.client.request("config.apply", {
@@ -171,7 +175,7 @@ export async function applyConfig(state: ConfigState) {
     state.configFormDirty = false;
     await loadConfig(state);
   } catch (err) {
-    state.lastError = String(err);
+    state.lastError = formatConfigError("应用配置失败", err);
   } finally {
     state.configApplying = false;
   }
@@ -188,7 +192,7 @@ export async function runUpdate(state: ConfigState) {
       sessionKey: state.applySessionKey,
     });
   } catch (err) {
-    state.lastError = String(err);
+    state.lastError = formatConfigError("执行更新失败", err);
   } finally {
     state.updateRunning = false;
   }

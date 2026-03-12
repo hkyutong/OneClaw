@@ -42,7 +42,7 @@ describe("executeSlashCommand /kill", () => {
       "all",
     );
 
-    expect(result.content).toBe("Aborted 3 sub-agent sessions.");
+    expect(result.content).toBe("已中止 3 个子代理会话。");
     expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
     expect(request).toHaveBeenNthCalledWith(2, "chat.abort", {
       sessionKey: "agent:main:subagent:one",
@@ -79,7 +79,7 @@ describe("executeSlashCommand /kill", () => {
       "main",
     );
 
-    expect(result.content).toBe("Aborted 2 matching sub-agent sessions for `main`.");
+    expect(result.content).toBe("已中止与 `main` 匹配的 2 个子代理会话。");
     expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
     expect(request).toHaveBeenNthCalledWith(2, "chat.abort", {
       sessionKey: "agent:main:subagent:one",
@@ -115,9 +115,7 @@ describe("executeSlashCommand /kill", () => {
       "agent:main:subagent:sibling",
     );
 
-    expect(result.content).toBe(
-      "No matching sub-agent sessions found for `agent:main:subagent:sibling`.",
-    );
+    expect(result.content).toBe("没有找到与 `agent:main:subagent:sibling` 匹配的子代理会话。");
     expect(request).toHaveBeenCalledTimes(1);
     expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
   });
@@ -145,7 +143,7 @@ describe("executeSlashCommand /kill", () => {
       "all",
     );
 
-    expect(result.content).toBe("No active sub-agent runs to abort.");
+    expect(result.content).toBe("没有活动中的子代理运行可中止。");
     expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
     expect(request).toHaveBeenNthCalledWith(2, "chat.abort", {
       sessionKey: "agent:main:subagent:one",
@@ -180,7 +178,7 @@ describe("executeSlashCommand /kill", () => {
       "all",
     );
 
-    expect(result.content).toBe("Aborted 2 sub-agent sessions.");
+    expect(result.content).toBe("已中止 2 个子代理会话。");
     expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
     expect(request).toHaveBeenNthCalledWith(2, "chat.abort", {
       sessionKey: "agent:main:subagent:one",
@@ -219,7 +217,7 @@ describe("executeSlashCommand /kill", () => {
       "all",
     );
 
-    expect(result.content).toBe("Aborted 2 sub-agent sessions.");
+    expect(result.content).toBe("已中止 2 个子代理会话。");
     expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
     expect(request).toHaveBeenNthCalledWith(2, "chat.abort", {
       sessionKey: "agent:main:subagent:mine",
@@ -259,7 +257,7 @@ describe("executeSlashCommand directives", () => {
     );
 
     expect(result.content).toBe(
-      "**Current model:** `gpt-4.1-mini`\n**Available:** `gpt-4.1-mini`, `gpt-4.1`",
+      "**当前模型：** `gpt-4.1-mini`\n**可用模型：** `gpt-4.1-mini`，`gpt-4.1`",
     );
     expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
     expect(request).toHaveBeenNthCalledWith(2, "models.list", {});
@@ -291,7 +289,7 @@ describe("executeSlashCommand directives", () => {
     );
 
     expect(result.content).toBe(
-      "**Session Usage**\nInput: **1.2k** tokens\nOutput: **300** tokens\nTotal: **1.5k** tokens\nContext: **30%** of 4k\nModel: `gpt-4.1-mini`",
+      "**当前会话用量**\n输入：**1.2k** 令牌\n输出：**300** 令牌\n总计：**1.5k** 令牌\n上下文占用：**30%** / 4k\n模型：`gpt-4.1-mini`",
     );
     expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
   });
@@ -324,7 +322,7 @@ describe("executeSlashCommand directives", () => {
     );
 
     expect(result.content).toBe(
-      "Current thinking level: low.\nOptions: off, minimal, low, medium, high, adaptive.",
+      "当前思考强度：low。\n可用选项：off, minimal, low, medium, high, adaptive。",
     );
     expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
     expect(request).toHaveBeenNthCalledWith(2, "models.list", {});
@@ -346,8 +344,8 @@ describe("executeSlashCommand directives", () => {
       "xhigh",
     );
 
-    expect(minimal.content).toBe("Thinking level set to **minimal**.");
-    expect(xhigh.content).toBe("Thinking level set to **xhigh**.");
+    expect(minimal.content).toBe("思考强度已设置为 **minimal**。");
+    expect(xhigh.content).toBe("思考强度已设置为 **xhigh**。");
     expect(request).toHaveBeenNthCalledWith(1, "sessions.patch", {
       key: "agent:main:main",
       thinkingLevel: "minimal",
@@ -375,7 +373,7 @@ describe("executeSlashCommand directives", () => {
       "",
     );
 
-    expect(result.content).toBe("Current verbose level: full.\nOptions: on, full, off.");
+    expect(result.content).toBe("当前详细输出级别：full。\n可用选项：on, full, off。");
     expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
   });
 });

@@ -81,7 +81,7 @@ export function renderStreamingGroup(
     hour: "numeric",
     minute: "2-digit",
   });
-  const name = assistant?.name ?? "Assistant";
+  const name = assistant?.name ?? "助手";
 
   return html`
     <div class="chat-group assistant">
@@ -115,14 +115,16 @@ export function renderMessageGroup(
   },
 ) {
   const normalizedRole = normalizeRoleForGrouping(group.role);
-  const assistantName = opts.assistantName ?? "Assistant";
+  const assistantName = opts.assistantName ?? "助手";
   const userLabel = group.senderLabel?.trim();
   const who =
     normalizedRole === "user"
-      ? (userLabel ?? "You")
+      ? (userLabel ?? "你")
       : normalizedRole === "assistant"
         ? assistantName
-        : normalizedRole;
+        : normalizedRole === "tool"
+          ? "工具"
+          : normalizedRole;
   const roleClass =
     normalizedRole === "user" ? "user" : normalizedRole === "assistant" ? "assistant" : "other";
   const timestamp = new Date(group.timestamp).toLocaleTimeString([], {
@@ -158,15 +160,15 @@ export function renderMessageGroup(
 
 function renderAvatar(role: string, assistant?: Pick<AssistantIdentity, "name" | "avatar">) {
   const normalized = normalizeRoleForGrouping(role);
-  const assistantName = assistant?.name?.trim() || "Assistant";
+  const assistantName = assistant?.name?.trim() || "助手";
   const assistantAvatar = assistant?.avatar?.trim() || "";
   const initial =
     normalized === "user"
-      ? "U"
+      ? "你"
       : normalized === "assistant"
-        ? assistantName.charAt(0).toUpperCase() || "A"
+        ? assistantName.charAt(0) || "助"
         : normalized === "tool"
-          ? "⚙"
+          ? "工"
           : "?";
   const className =
     normalized === "user"
@@ -212,7 +214,7 @@ function renderMessageImages(images: ImageBlock[]) {
         (img) => html`
           <img
             src=${img.url}
-            alt=${img.alt ?? "Attached image"}
+            alt=${img.alt ?? "已附加图片"}
             class="chat-message-image"
             @click=${() => openImage(img.url)}
           />

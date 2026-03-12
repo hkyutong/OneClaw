@@ -51,7 +51,7 @@ let activeRecognition: SpeechRecognitionInstance | null = null;
 export function startStt(callbacks: SttCallbacks): boolean {
   const Ctor = getSpeechRecognitionCtor();
   if (!Ctor) {
-    callbacks.onError?.("Speech recognition is not supported in this browser");
+    callbacks.onError?.("当前浏览器不支持语音识别");
     return false;
   }
 
@@ -94,7 +94,7 @@ export function startStt(callbacks: SttCallbacks): boolean {
     if (speechEvent.error === "aborted" || speechEvent.error === "no-speech") {
       return;
     }
-    callbacks.onError?.(speechEvent.error);
+    callbacks.onError?.(formatSpeechRecognitionError(speechEvent.error));
   });
 
   recognition.addEventListener("end", () => {
@@ -142,7 +142,7 @@ export function speakText(
   },
 ): boolean {
   if (!isTtsSupported()) {
-    opts?.onError?.("Speech synthesis is not supported in this browser");
+    opts?.onError?.("当前浏览器不支持语音合成");
     return false;
   }
 
@@ -171,7 +171,7 @@ export function speakText(
     if (e.error === "canceled" || e.error === "interrupted") {
       return;
     }
-    opts?.onError?.(e.error);
+    opts?.onError?.(formatSpeechSynthesisError(e.error));
   });
 
   currentUtterance = utterance;
@@ -190,6 +190,39 @@ export function stopTts(): void {
 
 export function isTtsSpeaking(): boolean {
   return isTtsSupported() && speechSynthesis.speaking;
+}
+
+function formatSpeechRecognitionError(error: string): string {
+  switch (error) {
+    case "audio-capture":
+      return "没有检测到可用的麦克风。";
+    case "network":
+      return "语音识别网络连接失败。";
+    case "not-allowed":
+    case "service-not-allowed":
+      return "语音识别权限被拒绝。";
+    case "language-not-supported":
+      return "当前语言暂不支持语音识别。";
+    default:
+      return `语音识别失败：${error}`;
+  }
+}
+
+function formatSpeechSynthesisError(error: string): string {
+  switch (error) {
+    case "audio-busy":
+      return "音频设备正忙，请稍后再试。";
+    case "audio-hardware":
+      return "无法访问音频输出设备。";
+    case "network":
+      return "语音合成网络连接失败。";
+    case "not-allowed":
+      return "语音合成权限被拒绝。";
+    case "language-unavailable":
+      return "当前语言暂不支持语音合成。";
+    default:
+      return `语音合成失败：${error}`;
+  }
 }
 
 /** Strip common markdown syntax for cleaner speech output. */

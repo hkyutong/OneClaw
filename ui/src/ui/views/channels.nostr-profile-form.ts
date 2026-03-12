@@ -185,13 +185,13 @@ export function renderNostrProfileForm(params: {
       ${renderPicturePreview()}
 
       ${renderField("name", "用户名", {
-        placeholder: "satoshi",
+        placeholder: "zhangsan",
         maxLength: 256,
-        help: "简短用户名（例如 satoshi）",
+        help: "简短用户名（例如 zhangsan）",
       })}
 
       ${renderField("displayName", "显示名称", {
-        placeholder: "Satoshi Nakamoto",
+        placeholder: "张三",
         maxLength: 256,
         help: "你的完整显示名称",
       })}

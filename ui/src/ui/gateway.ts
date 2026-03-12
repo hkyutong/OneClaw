@@ -163,7 +163,7 @@ export class GatewayBrowserClient {
     this.pendingConnectError = undefined;
     this.pendingDeviceTokenRetry = false;
     this.deviceTokenRetryBudgetUsed = false;
-    this.flushPending(new Error("gateway client stopped"));
+    this.flushPending(new Error("网关客户端已停止"));
   }
 
   get connected() {
@@ -182,7 +182,7 @@ export class GatewayBrowserClient {
       const connectError = this.pendingConnectError;
       this.pendingConnectError = undefined;
       this.ws = null;
-      this.flushPending(new Error(`gateway closed (${ev.code}): ${reason}`));
+      this.flushPending(new Error(`网关已关闭（${ev.code}）：${reason || "未知原因"}`));
       this.opts.onClose?.({ code: ev.code, reason, error: connectError });
       const connectErrorCode = resolveGatewayErrorDetailCode(connectError);
       if (
@@ -434,7 +434,7 @@ export class GatewayBrowserClient {
         pending.reject(
           new GatewayRequestError({
             code: res.error?.code ?? "UNAVAILABLE",
-            message: res.error?.message ?? "request failed",
+            message: res.error?.message ?? "请求失败",
             details: res.error?.details,
           }),
         );
@@ -445,7 +445,7 @@ export class GatewayBrowserClient {
 
   request<T = unknown>(method: string, params?: unknown): Promise<T> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      return Promise.reject(new Error("gateway not connected"));
+      return Promise.reject(new Error("网关未连接"));
     }
     const id = generateUUID();
     const frame = { type: "req", id, method, params };

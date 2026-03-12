@@ -10,6 +10,10 @@ export type PresenceState = {
   presenceStatus: string | null;
 };
 
+function formatPresenceError(err: unknown): string {
+  return `加载在线状态失败：${String(err)}`;
+}
+
 export async function loadPresence(state: PresenceState) {
   if (!state.client || !state.connected) {
     return;
@@ -24,13 +28,13 @@ export async function loadPresence(state: PresenceState) {
     const res = await state.client.request("system-presence", {});
     if (Array.isArray(res)) {
       state.presenceEntries = res;
-      state.presenceStatus = res.length === 0 ? "No instances yet." : null;
+      state.presenceStatus = res.length === 0 ? "暂时没有在线实例。" : null;
     } else {
       state.presenceEntries = [];
-      state.presenceStatus = "No presence payload.";
+      state.presenceStatus = "没有收到在线状态数据。";
     }
   } catch (err) {
-    state.presenceError = String(err);
+    state.presenceError = formatPresenceError(err);
   } finally {
     state.presenceLoading = false;
   }

@@ -20,7 +20,7 @@ import {
 } from "../../../../src/routing/session-key.js";
 import type { GatewayBrowserClient } from "../gateway.ts";
 import type { AgentsListResult, GatewaySessionRow, SessionsListResult } from "../types.ts";
-import { SLASH_COMMANDS } from "./slash-commands.ts";
+import { CATEGORY_LABELS, SLASH_COMMANDS } from "./slash-commands.ts";
 
 export type SlashCommandResult = {
   /** Markdown-formatted result to display in chat. */
@@ -49,15 +49,15 @@ export async function executeSlashCommand(
     case "status":
       return await executeStatus(client);
     case "new":
-      return { content: "Starting new session...", action: "new-session" };
+      return { content: "正在开始新会话...", action: "new-session" };
     case "reset":
-      return { content: "Resetting session...", action: "reset" };
+      return { content: "正在重置会话...", action: "reset" };
     case "stop":
-      return { content: "Stopping current run...", action: "stop" };
+      return { content: "正在停止当前运行...", action: "stop" };
     case "clear":
-      return { content: "Chat history cleared.", action: "clear" };
+      return { content: "聊天记录已清空。", action: "clear" };
     case "focus":
-      return { content: "Toggled focus mode.", action: "toggle-focus" };
+      return { content: "已切换专注模式。", action: "toggle-focus" };
     case "compact":
       return await executeCompact(client, sessionKey);
     case "model":
@@ -67,7 +67,7 @@ export async function executeSlashCommand(
     case "verbose":
       return await executeVerbose(client, sessionKey, args);
     case "export":
-      return { content: "Exporting session...", action: "export" };
+      return { content: "正在导出当前会话...", action: "export" };
     case "usage":
       return await executeUsage(client, sessionKey);
     case "agents":
@@ -75,49 +75,49 @@ export async function executeSlashCommand(
     case "kill":
       return await executeKill(client, sessionKey, args);
     default:
-      return { content: `Unknown command: \`/${commandName}\`` };
+      return { content: `未知命令：\`/${commandName}\`` };
   }
 }
 
 // ── Command Implementations ──
 
 function executeHelp(): SlashCommandResult {
-  const lines = ["**Available Commands**\n"];
+  const lines = ["**可用命令**\n"];
   let currentCategory = "";
 
   for (const cmd of SLASH_COMMANDS) {
     const cat = cmd.category ?? "session";
     if (cat !== currentCategory) {
       currentCategory = cat;
-      lines.push(`**${cat.charAt(0).toUpperCase() + cat.slice(1)}**`);
+      lines.push(`**${CATEGORY_LABELS[cat]}**`);
     }
     const argStr = cmd.args ? ` ${cmd.args}` : "";
-    const local = cmd.executeLocal ? "" : " *(agent)*";
+    const local = cmd.executeLocal ? "" : " *(由代理执行)*";
     lines.push(`\`/${cmd.name}${argStr}\` — ${cmd.description}${local}`);
   }
 
-  lines.push("\nType `/` to open the command menu.");
+  lines.push("\n输入 `/` 可打开命令菜单。");
   return { content: lines.join("\n") };
 }
 
 async function executeStatus(client: GatewayBrowserClient): Promise<SlashCommandResult> {
   try {
     const health = await client.request<HealthSummary>("health", {});
-    const status = health.ok ? "Healthy" : "Degraded";
+    const status = health.ok ? "健康" : "降级";
     const agentCount = health.agents?.length ?? 0;
     const sessionCount = health.sessions?.count ?? 0;
     const lines = [
-      `**System Status:** ${status}`,
-      `**Agents:** ${agentCount}`,
-      `**Sessions:** ${sessionCount}`,
-      `**Default Agent:** ${health.defaultAgentId || "none"}`,
+      `**系统状态：** ${status}`,
+      `**代理数量：** ${agentCount}`,
+      `**会话数量：** ${sessionCount}`,
+      `**默认代理：** ${health.defaultAgentId || "未设置"}`,
     ];
     if (health.durationMs) {
-      lines.push(`**Response:** ${health.durationMs}ms`);
+      lines.push(`**响应时间：** ${health.durationMs} 毫秒`);
     }
     return { content: lines.join("\n") };
   } catch (err) {
-    return { content: `Failed to fetch status: ${String(err)}` };
+    return { content: `获取系统状态失败：${String(err)}` };
   }
 }
 
@@ -127,9 +127,9 @@ async function executeCompact(
 ): Promise<SlashCommandResult> {
   try {
     await client.request("sessions.compact", { key: sessionKey });
-    return { content: "Context compacted successfully.", action: "refresh" };
+    return { content: "会话上下文已成功压缩。", action: "refresh" };
   } catch (err) {
-    return { content: `Compaction failed: ${String(err)}` };
+    return { content: `压缩上下文失败：${String(err)}` };
   }
 }
 
@@ -145,28 +145,28 @@ async function executeModel(
         client.request<{ models: ModelCatalogEntry[] }>("models.list", {}),
       ]);
       const session = resolveCurrentSession(sessions, sessionKey);
-      const model = session?.model || sessions?.defaults?.model || "default";
+      const model = session?.model || sessions?.defaults?.model || "默认";
       const available = models?.models?.map((m: ModelCatalogEntry) => m.id) ?? [];
-      const lines = [`**Current model:** \`${model}\``];
+      const lines = [`**当前模型：** \`${model}\``];
       if (available.length > 0) {
         lines.push(
-          `**Available:** ${available
+          `**可用模型：** ${available
             .slice(0, 10)
             .map((m: string) => `\`${m}\``)
-            .join(", ")}${available.length > 10 ? ` +${available.length - 10} more` : ""}`,
+            .join("，")}${available.length > 10 ? ` 等另外 ${available.length - 10} 个` : ""}`,
         );
       }
       return { content: lines.join("\n") };
     } catch (err) {
-      return { content: `Failed to get model info: ${String(err)}` };
+      return { content: `获取模型信息失败：${String(err)}` };
     }
   }
 
   try {
     await client.request("sessions.patch", { key: sessionKey, model: args.trim() });
-    return { content: `Model set to \`${args.trim()}\`.`, action: "refresh" };
+    return { content: `当前模型已设置为 \`${args.trim()}\`。`, action: "refresh" };
   } catch (err) {
-    return { content: `Failed to set model: ${String(err)}` };
+    return { content: `设置模型失败：${String(err)}` };
   }
 }
 
@@ -181,12 +181,12 @@ async function executeThink(
       const { session, models } = await loadThinkingCommandState(client, sessionKey);
       return {
         content: formatDirectiveOptions(
-          `Current thinking level: ${resolveCurrentThinkingLevel(session, models)}.`,
+          `当前思考强度：${resolveCurrentThinkingLevel(session, models)}。`,
           formatThinkingLevels(session?.modelProvider, session?.model),
         ),
       };
     } catch (err) {
-      return { content: `Failed to get thinking level: ${String(err)}` };
+      return { content: `获取思考强度失败：${String(err)}` };
     }
   }
 
@@ -195,21 +195,21 @@ async function executeThink(
     try {
       const session = await loadCurrentSession(client, sessionKey);
       return {
-        content: `Unrecognized thinking level "${rawLevel}". Valid levels: ${formatThinkingLevels(session?.modelProvider, session?.model)}.`,
+        content: `无法识别思考强度“${rawLevel}”。可用级别：${formatThinkingLevels(session?.modelProvider, session?.model)}。`,
       };
     } catch (err) {
-      return { content: `Failed to validate thinking level: ${String(err)}` };
+      return { content: `校验思考强度失败：${String(err)}` };
     }
   }
 
   try {
     await client.request("sessions.patch", { key: sessionKey, thinkingLevel: level });
     return {
-      content: `Thinking level set to **${level}**.`,
+      content: `思考强度已设置为 **${level}**。`,
       action: "refresh",
     };
   } catch (err) {
-    return { content: `Failed to set thinking level: ${String(err)}` };
+    return { content: `设置思考强度失败：${String(err)}` };
   }
 }
 
@@ -224,30 +224,30 @@ async function executeVerbose(
       const session = await loadCurrentSession(client, sessionKey);
       return {
         content: formatDirectiveOptions(
-          `Current verbose level: ${normalizeVerboseLevel(session?.verboseLevel) ?? "off"}.`,
+          `当前详细输出级别：${normalizeVerboseLevel(session?.verboseLevel) ?? "off"}。`,
           "on, full, off",
         ),
       };
     } catch (err) {
-      return { content: `Failed to get verbose level: ${String(err)}` };
+      return { content: `获取详细输出级别失败：${String(err)}` };
     }
   }
 
   const level = normalizeVerboseLevel(rawLevel);
   if (!level) {
     return {
-      content: `Unrecognized verbose level "${rawLevel}". Valid levels: off, on, full.`,
+      content: `无法识别详细输出级别“${rawLevel}”。可用级别：off、on、full。`,
     };
   }
 
   try {
     await client.request("sessions.patch", { key: sessionKey, verboseLevel: level });
     return {
-      content: `Verbose mode set to **${level}**.`,
+      content: `详细输出级别已设置为 **${level}**。`,
       action: "refresh",
     };
   } catch (err) {
-    return { content: `Failed to set verbose mode: ${String(err)}` };
+    return { content: `设置详细输出级别失败：${String(err)}` };
   }
 }
 
@@ -259,7 +259,7 @@ async function executeUsage(
     const sessions = await client.request<SessionsListResult>("sessions.list", {});
     const session = resolveCurrentSession(sessions, sessionKey);
     if (!session) {
-      return { content: "No active session." };
+      return { content: "当前没有活动会话。" };
     }
     const input = session.inputTokens ?? 0;
     const output = session.outputTokens ?? 0;
@@ -268,20 +268,20 @@ async function executeUsage(
     const pct = ctx > 0 ? Math.round((input / ctx) * 100) : null;
 
     const lines = [
-      "**Session Usage**",
-      `Input: **${fmtTokens(input)}** tokens`,
-      `Output: **${fmtTokens(output)}** tokens`,
-      `Total: **${fmtTokens(total)}** tokens`,
+      "**当前会话用量**",
+      `输入：**${fmtTokens(input)}** 令牌`,
+      `输出：**${fmtTokens(output)}** 令牌`,
+      `总计：**${fmtTokens(total)}** 令牌`,
     ];
     if (pct !== null) {
-      lines.push(`Context: **${pct}%** of ${fmtTokens(ctx)}`);
+      lines.push(`上下文占用：**${pct}%** / ${fmtTokens(ctx)}`);
     }
     if (session.model) {
-      lines.push(`Model: \`${session.model}\``);
+      lines.push(`模型：\`${session.model}\``);
     }
     return { content: lines.join("\n") };
   } catch (err) {
-    return { content: `Failed to get usage: ${String(err)}` };
+    return { content: `获取用量失败：${String(err)}` };
   }
 }
 
@@ -290,18 +290,18 @@ async function executeAgents(client: GatewayBrowserClient): Promise<SlashCommand
     const result = await client.request<AgentsListResult>("agents.list", {});
     const agents = result?.agents ?? [];
     if (agents.length === 0) {
-      return { content: "No agents configured." };
+      return { content: "当前没有已配置的代理。" };
     }
-    const lines = [`**Agents** (${agents.length})\n`];
+    const lines = [`**代理列表**（${agents.length}）\n`];
     for (const agent of agents) {
       const isDefault = agent.id === result?.defaultId;
       const name = agent.identity?.name || agent.name || agent.id;
-      const marker = isDefault ? " *(default)*" : "";
+      const marker = isDefault ? " *(默认)*" : "";
       lines.push(`- \`${agent.id}\` — ${name}${marker}`);
     }
     return { content: lines.join("\n") };
   } catch (err) {
-    return { content: `Failed to list agents: ${String(err)}` };
+    return { content: `获取代理列表失败：${String(err)}` };
   }
 }
 
@@ -312,7 +312,7 @@ async function executeKill(
 ): Promise<SlashCommandResult> {
   const target = args.trim();
   if (!target) {
-    return { content: "Usage: `/kill <id|all>`" };
+    return { content: "用法：`/kill <id|all>`" };
   }
   try {
     const sessions = await client.request<SessionsListResult>("sessions.list", {});
@@ -321,8 +321,8 @@ async function executeKill(
       return {
         content:
           target.toLowerCase() === "all"
-            ? "No active sub-agent sessions found."
-            : `No matching sub-agent sessions found for \`${target}\`.`,
+            ? "没有找到活动中的子代理会话。"
+            : `没有找到与 \`${target}\` 匹配的子代理会话。`,
       };
     }
 
@@ -341,8 +341,8 @@ async function executeKill(
         return {
           content:
             target.toLowerCase() === "all"
-              ? "No active sub-agent runs to abort."
-              : `No active runs matched \`${target}\`.`,
+              ? "没有活动中的子代理运行可中止。"
+              : `没有与 \`${target}\` 匹配的活动运行。`,
         };
       }
       throw rejected[0]?.reason ?? new Error("abort failed");
@@ -352,19 +352,19 @@ async function executeKill(
       return {
         content:
           successCount === matched.length
-            ? `Aborted ${successCount} sub-agent session${successCount === 1 ? "" : "s"}.`
-            : `Aborted ${successCount} of ${matched.length} sub-agent sessions.`,
+            ? `已中止 ${successCount} 个子代理会话。`
+            : `已中止 ${matched.length} 个匹配会话中的 ${successCount} 个。`,
       };
     }
 
     return {
       content:
         successCount === matched.length
-          ? `Aborted ${successCount} matching sub-agent session${successCount === 1 ? "" : "s"} for \`${target}\`.`
-          : `Aborted ${successCount} of ${matched.length} matching sub-agent sessions for \`${target}\`.`,
+          ? `已中止与 \`${target}\` 匹配的 ${successCount} 个子代理会话。`
+          : `已中止与 \`${target}\` 匹配的 ${matched.length} 个会话中的 ${successCount} 个。`,
     };
   } catch (err) {
-    return { content: `Failed to abort: ${String(err)}` };
+    return { content: `中止子代理失败：${String(err)}` };
   }
 }
 
@@ -476,7 +476,7 @@ function resolveEquivalentSessionKeys(
 }
 
 function formatDirectiveOptions(text: string, options: string): string {
-  return `${text}\nOptions: ${options}.`;
+  return `${text}\n可用选项：${options}。`;
 }
 
 async function loadCurrentSession(

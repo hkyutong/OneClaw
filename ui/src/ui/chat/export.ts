@@ -5,22 +5,22 @@ export function escapeHtmlInMarkdown(text: string): string {
   return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
-export function normalizeSingleLineLabel(label: string, fallback = "Assistant"): string {
+export function normalizeSingleLineLabel(label: string, fallback = "助手"): string {
   const normalized = label.replace(/[\r\n\t]+/g, " ").trim();
   return normalized || fallback;
 }
 
 export function sanitizeFilenameComponent(input: string): string {
-  const normalized = normalizeSingleLineLabel(input, "assistant").normalize("NFKC");
+  const normalized = normalizeSingleLineLabel(input, "助手").normalize("NFKC");
   const sanitized = normalized
     .replace(/[\\/]/g, "-")
-    .replace(/[^a-zA-Z0-9 _.-]/g, "")
+    .replace(/[^a-zA-Z0-9\u4e00-\u9fff _.-]/g, "")
     .replace(/\s+/g, " ")
     .replace(/-+/g, "-")
     .trim()
     .replace(/^[.-]+/, "")
     .slice(0, 50);
-  return sanitized || "assistant";
+  return sanitized || "助手";
 }
 
 export function buildChatMarkdown(messages: unknown[], assistantNameRaw: string): string | null {
@@ -29,10 +29,10 @@ export function buildChatMarkdown(messages: unknown[], assistantNameRaw: string)
   if (history.length === 0) {
     return null;
   }
-  const lines: string[] = [`# Chat with ${assistantName}`, ""];
+  const lines: string[] = [`# 与 ${assistantName} 的对话`, ""];
   for (const msg of history) {
     const m = msg as Record<string, unknown>;
-    const role = m.role === "user" ? "You" : m.role === "assistant" ? assistantName : "Tool";
+    const role = m.role === "user" ? "你" : m.role === "assistant" ? assistantName : "工具";
     const content = escapeHtmlInMarkdown(
       typeof m.content === "string"
         ? m.content
@@ -50,7 +50,7 @@ export function buildChatMarkdown(messages: unknown[], assistantNameRaw: string)
 }
 
 export function buildChatExportFilename(assistantNameRaw: string, now = Date.now()): string {
-  return `chat-${sanitizeFilenameComponent(assistantNameRaw)}-${now}.md`;
+  return `对话-${sanitizeFilenameComponent(assistantNameRaw)}-${now}.md`;
 }
 
 export function exportChatMarkdown(messages: unknown[], assistantName: string): void {

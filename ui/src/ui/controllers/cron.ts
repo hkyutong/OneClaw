@@ -157,14 +157,14 @@ export function validateCronForm(form: CronFormState): CronFieldErrors {
     if (afterRaw) {
       const after = toNumber(afterRaw, 0);
       if (!Number.isFinite(after) || after <= 0) {
-        errors.failureAlertAfter = "Failure alert threshold must be greater than 0.";
+        errors.failureAlertAfter = "失败告警阈值必须大于 0。";
       }
     }
     const cooldownRaw = form.failureAlertCooldownSeconds.trim();
     if (cooldownRaw) {
       const cooldown = toNumber(cooldownRaw, -1);
       if (!Number.isFinite(cooldown) || cooldown < 0) {
-        errors.failureAlertCooldownSeconds = "Cooldown must be 0 or greater.";
+        errors.failureAlertCooldownSeconds = "冷却时间必须大于或等于 0。";
       }
     }
   }
@@ -889,20 +889,20 @@ export function startCronEdit(state: CronState, job: CronJob) {
 }
 
 function buildCloneName(name: string, existingNames: Set<string>) {
-  const base = name.trim() || "Job";
-  const first = `${base} copy`;
+  const base = name.trim() || "任务";
+  const first = `${base} 副本`;
   if (!existingNames.has(first.toLowerCase())) {
     return first;
   }
   let index = 2;
   while (index < 1000) {
-    const next = `${base} copy ${index}`;
+    const next = `${base} 副本 ${index}`;
     if (!existingNames.has(next.toLowerCase())) {
       return next;
     }
     index += 1;
   }
-  return `${base} copy ${Date.now()}`;
+  return `${base} 副本 ${Date.now()}`;
 }
 
 export function startCronClone(state: CronState, job: CronJob) {
