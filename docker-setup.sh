@@ -4,12 +4,12 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE_FILE="$ROOT_DIR/docker-compose.yml"
 EXTRA_COMPOSE_FILE="$ROOT_DIR/docker-compose.extra.yml"
-IMAGE_NAME="${OPENCLAW_IMAGE:-openclaw:local}"
-EXTRA_MOUNTS="${OPENCLAW_EXTRA_MOUNTS:-}"
-HOME_VOLUME_NAME="${OPENCLAW_HOME_VOLUME:-}"
-RAW_SANDBOX_SETTING="${OPENCLAW_SANDBOX:-}"
+IMAGE_NAME="${ONECLAW_IMAGE:-${OPENCLAW_IMAGE:-oneclaw:local}}"
+EXTRA_MOUNTS="${ONECLAW_EXTRA_MOUNTS:-${OPENCLAW_EXTRA_MOUNTS:-}}"
+HOME_VOLUME_NAME="${ONECLAW_HOME_VOLUME:-${OPENCLAW_HOME_VOLUME:-}}"
+RAW_SANDBOX_SETTING="${ONECLAW_SANDBOX:-${OPENCLAW_SANDBOX:-}}"
 SANDBOX_ENABLED=""
-DOCKER_SOCKET_PATH="${OPENCLAW_DOCKER_SOCKET:-}"
+DOCKER_SOCKET_PATH="${ONECLAW_DOCKER_SOCKET:-${OPENCLAW_DOCKER_SOCKET:-}}"
 
 fail() {
   echo "ERROR: $*" >&2
@@ -18,7 +18,7 @@ fail() {
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
-    echo "Missing dependency: $1" >&2
+    echo "缺少依赖：$1" >&2
     exit 1
   fi
 }
@@ -89,7 +89,9 @@ read_env_gateway_token() {
   fi
   while IFS= read -r line || [[ -n "$line" ]]; do
     line="${line%$'\r'}"
-    if [[ "$line" == OPENCLAW_GATEWAY_TOKEN=* ]]; then
+    if [[ "$line" == ONECLAW_GATEWAY_TOKEN=* ]]; then
+      token="${line#ONECLAW_GATEWAY_TOKEN=}"
+    elif [[ "$line" == OPENCLAW_GATEWAY_TOKEN=* ]]; then
       token="${line#OPENCLAW_GATEWAY_TOKEN=}"
     fi
   done <"$env_path"
@@ -107,27 +109,27 @@ ensure_control_ui_allowed_origins() {
   local current_allowed_origins
   allowed_origin_json="$(printf '["http://127.0.0.1:%s"]' "$OPENCLAW_GATEWAY_PORT")"
   current_allowed_origins="$(
-    docker compose "${COMPOSE_ARGS[@]}" run --rm openclaw-cli \
+    docker compose "${COMPOSE_ARGS[@]}" run --rm oneclaw-cli \
       config get gateway.controlUi.allowedOrigins 2>/dev/null || true
   )"
   current_allowed_origins="${current_allowed_origins//$'\r'/}"
 
   if [[ -n "$current_allowed_origins" && "$current_allowed_origins" != "null" && "$current_allowed_origins" != "[]" ]]; then
-    echo "Control UI allowlist already configured; leaving gateway.controlUi.allowedOrigins unchanged."
+    echo "Control UI 白名单已存在，保留当前 gateway.controlUi.allowedOrigins。"
     return 0
   fi
 
-  docker compose "${COMPOSE_ARGS[@]}" run --rm openclaw-cli \
+  docker compose "${COMPOSE_ARGS[@]}" run --rm oneclaw-cli \
     config set gateway.controlUi.allowedOrigins "$allowed_origin_json" --strict-json >/dev/null
-  echo "Set gateway.controlUi.allowedOrigins to $allowed_origin_json for non-loopback bind."
+  echo "已为非 loopback 绑定写入 gateway.controlUi.allowedOrigins=$allowed_origin_json。"
 }
 
 sync_gateway_mode_and_bind() {
-  docker compose "${COMPOSE_ARGS[@]}" run --rm openclaw-cli \
+  docker compose "${COMPOSE_ARGS[@]}" run --rm oneclaw-cli \
     config set gateway.mode local >/dev/null
-  docker compose "${COMPOSE_ARGS[@]}" run --rm openclaw-cli \
+  docker compose "${COMPOSE_ARGS[@]}" run --rm oneclaw-cli \
     config set gateway.bind "$OPENCLAW_GATEWAY_BIND" >/dev/null
-  echo "Pinned gateway.mode=local and gateway.bind=$OPENCLAW_GATEWAY_BIND for Docker setup."
+  echo "已固定 gateway.mode=local，gateway.bind=$OPENCLAW_GATEWAY_BIND。"
 }
 
 contains_disallowed_chars() {
@@ -139,38 +141,38 @@ validate_mount_path_value() {
   local label="$1"
   local value="$2"
   if [[ -z "$value" ]]; then
-    fail "$label cannot be empty."
+    fail "$label 不能为空。"
   fi
   if contains_disallowed_chars "$value"; then
-    fail "$label contains unsupported control characters."
+    fail "$label 包含不支持的控制字符。"
   fi
   if [[ "$value" =~ [[:space:]] ]]; then
-    fail "$label cannot contain whitespace."
+    fail "$label 不能包含空白字符。"
   fi
 }
 
 validate_named_volume() {
   local value="$1"
   if [[ ! "$value" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]]; then
-    fail "OPENCLAW_HOME_VOLUME must match [A-Za-z0-9][A-Za-z0-9_.-]* when using a named volume."
+    fail "ONECLAW_HOME_VOLUME / OPENCLAW_HOME_VOLUME 使用命名卷时必须匹配 [A-Za-z0-9][A-Za-z0-9_.-]*。"
   fi
 }
 
 validate_mount_spec() {
   local mount="$1"
   if contains_disallowed_chars "$mount"; then
-    fail "OPENCLAW_EXTRA_MOUNTS entries cannot contain control characters."
+    fail "ONECLAW_EXTRA_MOUNTS / OPENCLAW_EXTRA_MOUNTS 不能包含控制字符。"
   fi
   # Keep mount specs strict to avoid YAML structure injection.
   # Expected format: source:target[:options]
   if [[ ! "$mount" =~ ^[^[:space:],:]+:[^[:space:],:]+(:[^[:space:],:]+)?$ ]]; then
-    fail "Invalid mount format '$mount'. Expected source:target[:options] without spaces."
+    fail "无效的挂载格式 '$mount'。应为不含空格的 source:target[:options]。"
   fi
 }
 
 require_cmd docker
 if ! docker compose version >/dev/null 2>&1; then
-  echo "Docker Compose not available (try: docker compose version)" >&2
+  echo "Docker Compose 不可用（可先试试：docker compose version）" >&2
   exit 1
 fi
 
@@ -184,23 +186,25 @@ if is_truthy_value "$RAW_SANDBOX_SETTING"; then
   SANDBOX_ENABLED="1"
 fi
 
-OPENCLAW_CONFIG_DIR="${OPENCLAW_CONFIG_DIR:-$HOME/.openclaw}"
-OPENCLAW_WORKSPACE_DIR="${OPENCLAW_WORKSPACE_DIR:-$HOME/.openclaw/workspace}"
+ONECLAW_CONFIG_DIR="${ONECLAW_CONFIG_DIR:-${OPENCLAW_CONFIG_DIR:-$HOME/.oneclaw}}"
+ONECLAW_WORKSPACE_DIR="${ONECLAW_WORKSPACE_DIR:-${OPENCLAW_WORKSPACE_DIR:-$HOME/.oneclaw/workspace}}"
+OPENCLAW_CONFIG_DIR="$ONECLAW_CONFIG_DIR"
+OPENCLAW_WORKSPACE_DIR="$ONECLAW_WORKSPACE_DIR"
 
-validate_mount_path_value "OPENCLAW_CONFIG_DIR" "$OPENCLAW_CONFIG_DIR"
-validate_mount_path_value "OPENCLAW_WORKSPACE_DIR" "$OPENCLAW_WORKSPACE_DIR"
+validate_mount_path_value "ONECLAW_CONFIG_DIR / OPENCLAW_CONFIG_DIR" "$OPENCLAW_CONFIG_DIR"
+validate_mount_path_value "ONECLAW_WORKSPACE_DIR / OPENCLAW_WORKSPACE_DIR" "$OPENCLAW_WORKSPACE_DIR"
 if [[ -n "$HOME_VOLUME_NAME" ]]; then
   if [[ "$HOME_VOLUME_NAME" == *"/"* ]]; then
-    validate_mount_path_value "OPENCLAW_HOME_VOLUME" "$HOME_VOLUME_NAME"
+    validate_mount_path_value "ONECLAW_HOME_VOLUME / OPENCLAW_HOME_VOLUME" "$HOME_VOLUME_NAME"
   else
     validate_named_volume "$HOME_VOLUME_NAME"
   fi
 fi
 if contains_disallowed_chars "$EXTRA_MOUNTS"; then
-  fail "OPENCLAW_EXTRA_MOUNTS cannot contain control characters."
+  fail "ONECLAW_EXTRA_MOUNTS / OPENCLAW_EXTRA_MOUNTS 不能包含控制字符。"
 fi
 if [[ -n "$SANDBOX_ENABLED" ]]; then
-  validate_mount_path_value "OPENCLAW_DOCKER_SOCKET" "$DOCKER_SOCKET_PATH"
+  validate_mount_path_value "ONECLAW_DOCKER_SOCKET / OPENCLAW_DOCKER_SOCKET" "$DOCKER_SOCKET_PATH"
 fi
 
 mkdir -p "$OPENCLAW_CONFIG_DIR"
@@ -211,6 +215,8 @@ mkdir -p "$OPENCLAW_CONFIG_DIR/identity"
 mkdir -p "$OPENCLAW_CONFIG_DIR/agents/main/agent"
 mkdir -p "$OPENCLAW_CONFIG_DIR/agents/main/sessions"
 
+export ONECLAW_CONFIG_DIR="$OPENCLAW_CONFIG_DIR"
+export ONECLAW_WORKSPACE_DIR="$OPENCLAW_WORKSPACE_DIR"
 export OPENCLAW_CONFIG_DIR
 export OPENCLAW_WORKSPACE_DIR
 export OPENCLAW_GATEWAY_PORT="${OPENCLAW_GATEWAY_PORT:-18789}"
@@ -224,6 +230,11 @@ export OPENCLAW_HOME_VOLUME="$HOME_VOLUME_NAME"
 export OPENCLAW_ALLOW_INSECURE_PRIVATE_WS="${OPENCLAW_ALLOW_INSECURE_PRIVATE_WS:-}"
 export OPENCLAW_SANDBOX="$SANDBOX_ENABLED"
 export OPENCLAW_DOCKER_SOCKET="$DOCKER_SOCKET_PATH"
+export ONECLAW_IMAGE="$OPENCLAW_IMAGE"
+export ONECLAW_EXTRA_MOUNTS="$OPENCLAW_EXTRA_MOUNTS"
+export ONECLAW_HOME_VOLUME="$OPENCLAW_HOME_VOLUME"
+export ONECLAW_SANDBOX="$OPENCLAW_SANDBOX"
+export ONECLAW_DOCKER_SOCKET="$OPENCLAW_DOCKER_SOCKET"
 
 # Detect Docker socket GID for sandbox group_add.
 DOCKER_GID=""
@@ -233,15 +244,21 @@ fi
 export DOCKER_GID
 
 if [[ -z "${OPENCLAW_GATEWAY_TOKEN:-}" ]]; then
+  if [[ -n "${ONECLAW_GATEWAY_TOKEN:-}" ]]; then
+    OPENCLAW_GATEWAY_TOKEN="$ONECLAW_GATEWAY_TOKEN"
+  fi
+fi
+
+if [[ -z "${OPENCLAW_GATEWAY_TOKEN:-}" ]]; then
   EXISTING_CONFIG_TOKEN="$(read_config_gateway_token || true)"
   if [[ -n "$EXISTING_CONFIG_TOKEN" ]]; then
     OPENCLAW_GATEWAY_TOKEN="$EXISTING_CONFIG_TOKEN"
-    echo "Reusing gateway token from $OPENCLAW_CONFIG_DIR/openclaw.json"
+    echo "沿用 $OPENCLAW_CONFIG_DIR/openclaw.json 中已有的 Gateway token。"
   else
     DOTENV_GATEWAY_TOKEN="$(read_env_gateway_token "$ROOT_DIR/.env" || true)"
     if [[ -n "$DOTENV_GATEWAY_TOKEN" ]]; then
       OPENCLAW_GATEWAY_TOKEN="$DOTENV_GATEWAY_TOKEN"
-      echo "Reusing gateway token from $ROOT_DIR/.env"
+      echo "沿用 $ROOT_DIR/.env 中已有的 Gateway token。"
     elif command -v openssl >/dev/null 2>&1; then
       OPENCLAW_GATEWAY_TOKEN="$(openssl rand -hex 32)"
     else
@@ -254,6 +271,7 @@ PY
   fi
 fi
 export OPENCLAW_GATEWAY_TOKEN
+export ONECLAW_GATEWAY_TOKEN="$OPENCLAW_GATEWAY_TOKEN"
 
 COMPOSE_FILES=("$COMPOSE_FILE")
 COMPOSE_ARGS=()
@@ -268,7 +286,7 @@ write_extra_compose() {
 
   cat >"$EXTRA_COMPOSE_FILE" <<'YAML'
 services:
-  openclaw-gateway:
+  oneclaw-gateway:
     volumes:
 YAML
 
@@ -290,7 +308,7 @@ YAML
   done
 
   cat >>"$EXTRA_COMPOSE_FILE" <<'YAML'
-  openclaw-cli:
+  oneclaw-cli:
     volumes:
 YAML
 
@@ -393,6 +411,14 @@ upsert_env() {
 }
 
 upsert_env "$ENV_FILE" \
+  ONECLAW_CONFIG_DIR \
+  ONECLAW_WORKSPACE_DIR \
+  ONECLAW_GATEWAY_TOKEN \
+  ONECLAW_IMAGE \
+  ONECLAW_EXTRA_MOUNTS \
+  ONECLAW_HOME_VOLUME \
+  ONECLAW_SANDBOX \
+  ONECLAW_DOCKER_SOCKET \
   OPENCLAW_CONFIG_DIR \
   OPENCLAW_WORKSPACE_DIR \
   OPENCLAW_GATEWAY_PORT \
@@ -410,8 +436,8 @@ upsert_env "$ENV_FILE" \
   OPENCLAW_INSTALL_DOCKER_CLI \
   OPENCLAW_ALLOW_INSECURE_PRIVATE_WS
 
-if [[ "$IMAGE_NAME" == "openclaw:local" ]]; then
-  echo "==> Building Docker image: $IMAGE_NAME"
+if [[ "$IMAGE_NAME" == "oneclaw:local" ]]; then
+  echo "==> 构建 Docker 镜像：$IMAGE_NAME"
   docker build \
     --build-arg "OPENCLAW_DOCKER_APT_PACKAGES=${OPENCLAW_DOCKER_APT_PACKAGES}" \
     --build-arg "OPENCLAW_EXTENSIONS=${OPENCLAW_EXTENSIONS}" \
@@ -420,9 +446,9 @@ if [[ "$IMAGE_NAME" == "openclaw:local" ]]; then
     -f "$ROOT_DIR/Dockerfile" \
     "$ROOT_DIR"
 else
-  echo "==> Pulling Docker image: $IMAGE_NAME"
+  echo "==> 拉取 Docker 镜像：$IMAGE_NAME"
   if ! docker pull "$IMAGE_NAME"; then
-    echo "ERROR: Failed to pull image $IMAGE_NAME. Please check the image name and your access permissions." >&2
+    echo "ERROR: 拉取镜像 $IMAGE_NAME 失败，请检查镜像名和访问权限。" >&2
     exit 1
   fi
 fi
@@ -433,74 +459,74 @@ fi
 # Running a brief root container to chown is the portable Docker idiom --
 # it works regardless of the host uid and doesn't require host-side root.
 echo ""
-echo "==> Fixing data-directory permissions"
+echo "==> 修正数据目录权限"
 # Use -xdev to restrict chown to the config-dir mount only — without it,
 # the recursive chown would cross into the workspace bind mount and rewrite
 # ownership of all user project files on Linux hosts.
 # After fixing the config dir, only the OpenClaw metadata subdirectory
 # (.openclaw/) inside the workspace gets chowned, not the user's project files.
-docker compose "${COMPOSE_ARGS[@]}" run --rm --user root --entrypoint sh openclaw-cli -c \
+docker compose "${COMPOSE_ARGS[@]}" run --rm --user root --entrypoint sh oneclaw-cli -c \
   'find /home/node/.openclaw -xdev -exec chown node:node {} +; \
    [ -d /home/node/.openclaw/workspace/.openclaw ] && chown -R node:node /home/node/.openclaw/workspace/.openclaw || true'
 
 echo ""
-echo "==> Onboarding (interactive)"
-echo "Docker setup pins Gateway mode to local."
-echo "Gateway runtime bind comes from OPENCLAW_GATEWAY_BIND (default: lan)."
-echo "Current runtime bind: $OPENCLAW_GATEWAY_BIND"
-echo "Gateway token: $OPENCLAW_GATEWAY_TOKEN"
-echo "Tailscale exposure: Off (use host-level tailnet/Tailscale setup separately)."
-echo "Install Gateway daemon: No (managed by Docker Compose)"
+echo "==> 启动交互式初始化"
+echo "Docker 安装流程会固定使用 Gateway 本地模式。"
+echo "Gateway 绑定来源于 OPENCLAW_GATEWAY_BIND（默认：lan）。"
+echo "当前绑定：$OPENCLAW_GATEWAY_BIND"
+echo "Gateway token：$OPENCLAW_GATEWAY_TOKEN"
+echo "Tailscale 暴露：关闭（如需使用，请在宿主机单独配置）。"
+echo "Gateway daemon 安装：否（由 Docker Compose 管理）"
 echo ""
-docker compose "${COMPOSE_ARGS[@]}" run --rm openclaw-cli onboard --mode local --no-install-daemon
+docker compose "${COMPOSE_ARGS[@]}" run --rm oneclaw-cli onboard --mode local --no-install-daemon
 
 echo ""
-echo "==> Docker gateway defaults"
+echo "==> 写入 Docker 网关默认值"
 sync_gateway_mode_and_bind
 
 echo ""
-echo "==> Control UI origin allowlist"
+echo "==> 写入 Control UI 来源白名单"
 ensure_control_ui_allowed_origins
 
 echo ""
-echo "==> Provider setup (optional)"
-echo "WhatsApp (QR):"
-echo "  ${COMPOSE_HINT} run --rm openclaw-cli channels login"
-echo "Telegram (bot token):"
-echo "  ${COMPOSE_HINT} run --rm openclaw-cli channels add --channel telegram --token <token>"
-echo "Discord (bot token):"
-echo "  ${COMPOSE_HINT} run --rm openclaw-cli channels add --channel discord --token <token>"
-echo "Docs: https://docs.openclaw.ai/channels"
+echo "==> 渠道接入（可选）"
+echo "WhatsApp（二维码）："
+echo "  ${COMPOSE_HINT} run --rm oneclaw-cli channels login"
+echo "Telegram（Bot Token）："
+echo "  ${COMPOSE_HINT} run --rm oneclaw-cli channels add --channel telegram --token <token>"
+echo "Discord（Bot Token）："
+echo "  ${COMPOSE_HINT} run --rm oneclaw-cli channels add --channel discord --token <token>"
+echo "参考：https://docs.openclaw.ai/channels"
 
 echo ""
-echo "==> Starting gateway"
-docker compose "${COMPOSE_ARGS[@]}" up -d openclaw-gateway
+echo "==> 启动 Gateway"
+docker compose "${COMPOSE_ARGS[@]}" up -d oneclaw-gateway
 
 # --- Sandbox setup (opt-in via OPENCLAW_SANDBOX=1) ---
 if [[ -n "$SANDBOX_ENABLED" ]]; then
   echo ""
-  echo "==> Sandbox setup"
+  echo "==> 配置 Sandbox"
 
   # Build sandbox image if Dockerfile.sandbox exists.
   if [[ -f "$ROOT_DIR/Dockerfile.sandbox" ]]; then
-    echo "Building sandbox image: openclaw-sandbox:bookworm-slim"
+    echo "构建 sandbox 镜像：oneclaw-sandbox:bookworm-slim"
     docker build \
-      -t "openclaw-sandbox:bookworm-slim" \
+      -t "oneclaw-sandbox:bookworm-slim" \
       -f "$ROOT_DIR/Dockerfile.sandbox" \
       "$ROOT_DIR"
   else
-    echo "WARNING: Dockerfile.sandbox not found in $ROOT_DIR" >&2
-    echo "  Sandbox config will be applied but no sandbox image will be built." >&2
-    echo "  Agent exec may fail if the configured sandbox image does not exist." >&2
+    echo "WARNING: 在 $ROOT_DIR 未找到 Dockerfile.sandbox" >&2
+    echo "  将继续写入 sandbox 配置，但不会构建 sandbox 镜像。" >&2
+    echo "  如果目标 sandbox 镜像不存在，Agent 执行可能失败。" >&2
   fi
 
   # Defense-in-depth: verify Docker CLI in the running image before enabling
   # sandbox. This avoids claiming sandbox is enabled when the image cannot
   # launch sandbox containers.
-  if ! docker compose "${COMPOSE_ARGS[@]}" run --rm --entrypoint docker openclaw-gateway --version >/dev/null 2>&1; then
-    echo "WARNING: Docker CLI not found inside the container image." >&2
-    echo "  Sandbox requires Docker CLI. Rebuild with --build-arg OPENCLAW_INSTALL_DOCKER_CLI=1" >&2
-    echo "  or use a local build (OPENCLAW_IMAGE=openclaw:local). Skipping sandbox setup." >&2
+  if ! docker compose "${COMPOSE_ARGS[@]}" run --rm --entrypoint docker oneclaw-gateway --version >/dev/null 2>&1; then
+    echo "WARNING: 容器镜像内未检测到 Docker CLI。" >&2
+    echo "  Sandbox 依赖 Docker CLI。请使用 --build-arg OPENCLAW_INSTALL_DOCKER_CLI=1 重新构建，" >&2
+    echo "  或改用本地构建（OPENCLAW_IMAGE=oneclaw:local）。本次跳过 sandbox 配置。" >&2
     SANDBOX_ENABLED=""
   fi
 fi
@@ -514,7 +540,7 @@ if [[ -n "$SANDBOX_ENABLED" ]]; then
     SANDBOX_COMPOSE_FILE="$ROOT_DIR/docker-compose.sandbox.yml"
     cat >"$SANDBOX_COMPOSE_FILE" <<YAML
 services:
-  openclaw-gateway:
+  oneclaw-gateway:
     volumes:
       - ${DOCKER_SOCKET_PATH}:/var/run/docker.sock
 YAML
@@ -525,10 +551,10 @@ YAML
 YAML
     fi
     COMPOSE_ARGS+=("-f" "$SANDBOX_COMPOSE_FILE")
-    echo "==> Sandbox: added Docker socket mount"
+    echo "==> Sandbox：已挂载 Docker socket"
   else
-    echo "WARNING: OPENCLAW_SANDBOX enabled but Docker socket not found at $DOCKER_SOCKET_PATH." >&2
-    echo "  Sandbox requires Docker socket access. Skipping sandbox setup." >&2
+    echo "WARNING: 已开启 OPENCLAW_SANDBOX，但在 $DOCKER_SOCKET_PATH 未找到 Docker socket。" >&2
+    echo "  Sandbox 需要 Docker socket 访问能力，本次跳过 sandbox 配置。" >&2
     SANDBOX_ENABLED=""
   fi
 fi
@@ -536,49 +562,49 @@ fi
 if [[ -n "$SANDBOX_ENABLED" ]]; then
   # Enable sandbox in OpenClaw config.
   sandbox_config_ok=true
-  if ! docker compose "${COMPOSE_ARGS[@]}" run --rm --no-deps openclaw-cli \
+  if ! docker compose "${COMPOSE_ARGS[@]}" run --rm --no-deps oneclaw-cli \
     config set agents.defaults.sandbox.mode "non-main" >/dev/null; then
-    echo "WARNING: Failed to set agents.defaults.sandbox.mode" >&2
+    echo "WARNING: 设置 agents.defaults.sandbox.mode 失败" >&2
     sandbox_config_ok=false
   fi
-  if ! docker compose "${COMPOSE_ARGS[@]}" run --rm --no-deps openclaw-cli \
+  if ! docker compose "${COMPOSE_ARGS[@]}" run --rm --no-deps oneclaw-cli \
     config set agents.defaults.sandbox.scope "agent" >/dev/null; then
-    echo "WARNING: Failed to set agents.defaults.sandbox.scope" >&2
+    echo "WARNING: 设置 agents.defaults.sandbox.scope 失败" >&2
     sandbox_config_ok=false
   fi
-  if ! docker compose "${COMPOSE_ARGS[@]}" run --rm --no-deps openclaw-cli \
+  if ! docker compose "${COMPOSE_ARGS[@]}" run --rm --no-deps oneclaw-cli \
     config set agents.defaults.sandbox.workspaceAccess "none" >/dev/null; then
-    echo "WARNING: Failed to set agents.defaults.sandbox.workspaceAccess" >&2
+    echo "WARNING: 设置 agents.defaults.sandbox.workspaceAccess 失败" >&2
     sandbox_config_ok=false
   fi
 
   if [[ "$sandbox_config_ok" == true ]]; then
-    echo "Sandbox enabled: mode=non-main, scope=agent, workspaceAccess=none"
-    echo "Docs: https://docs.openclaw.ai/gateway/sandboxing"
+    echo "Sandbox 已开启：mode=non-main, scope=agent, workspaceAccess=none"
+    echo "参考：https://docs.openclaw.ai/gateway/sandboxing"
     # Restart gateway with sandbox compose overlay to pick up socket mount + config.
-    docker compose "${COMPOSE_ARGS[@]}" up -d openclaw-gateway
+    docker compose "${COMPOSE_ARGS[@]}" up -d oneclaw-gateway
   else
-    echo "WARNING: Sandbox config was partially applied. Check errors above." >&2
-    echo "  Skipping gateway restart to avoid exposing Docker socket without a full sandbox policy." >&2
-    if ! docker compose "${BASE_COMPOSE_ARGS[@]}" run --rm --no-deps openclaw-cli \
+    echo "WARNING: Sandbox 配置仅部分写入，请检查上方错误信息。" >&2
+    echo "  为避免在未完成策略时暴露 Docker socket，本次不会重启 Gateway。" >&2
+    if ! docker compose "${BASE_COMPOSE_ARGS[@]}" run --rm --no-deps oneclaw-cli \
       config set agents.defaults.sandbox.mode "off" >/dev/null; then
-      echo "WARNING: Failed to roll back agents.defaults.sandbox.mode to off" >&2
+      echo "WARNING: 回滚 agents.defaults.sandbox.mode=off 失败" >&2
     else
-      echo "Sandbox mode rolled back to off due to partial sandbox config failure."
+      echo "由于 sandbox 配置未完成，已回滚为 off。"
     fi
     if [[ -n "${SANDBOX_COMPOSE_FILE:-}" ]]; then
       rm -f "$SANDBOX_COMPOSE_FILE"
     fi
     # Ensure gateway service definition is reset without sandbox overlay mount.
-    docker compose "${BASE_COMPOSE_ARGS[@]}" up -d --force-recreate openclaw-gateway
+    docker compose "${BASE_COMPOSE_ARGS[@]}" up -d --force-recreate oneclaw-gateway
   fi
 else
   # Keep reruns deterministic: if sandbox is not active for this run, reset
   # persisted sandbox mode so future execs do not require docker.sock by stale
   # config alone.
-  if ! docker compose "${COMPOSE_ARGS[@]}" run --rm openclaw-cli \
+  if ! docker compose "${COMPOSE_ARGS[@]}" run --rm oneclaw-cli \
     config set agents.defaults.sandbox.mode "off" >/dev/null; then
-    echo "WARNING: Failed to reset agents.defaults.sandbox.mode to off" >&2
+    echo "WARNING: 重置 agents.defaults.sandbox.mode=off 失败" >&2
   fi
   if [[ -f "$ROOT_DIR/docker-compose.sandbox.yml" ]]; then
     rm -f "$ROOT_DIR/docker-compose.sandbox.yml"
@@ -586,12 +612,12 @@ else
 fi
 
 echo ""
-echo "Gateway running with host port mapping."
-echo "Access from tailnet devices via the host's tailnet IP."
-echo "Config: $OPENCLAW_CONFIG_DIR"
-echo "Workspace: $OPENCLAW_WORKSPACE_DIR"
-echo "Token: $OPENCLAW_GATEWAY_TOKEN"
+echo "Gateway 已通过宿主机端口映射启动。"
+echo "如需从 tailnet 设备访问，请使用宿主机的 tailnet IP。"
+echo "配置目录：$OPENCLAW_CONFIG_DIR"
+echo "工作区：$OPENCLAW_WORKSPACE_DIR"
+echo "Token：$OPENCLAW_GATEWAY_TOKEN"
 echo ""
-echo "Commands:"
-echo "  ${COMPOSE_HINT} logs -f openclaw-gateway"
-echo "  ${COMPOSE_HINT} exec openclaw-gateway node dist/index.js health --token \"$OPENCLAW_GATEWAY_TOKEN\""
+echo "常用命令："
+echo "  ${COMPOSE_HINT} logs -f oneclaw-gateway"
+echo "  ${COMPOSE_HINT} exec oneclaw-gateway node dist/index.js health --token \"$OPENCLAW_GATEWAY_TOKEN\""

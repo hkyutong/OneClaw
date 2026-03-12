@@ -49,40 +49,40 @@ const AUTH_CHOICE_HELP = formatAuthChoiceChoicesForCli({
 export function registerOnboardCommand(program: Command) {
   const command = program
     .command("onboard")
-    .description("Interactive wizard to set up the gateway, workspace, and skills")
+    .description("交互式向导：设置网关、工作区与技能")
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/onboard", "docs.openclaw.ai/cli/onboard")}\n`,
+        `\n${theme.muted("文档：")} ${formatDocsLink("/cli/onboard", "docs.openclaw.ai/cli/onboard")}\n`,
     )
-    .option("--workspace <dir>", "Agent workspace directory (default: ~/.openclaw/workspace)")
+    .option("--workspace <dir>", "Agent 工作区目录（默认：~/.oneclaw/workspace）")
     .option(
       "--reset",
-      "Reset config + credentials + sessions before running wizard (workspace only with --reset-scope full)",
+      "运行向导前重置配置、凭据与会话（工作区仅在 --reset-scope full 时重置）",
     )
-    .option("--reset-scope <scope>", "Reset scope: config|config+creds+sessions|full")
-    .option("--non-interactive", "Run without prompts", false)
+    .option("--reset-scope <scope>", "重置范围：config|config+creds+sessions|full")
+    .option("--non-interactive", "无提示运行", false)
     .option(
       "--accept-risk",
-      "Acknowledge that agents are powerful and full system access is risky (required for --non-interactive)",
+      "确认已理解 Agent 的能力和系统访问风险（--non-interactive 必需）",
       false,
     )
-    .option("--flow <flow>", "Wizard flow: quickstart|advanced|manual")
-    .option("--mode <mode>", "Wizard mode: local|remote")
-    .option("--auth-choice <choice>", `Auth: ${AUTH_CHOICE_HELP}`)
+    .option("--flow <flow>", "向导流程：quickstart|advanced|manual")
+    .option("--mode <mode>", "向导模式：local|remote")
+    .option("--auth-choice <choice>", `认证方式：${AUTH_CHOICE_HELP}`)
     .option(
       "--token-provider <id>",
-      "Token provider id (non-interactive; used with --auth-choice token)",
+      "Token 提供商 ID（无交互模式；配合 --auth-choice token 使用）",
     )
-    .option("--token <token>", "Token value (non-interactive; used with --auth-choice token)")
+    .option("--token <token>", "Token 值（无交互模式；配合 --auth-choice token 使用）")
     .option(
       "--token-profile-id <id>",
-      "Auth profile id (non-interactive; default: <provider>:manual)",
+      "认证配置 ID（无交互模式；默认：<provider>:manual）",
     )
-    .option("--token-expires-in <duration>", "Optional token expiry duration (e.g. 365d, 12h)")
+    .option("--token-expires-in <duration>", "可选的 token 过期时间（例如 365d、12h）")
     .option(
       "--secret-input-mode <mode>",
-      "API key persistence mode: plaintext|ref (default: plaintext)",
+      "API Key 保存方式：plaintext|ref（默认：plaintext）",
     )
     .option("--cloudflare-ai-gateway-account-id <id>", "Cloudflare Account ID")
     .option("--cloudflare-ai-gateway-gateway-id <id>", "Cloudflare AI Gateway ID");
@@ -92,38 +92,38 @@ export function registerOnboardCommand(program: Command) {
   }
 
   command
-    .option("--custom-base-url <url>", "Custom provider base URL")
-    .option("--custom-api-key <key>", "Custom provider API key (optional)")
-    .option("--custom-model-id <id>", "Custom provider model ID")
-    .option("--custom-provider-id <id>", "Custom provider ID (optional; auto-derived by default)")
+    .option("--custom-base-url <url>", "自定义提供商 Base URL")
+    .option("--custom-api-key <key>", "自定义提供商 API Key（可选）")
+    .option("--custom-model-id <id>", "自定义提供商模型 ID")
+    .option("--custom-provider-id <id>", "自定义提供商 ID（可选；默认自动推断）")
     .option(
       "--custom-compatibility <mode>",
-      "Custom provider API compatibility: openai|anthropic (default: openai)",
+      "自定义提供商 API 兼容模式：openai|anthropic（默认：openai）",
     )
-    .option("--gateway-port <port>", "Gateway port")
-    .option("--gateway-bind <mode>", "Gateway bind: loopback|tailnet|lan|auto|custom")
-    .option("--gateway-auth <mode>", "Gateway auth: token|password")
-    .option("--gateway-token <token>", "Gateway token (token auth)")
+    .option("--gateway-port <port>", "Gateway 端口")
+    .option("--gateway-bind <mode>", "Gateway 绑定方式：loopback|tailnet|lan|auto|custom")
+    .option("--gateway-auth <mode>", "Gateway 认证方式：token|password")
+    .option("--gateway-token <token>", "Gateway token（token 认证）")
     .option(
       "--gateway-token-ref-env <name>",
-      "Gateway token SecretRef env var name (token auth; e.g. OPENCLAW_GATEWAY_TOKEN)",
+      "Gateway token 的 SecretRef 环境变量名（token 认证，例如 OPENCLAW_GATEWAY_TOKEN）",
     )
-    .option("--gateway-password <password>", "Gateway password (password auth)")
-    .option("--remote-url <url>", "Remote Gateway WebSocket URL")
-    .option("--remote-token <token>", "Remote Gateway token (optional)")
-    .option("--tailscale <mode>", "Tailscale: off|serve|funnel")
-    .option("--tailscale-reset-on-exit", "Reset tailscale serve/funnel on exit")
-    .option("--install-daemon", "Install gateway service")
-    .option("--no-install-daemon", "Skip gateway service install")
-    .option("--skip-daemon", "Skip gateway service install")
-    .option("--daemon-runtime <runtime>", "Daemon runtime: node|bun")
-    .option("--skip-channels", "Skip channel setup")
-    .option("--skip-skills", "Skip skills setup")
-    .option("--skip-search", "Skip search provider setup")
-    .option("--skip-health", "Skip health check")
-    .option("--skip-ui", "Skip Control UI/TUI prompts")
-    .option("--node-manager <name>", "Node manager for skills: npm|pnpm|bun")
-    .option("--json", "Output JSON summary", false);
+    .option("--gateway-password <password>", "Gateway 密码（password 认证）")
+    .option("--remote-url <url>", "远程 Gateway 的 WebSocket URL")
+    .option("--remote-token <token>", "远程 Gateway token（可选）")
+    .option("--tailscale <mode>", "Tailscale：off|serve|funnel")
+    .option("--tailscale-reset-on-exit", "退出时重置 Tailscale serve/funnel")
+    .option("--install-daemon", "安装 Gateway 服务")
+    .option("--no-install-daemon", "跳过 Gateway 服务安装")
+    .option("--skip-daemon", "跳过 Gateway 服务安装")
+    .option("--daemon-runtime <runtime>", "Daemon 运行时：node|bun")
+    .option("--skip-channels", "跳过渠道配置")
+    .option("--skip-skills", "跳过技能配置")
+    .option("--skip-search", "跳过搜索配置")
+    .option("--skip-health", "跳过健康检查")
+    .option("--skip-ui", "跳过 Control UI/TUI 相关提示")
+    .option("--node-manager <name>", "技能安装使用的 Node 管理器：npm|pnpm|bun")
+    .option("--json", "输出 JSON 摘要", false);
 
   command.action(async (opts, commandRuntime) => {
     await runCommandWithRuntime(defaultRuntime, async () => {

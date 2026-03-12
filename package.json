@@ -1,19 +1,20 @@
 {
-  "name": "openclaw",
+  "name": "oneclaw",
   "version": "2026.3.11",
-  "description": "Multi-channel AI gateway with extensible messaging integrations",
+  "description": "OneClaw 是一个可本地部署的多通道 AI 网关与个人助理运行时",
   "keywords": [],
-  "homepage": "https://github.com/openclaw/openclaw#readme",
+  "homepage": "https://github.com/hkyutong/One-Claw#readme",
   "bugs": {
-    "url": "https://github.com/openclaw/openclaw/issues"
+    "url": "https://github.com/hkyutong/One-Claw/issues"
   },
   "license": "MIT",
   "author": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/openclaw/openclaw.git"
+    "url": "git+ssh://git@github.com/hkyutong/One-Claw.git"
   },
   "bin": {
+    "oneclaw": "oneclaw.mjs",
     "openclaw": "openclaw.mjs"
   },
   "directories": {
@@ -23,6 +24,7 @@
   "files": [
     "CHANGELOG.md",
     "LICENSE",
+    "oneclaw.mjs",
     "openclaw.mjs",
     "README-header.png",
     "README.md",

@@ -1,6 +1,6 @@
 services:
-  openclaw-gateway:
-    image: ${OPENCLAW_IMAGE:-openclaw:local}
+  oneclaw-gateway:
+    image: ${OPENCLAW_IMAGE:-oneclaw:local}
     environment:
       HOME: /home/node
       TERM: xterm-256color
@@ -48,9 +48,9 @@ services:
       retries: 5
       start_period: 20s
 
-  openclaw-cli:
-    image: ${OPENCLAW_IMAGE:-openclaw:local}
-    network_mode: "service:openclaw-gateway"
+  oneclaw-cli:
+    image: ${OPENCLAW_IMAGE:-oneclaw:local}
+    network_mode: "service:oneclaw-gateway"
     cap_drop:
       - NET_RAW
       - NET_ADMIN
@@ -73,4 +73,4 @@ services:
     init: true
     entrypoint: ["node", "dist/index.js"]
     depends_on:
-      - openclaw-gateway
+      - oneclaw-gateway

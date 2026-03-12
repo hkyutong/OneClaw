@@ -11,20 +11,20 @@ import { runCommandWithRuntime } from "../cli-utils.js";
 export function registerMaintenanceCommands(program: Command) {
   program
     .command("doctor")
-    .description("Health checks + quick fixes for the gateway and channels")
+    .description("健康检查与常见修复")
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/doctor", "docs.openclaw.ai/cli/doctor")}\n`,
+        `\n${theme.muted("文档：")} ${formatDocsLink("/cli/doctor", "docs.openclaw.ai/cli/doctor")}\n`,
     )
-    .option("--no-workspace-suggestions", "Disable workspace memory system suggestions", false)
-    .option("--yes", "Accept defaults without prompting", false)
-    .option("--repair", "Apply recommended repairs without prompting", false)
-    .option("--fix", "Apply recommended repairs (alias for --repair)", false)
-    .option("--force", "Apply aggressive repairs (overwrites custom service config)", false)
-    .option("--non-interactive", "Run without prompts (safe migrations only)", false)
-    .option("--generate-gateway-token", "Generate and configure a gateway token", false)
-    .option("--deep", "Scan system services for extra gateway installs", false)
+    .option("--no-workspace-suggestions", "关闭工作区记忆系统建议", false)
+    .option("--yes", "直接接受默认项，不再询问", false)
+    .option("--repair", "直接应用推荐修复，不再询问", false)
+    .option("--fix", "应用推荐修复（--repair 的别名）", false)
+    .option("--force", "执行更强的修复（可能覆盖自定义服务配置）", false)
+    .option("--non-interactive", "无交互运行（仅安全迁移）", false)
+    .option("--generate-gateway-token", "生成并配置 Gateway token", false)
+    .option("--deep", "额外扫描系统服务中的其他 Gateway 安装", false)
     .action(async (opts) => {
       await runCommandWithRuntime(defaultRuntime, async () => {
         await doctorCommand(defaultRuntime, {
@@ -42,13 +42,13 @@ export function registerMaintenanceCommands(program: Command) {
 
   program
     .command("dashboard")
-    .description("Open the Control UI with your current token")
+    .description("使用当前 token 打开 Control UI")
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/dashboard", "docs.openclaw.ai/cli/dashboard")}\n`,
+        `\n${theme.muted("文档：")} ${formatDocsLink("/cli/dashboard", "docs.openclaw.ai/cli/dashboard")}\n`,
     )
-    .option("--no-open", "Print URL but do not launch a browser")
+    .option("--no-open", "仅输出 URL，不自动打开浏览器")
     .action(async (opts) => {
       await runCommandWithRuntime(defaultRuntime, async () => {
         await dashboardCommand(defaultRuntime, {
@@ -59,16 +59,16 @@ export function registerMaintenanceCommands(program: Command) {
 
   program
     .command("reset")
-    .description("Reset local config/state (keeps the CLI installed)")
+    .description("重置本地配置与状态（保留 CLI）")
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/reset", "docs.openclaw.ai/cli/reset")}\n`,
+        `\n${theme.muted("文档：")} ${formatDocsLink("/cli/reset", "docs.openclaw.ai/cli/reset")}\n`,
     )
-    .option("--scope <scope>", "config|config+creds+sessions|full (default: interactive prompt)")
-    .option("--yes", "Skip confirmation prompts", false)
-    .option("--non-interactive", "Disable prompts (requires --scope + --yes)", false)
-    .option("--dry-run", "Print actions without removing files", false)
+    .option("--scope <scope>", "config|config+creds+sessions|full（默认：交互选择）")
+    .option("--yes", "跳过确认提示", false)
+    .option("--non-interactive", "关闭提示（需配合 --scope + --yes）", false)
+    .option("--dry-run", "只打印操作，不删除文件", false)
     .action(async (opts) => {
       await runCommandWithRuntime(defaultRuntime, async () => {
         await resetCommand(defaultRuntime, {
@@ -82,20 +82,20 @@ export function registerMaintenanceCommands(program: Command) {
 
   program
     .command("uninstall")
-    .description("Uninstall the gateway service + local data (CLI remains)")
+    .description("卸载 Gateway 服务与本地数据（CLI 保留）")
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/uninstall", "docs.openclaw.ai/cli/uninstall")}\n`,
+        `\n${theme.muted("文档：")} ${formatDocsLink("/cli/uninstall", "docs.openclaw.ai/cli/uninstall")}\n`,
     )
-    .option("--service", "Remove the gateway service", false)
-    .option("--state", "Remove state + config", false)
-    .option("--workspace", "Remove workspace dirs", false)
-    .option("--app", "Remove the macOS app", false)
-    .option("--all", "Remove service + state + workspace + app", false)
-    .option("--yes", "Skip confirmation prompts", false)
-    .option("--non-interactive", "Disable prompts (requires --yes)", false)
-    .option("--dry-run", "Print actions without removing files", false)
+    .option("--service", "移除 Gateway 服务", false)
+    .option("--state", "移除状态与配置", false)
+    .option("--workspace", "移除工作区目录", false)
+    .option("--app", "移除 macOS App", false)
+    .option("--all", "移除服务、状态、工作区和 App", false)
+    .option("--yes", "跳过确认提示", false)
+    .option("--non-interactive", "关闭提示（需配合 --yes）", false)
+    .option("--dry-run", "只打印操作，不删除文件", false)
     .action(async (opts) => {
       await runCommandWithRuntime(defaultRuntime, async () => {
         await uninstallCommand(defaultRuntime, {

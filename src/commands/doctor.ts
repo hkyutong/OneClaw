@@ -76,7 +76,7 @@ export async function doctorCommand(
 ) {
   const prompter = createDoctorPrompter({ runtime, options });
   printWizardHeader(runtime);
-  intro("OpenClaw doctor");
+  intro("OneClaw Doctor");
 
   const root = await resolveOpenClawPackageRoot({
     moduleUrl: import.meta.url,
@@ -111,24 +111,24 @@ export async function doctorCommand(
   const configPath = configResult.path ?? CONFIG_PATH;
   if (!cfg.gateway?.mode) {
     const lines = [
-      "gateway.mode is unset; gateway start will be blocked.",
-      `Fix: run ${formatCliCommand("openclaw configure")} and set Gateway mode (local/remote).`,
-      `Or set directly: ${formatCliCommand("openclaw config set gateway.mode local")}`,
+      "gateway.mode 尚未设置，Gateway 将无法启动。",
+      `修复方法：执行 ${formatCliCommand("oneclaw configure")} 并设置 Gateway 模式（local/remote）。`,
+      `或直接执行：${formatCliCommand("oneclaw config set gateway.mode local")}`,
     ];
     if (!fs.existsSync(configPath)) {
-      lines.push(`Missing config: run ${formatCliCommand("openclaw setup")} first.`);
+      lines.push(`尚未找到配置文件：请先执行 ${formatCliCommand("oneclaw setup")}。`);
     }
     note(lines.join("\n"), "Gateway");
   }
   if (resolveMode(cfg) === "local" && hasAmbiguousGatewayAuthModeConfig(cfg)) {
     note(
       [
-        "gateway.auth.token and gateway.auth.password are both configured while gateway.auth.mode is unset.",
-        "Set an explicit mode to avoid ambiguous auth selection and startup/runtime failures.",
-        `Set token mode: ${formatCliCommand("openclaw config set gateway.auth.mode token")}`,
-        `Set password mode: ${formatCliCommand("openclaw config set gateway.auth.mode password")}`,
+        "gateway.auth.token 和 gateway.auth.password 同时存在，但 gateway.auth.mode 尚未设置。",
+        "请明确指定一种认证模式，避免启动和运行时出现歧义。",
+        `设置 token 模式：${formatCliCommand("oneclaw config set gateway.auth.mode token")}`,
+        `设置 password 模式：${formatCliCommand("oneclaw config set gateway.auth.mode password")}`,
       ].join("\n"),
-      "Gateway auth",
+      "Gateway 认证",
     );
   }
 
@@ -157,16 +157,16 @@ export async function doctorCommand(
       if (gatewayTokenRef) {
         note(
           [
-            "Gateway token is managed via SecretRef and is currently unavailable.",
-            "Doctor will not overwrite gateway.auth.token with a plaintext value.",
-            "Resolve/rotate the external secret source, then rerun doctor.",
+            "Gateway token 当前由 SecretRef 管理，但暂时不可用。",
+            "Doctor 不会把 gateway.auth.token 覆盖成明文。",
+            "请先修复或轮换外部密钥来源，再重新执行 Doctor。",
           ].join("\n"),
-          "Gateway auth",
+          "Gateway 认证",
         );
       } else {
         note(
-          "Gateway auth is off or missing a token. Token auth is now the recommended default (including loopback).",
-          "Gateway auth",
+          "Gateway 认证当前关闭，或缺少 token。现在推荐默认启用 token 认证（包括 loopback）。",
+          "Gateway 认证",
         );
         const shouldSetToken =
           options.generateGatewayToken === true
@@ -174,7 +174,7 @@ export async function doctorCommand(
             : options.nonInteractive === true
               ? false
               : await prompter.confirmRepair({
-                  message: "Generate and configure a gateway token now?",
+                  message: "现在生成并配置一个 Gateway token 吗？",
                   initialValue: true,
                 });
         if (shouldSetToken) {
@@ -190,7 +190,7 @@ export async function doctorCommand(
               },
             },
           };
-          note("Gateway token configured.", "Gateway auth");
+          note("Gateway token 已配置。", "Gateway 认证");
         }
       }
     }
@@ -198,12 +198,12 @@ export async function doctorCommand(
 
   const legacyState = await detectLegacyStateMigrations({ cfg });
   if (legacyState.preview.length > 0) {
-    note(legacyState.preview.join("\n"), "Legacy state detected");
+    note(legacyState.preview.join("\n"), "检测到旧版状态");
     const migrate =
       options.nonInteractive === true
         ? true
         : await prompter.confirm({
-            message: "Migrate legacy state (sessions/agent/WhatsApp auth) now?",
+            message: "现在迁移旧版状态（会话 / agent / WhatsApp 认证）吗？",
             initialValue: true,
           });
     if (migrate) {
@@ -211,10 +211,10 @@ export async function doctorCommand(
         detected: legacyState,
       });
       if (migrated.changes.length > 0) {
-        note(migrated.changes.join("\n"), "Doctor changes");
+        note(migrated.changes.join("\n"), "Doctor 变更");
       }
       if (migrated.warnings.length > 0) {
-        note(migrated.warnings.join("\n"), "Doctor warnings");
+        note(migrated.warnings.join("\n"), "Doctor 警告");
       }
     }
   }
@@ -247,7 +247,7 @@ export async function doctorCommand(
       defaultProvider: DEFAULT_PROVIDER,
     });
     if (!hooksModelRef) {
-      note(`- hooks.gmail.model "${cfg.hooks.gmail.model}" could not be resolved`, "Hooks");
+      note(`- hooks.gmail.model "${cfg.hooks.gmail.model}" 无法解析`, "Hooks");
     } else {
       const { provider: defaultProvider, model: defaultModel } = resolveConfiguredModelRef({
         cfg,
@@ -265,12 +265,12 @@ export async function doctorCommand(
       const warnings: string[] = [];
       if (!status.allowed) {
         warnings.push(
-          `- hooks.gmail.model "${status.key}" not in agents.defaults.models allowlist (will use primary instead)`,
+          `- hooks.gmail.model "${status.key}" 不在 agents.defaults.models allowlist 中（将回退到主模型）`,
         );
       }
       if (!status.inCatalog) {
         warnings.push(
-          `- hooks.gmail.model "${status.key}" not in the model catalog (may fail at runtime)`,
+          `- hooks.gmail.model "${status.key}" 不在模型目录中（运行时可能失败）`,
         );
       }
       if (warnings.length > 0) {
@@ -299,7 +299,7 @@ export async function doctorCommand(
           note,
         },
         reason:
-          "Gateway runs as a systemd user service. Without lingering, systemd stops the user session on logout/idle and kills the Gateway.",
+          "Gateway 以 systemd 用户服务运行。如果没有开启 lingering，用户登出或会话空闲时 systemd 会停止用户会话并杀掉 Gateway。",
         requireConfirm: true,
       });
     }
@@ -342,10 +342,10 @@ export async function doctorCommand(
     logConfigUpdated(runtime);
     const backupPath = `${CONFIG_PATH}.bak`;
     if (fs.existsSync(backupPath)) {
-      runtime.log(`Backup: ${shortenHomePath(backupPath)}`);
+      runtime.log(`备份文件：${shortenHomePath(backupPath)}`);
     }
   } else if (!prompter.shouldRepair) {
-    runtime.log(`Run "${formatCliCommand("openclaw doctor --fix")}" to apply changes.`);
+    runtime.log(`如需自动应用修复，请执行 "${formatCliCommand("oneclaw doctor --fix")}"。`);
   }
 
   if (options.workspaceSuggestions !== false) {
@@ -358,12 +358,12 @@ export async function doctorCommand(
 
   const finalSnapshot = await readConfigFileSnapshot();
   if (finalSnapshot.exists && !finalSnapshot.valid) {
-    runtime.error("Invalid config:");
+    runtime.error("配置无效：");
     for (const issue of finalSnapshot.issues) {
       const path = issue.path || "<root>";
       runtime.error(`- ${path}: ${issue.message}`);
     }
   }
 
-  outro("Doctor complete.");
+  outro("Doctor 已完成。");
 }
