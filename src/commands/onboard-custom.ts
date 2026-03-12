@@ -546,17 +546,15 @@ async function promptYutoApiModelId(params: {
       value: modelId,
       label: modelId,
       hint:
-        scoreYutoApiModelId(modelId) < YUTOAPI_MODEL_PRIORITY.length
-          ? "Recommended"
-          : "Available from YutoAPI",
+        scoreYutoApiModelId(modelId) < YUTOAPI_MODEL_PRIORITY.length ? "推荐" : "YutoAPI 当前可用",
     }));
     options.push({
       value: MANUAL_YUTOAPI_MODEL_VALUE,
-      label: "Enter another model ID",
-      hint: "Use this if the model you want is not in the quick list.",
+      label: "手动输入其他模型 ID",
+      hint: "如果你要的模型不在推荐列表里，可以手动输入。",
     });
     const selected = await params.prompter.select({
-      message: "Choose a YutoAPI model",
+      message: "选择一个 YutoAPI 模型",
       options,
       initialValue: options[0]?.value,
     });
@@ -566,10 +564,12 @@ async function promptYutoApiModelId(params: {
   } catch (error) {
     await params.prompter.note(
       [
-        "Could not load the YutoAPI model list automatically.",
-        `Reason: ${formatVerificationError(error)}`,
-        "Make sure you entered a YutoAPI-issued key instead of an OpenAI official key.",
-        "You can still type the model ID manually.",
+        "暂时无法自动拉取 YutoAPI 模型列表。",
+        `原因：${formatVerificationError(error)}`,
+        "OneClaw 这里内置使用的是 https://gptapi.asia/v1。",
+        "如果你看到的是 fetch 失败，通常不是 /v1 配错，而是当前网络、WSL、Docker、DNS、代理或 TLS 访问不到该域名。",
+        "同时请确认你填写的是 YutoAPI 发放的 key，而不是 OpenAI 官方 key。",
+        "你也可以先手动输入模型 ID 继续。",
       ].join("\n"),
       "YutoAPI",
     );
@@ -577,9 +577,9 @@ async function promptYutoApiModelId(params: {
 
   return (
     await params.prompter.text({
-      message: "YutoAPI model ID",
-      placeholder: "e.g. gpt-4o-mini, claude-3-7-sonnet, gemini-2.5-pro",
-      validate: (value) => (value.trim() ? undefined : "YutoAPI model ID is required."),
+      message: "输入 YutoAPI 模型 ID",
+      placeholder: "例如：gpt-4o-mini、claude-3-7-sonnet、gemini-2.5-pro",
+      validate: (value) => (value.trim() ? undefined : "YutoAPI 模型 ID 不能为空。"),
     })
   ).trim();
 }
@@ -588,11 +588,11 @@ type YutoApiRetryChoice = "apiKey" | "model" | "both";
 
 async function promptYutoApiRetryChoice(prompter: WizardPrompter): Promise<YutoApiRetryChoice> {
   return await prompter.select({
-    message: "What would you like to change?",
+    message: "你想修改哪一项？",
     options: [
-      { value: "apiKey", label: "Change API key" },
-      { value: "model", label: "Change model" },
-      { value: "both", label: "Change API key and model" },
+      { value: "apiKey", label: "重新填写 API key" },
+      { value: "model", label: "重新选择模型" },
+      { value: "both", label: "同时重填 key 和模型" },
     ],
   });
 }
@@ -607,10 +607,10 @@ async function promptYutoApiKey(params: {
     config: params.config,
     provider: YUTOAPI_PROVIDER_ID,
     envLabel: "YUTOAPI_API_KEY",
-    promptMessage: "Enter YutoAPI API key (issued by YutoAPI, not OpenAI)",
+    promptMessage: "输入 YutoAPI API key（填写 YutoAPI 发放的 key，不是 OpenAI 官方 key）",
     normalize: normalizeSecretInput,
     validate: (value) =>
-      normalizeSecretInput(value) ? undefined : "A YutoAPI-issued API key is required.",
+      normalizeSecretInput(value) ? undefined : "必须填写 YutoAPI 发放的 API key。",
     prompter: params.prompter,
     secretInputMode: params.secretInputMode,
     setCredential: async (apiKey) => {
@@ -1008,10 +1008,11 @@ export async function promptYutoApiConfig(params: {
 
   await prompter.note(
     [
-      "YutoAPI is the recommended multi-model gateway for OneClaw.",
-      "It gives you one API endpoint for OpenAI, Claude, Gemini, GLM, Qwen, DeepSeek, Kimi, MiniMax, and more.",
-      "Use a YutoAPI-issued API key here. Do not paste an OpenAI official API key unless YutoAPI explicitly issued it.",
-      `Get or buy your API key at: ${YUTOAPI_PORTAL_URL}`,
+      "YutoAPI 是 OneClaw 当前推荐的统一模型网关。",
+      "它通过一个 API 入口统一接入 OpenAI、Claude、Gemini、GLM、Qwen、DeepSeek、Kimi、MiniMax 等模型。",
+      "这里内置使用的是 https://gptapi.asia/v1。",
+      "请填写 YutoAPI 发放的 API key，不要直接把 OpenAI 官方 key 填到这里，除非那就是 YutoAPI 发给你的 key。",
+      `获取或购买地址：${YUTOAPI_PORTAL_URL}`,
     ].join("\n"),
     "YutoAPI",
   );
@@ -1025,21 +1026,21 @@ export async function promptYutoApiConfig(params: {
   let modelId = await promptYutoApiModelId({ prompter, apiKey: resolvedApiKey });
 
   while (true) {
-    const verifySpinner = prompter.progress("Verifying YutoAPI...");
+    const verifySpinner = prompter.progress("正在验证 YutoAPI...");
     const result = await requestOpenAiVerification({
       baseUrl: YUTOAPI_BASE_URL,
       apiKey: resolvedApiKey,
       modelId,
     });
     if (result.ok) {
-      verifySpinner.stop("YutoAPI is ready.");
+      verifySpinner.stop("YutoAPI 已验证通过。");
       break;
     }
 
     if (result.status !== undefined) {
-      verifySpinner.stop(`Verification failed: status ${result.status}`);
+      verifySpinner.stop(`验证失败：HTTP ${result.status}`);
     } else {
-      verifySpinner.stop(`Verification failed: ${formatVerificationError(result.error)}`);
+      verifySpinner.stop(`验证失败：${formatVerificationError(result.error)}`);
     }
     const retryChoice = await promptYutoApiRetryChoice(prompter);
     if (retryChoice === "apiKey" || retryChoice === "both") {

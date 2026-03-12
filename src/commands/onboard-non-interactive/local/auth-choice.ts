@@ -642,12 +642,12 @@ export async function applyNonInteractiveAuthChoice(params: {
       return result.config;
     } catch (err) {
       if (err instanceof CustomApiError) {
-        runtime.error(`Invalid YutoAPI config: ${err.message}`);
+        runtime.error(`YutoAPI 配置无效：${err.message}`);
         runtime.exit(1);
         return null;
       }
       const reason = err instanceof Error ? err.message : String(err);
-      runtime.error(`Invalid YutoAPI config: ${reason}`);
+      runtime.error(`YutoAPI 配置无效：${reason}`);
       runtime.exit(1);
       return null;
     }

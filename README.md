@@ -99,7 +99,19 @@ chmod +x docker-setup.sh
 
 - 初始化向导里优先选择 `YutoAPI`
 - 填写 `YutoAPI` 发放的 `API key`
+- OneClaw 内置使用的是 `https://gptapi.asia/v1`
 - 这里使用的是 OpenAI-compatible 协议，不代表要填写 OpenAI 官方 key
+
+如果你在 Windows / WSL / Docker 里填写 YutoAPI key 时看到 `fetch` 错误，可以先在 Ubuntu 里测试连通性：
+
+```bash
+curl -I https://gptapi.asia/v1/models
+```
+
+说明：
+
+- 如果返回 `401` 或提示“未提供令牌”，通常说明网络是通的，只是你没带 key
+- 如果 `curl` 自己就报连接失败、DNS 失败、TLS 失败、超时，那问题通常在当前 Windows / WSL / Docker 的网络环境，不是 `/v1` 配错
 
 #### 5. 常用命令
 
@@ -125,6 +137,7 @@ docker compose restart oneclaw-gateway
 
 - 统一接入 OpenAI、Claude、Gemini、GLM、Qwen、DeepSeek、Kimi、MiniMax 等主流模型
 - 初始化向导里已把 `YutoAPI API key` 放在首位
+- OneClaw 内置使用的是 `https://gptapi.asia/v1`
 - `YUTOAPI_API_KEY` 指的是 YutoAPI 发放的 key；协议兼容 OpenAI，但不要把它理解成必须填写 OpenAI 官方 key
 - 官网与购买入口：<https://gptapi.asia>
 
