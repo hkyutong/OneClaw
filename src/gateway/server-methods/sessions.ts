@@ -8,7 +8,7 @@ import {
   updateSessionStore,
 } from "../../config/sessions.js";
 import { normalizeAgentId, parseAgentSessionKey } from "../../routing/session-key.js";
-import { GATEWAY_CLIENT_IDS } from "../protocol/client-info.js";
+import { isControlUiClientId } from "../protocol/client-info.js";
 import {
   ErrorCodes,
   errorShape,
@@ -78,7 +78,7 @@ function rejectWebchatSessionMutation(params: {
   if (!params.client?.connect || !params.isWebchatConnect(params.client.connect)) {
     return false;
   }
-  if (params.client.connect.client.id === GATEWAY_CLIENT_IDS.CONTROL_UI) {
+  if (isControlUiClientId(params.client.connect.client.id)) {
     return false;
   }
   params.respond(
