@@ -4,6 +4,8 @@ import {
   defaultValue,
   hintForPath,
   humanize,
+  localizeConfigTag,
+  localizeConfigText,
   pathKey,
   schemaType,
   type JsonSchema,
@@ -157,8 +159,8 @@ function resolveFieldMeta(
   hints: ConfigUiHints,
 ): FieldMeta {
   const hint = hintForPath(path, hints);
-  const label = hint?.label ?? schema.title ?? humanize(String(path.at(-1)));
-  const help = hint?.help ?? schema.description;
+  const label = hint?.label ?? localizeConfigText(schema.title) ?? humanize(String(path.at(-1)));
+  const help = hint?.help ?? localizeConfigText(schema.description);
   const schemaTags = normalizeTags(schema["x-tags"] ?? schema.tags);
   const hintTags = normalizeTags(hint?.tags);
   return {
@@ -218,8 +220,8 @@ function matchesNodeSelf(params: {
   return matchesText(criteria.text, [
     label,
     help,
-    schema.title,
-    schema.description,
+    localizeConfigText(schema.title),
+    localizeConfigText(schema.description),
     pathLabel,
     enumText,
   ]);
@@ -317,7 +319,7 @@ function renderTags(tags: string[]): TemplateResult | typeof nothing {
   }
   return html`
     <div class="cfg-tags">
-      ${tags.map((tag) => html`<span class="cfg-tag">${tag}</span>`)}
+      ${tags.map((tag) => html`<span class="cfg-tag">${localizeConfigTag(tag)}</span>`)}
     </div>
   `;
 }

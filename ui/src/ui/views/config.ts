@@ -1,6 +1,14 @@
 import { html, nothing } from "lit";
 import type { ConfigUiHints } from "../types.ts";
-import { hintForPath, humanize, schemaType, type JsonSchema } from "./config-form.shared.ts";
+import {
+  hintForPath,
+  humanize,
+  localizeConfigStatus,
+  localizeConfigTag,
+  localizeConfigText,
+  schemaType,
+  type JsonSchema,
+} from "./config-form.shared.ts";
 import { analyzeConfigSchema, renderConfigForm, SECTION_META } from "./config-form.ts";
 import { getTagFilters, replaceTagFilters } from "./config-search.ts";
 
@@ -322,8 +330,8 @@ function resolveSectionMeta(
     return meta;
   }
   return {
-    label: schema?.title ?? humanize(key),
-    description: schema?.description ?? "",
+    label: localizeConfigText(schema?.title) ?? humanize(key),
+    description: localizeConfigText(schema?.description) ?? "",
   };
 }
 
@@ -338,8 +346,8 @@ function resolveSubsections(params: {
   }
   const entries = Object.entries(schema.properties).map(([subKey, node]) => {
     const hint = hintForPath([key, subKey], uiHints);
-    const label = hint?.label ?? node.title ?? humanize(subKey);
-    const description = hint?.help ?? node.description ?? "";
+    const label = hint?.label ?? localizeConfigText(node.title) ?? humanize(subKey);
+    const description = hint?.help ?? localizeConfigText(node.description) ?? "";
     const order = hint?.order ?? 50;
     return { key: subKey, label, description, order };
   });
@@ -403,7 +411,8 @@ function truncateValue(value: unknown, maxLen = 40): string {
 }
 
 export function renderConfig(props: ConfigProps) {
-  const validity = props.valid == null ? "unknown" : props.valid ? "valid" : "invalid";
+  const validityKey = props.valid == null ? "unknown" : props.valid ? "valid" : "invalid";
+  const validityLabel = localizeConfigStatus(validityKey);
   const analysis = analyzeConfigSchema(props.schema);
   const formUnsafe = analysis.schema ? analysis.unsupportedPaths.length > 0 : false;
 
@@ -415,7 +424,10 @@ export function renderConfig(props: ConfigProps) {
   const knownKeys = new Set(SECTIONS.map((s) => s.key));
   const extraSections = Object.keys(schemaProps)
     .filter((k) => !knownKeys.has(k))
-    .map((k) => ({ key: k, label: k.charAt(0).toUpperCase() + k.slice(1) }));
+    .map((k) => ({
+      key: k,
+      label: localizeConfigText(schemaProps[k]?.title) ?? humanize(k),
+    }));
 
   const allSections = [...availableSections, ...extraSections];
 
@@ -472,9 +484,9 @@ export function renderConfig(props: ConfigProps) {
           <div class="config-sidebar__title">设置</div>
           <span
             class="pill pill--sm ${
-              validity === "valid" ? "pill--ok" : validity === "invalid" ? "pill--danger" : ""
+              validityKey === "valid" ? "pill--ok" : validityKey === "invalid" ? "pill--danger" : ""
             }"
-            >${validity}</span
+            >${validityLabel}</span
           >
         </div>
 
@@ -525,8 +537,11 @@ export function renderConfig(props: ConfigProps) {
                           ${Array.from(selectedTags)
                             .slice(0, 2)
                             .map(
-                              (tag) =>
-                                html`<span class="config-search__tag-chip">tag:${tag}</span>`,
+                              (tag) => html`
+                                <span class="config-search__tag-chip"
+                                  >${localizeConfigTag(tag)}</span
+                                >
+                              `,
                             )}
                           ${
                             selectedTags.size > 2
@@ -558,7 +573,7 @@ export function renderConfig(props: ConfigProps) {
                         props.onSearchChange(replaceTagFilters(props.searchQuery, nextTags));
                       }}
                     >
-                      tag:${tag}
+                      ${localizeConfigTag(tag)}
                     </button>
                   `;
                 })}

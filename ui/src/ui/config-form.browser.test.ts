@@ -1,5 +1,6 @@
 import { render } from "lit";
 import { describe, expect, it, vi } from "vitest";
+import { i18n } from "../i18n/lib/translate.ts";
 import { analyzeConfigSchema, renderConfigForm } from "./views/config-form.ts";
 
 const rootSchema = {
@@ -219,6 +220,52 @@ describe("config form renderer", () => {
     );
     expect(tags).toContain("security");
     expect(tags).toContain("secret");
+  });
+
+  it("localizes plugin schema labels and descriptions in zh-CN", async () => {
+    const onPatch = vi.fn();
+    const container = document.createElement("div");
+    const schema = {
+      type: "object",
+      properties: {
+        plugins: {
+          type: "object",
+          title: "Plugins",
+          description:
+            "Plugin system controls for enabling extensions, constraining load scope, configuring entries, and tracking installs. Keep plugin policy explicit and least-privilege in production environments.",
+          properties: {
+            allow: {
+              type: "array",
+              title: "Plugin Allowlist",
+              description:
+                "Optional allowlist of plugin IDs; when set, only listed plugins are eligible to load. Use this to enforce approved extension inventories in controlled environments.",
+              items: { type: "string" },
+            },
+          },
+        },
+      },
+    };
+    const analysis = analyzeConfigSchema(schema);
+    await i18n.setLocale("zh-CN");
+
+    try {
+      render(
+        renderConfigForm({
+          schema: analysis.schema,
+          uiHints: {},
+          unsupportedPaths: analysis.unsupportedPaths,
+          value: {},
+          activeSection: "plugins",
+          onPatch,
+        }),
+        container,
+      );
+
+      expect(container.textContent).toContain("插件允许列表");
+      expect(container.textContent).toContain("可选的插件允许列表");
+    } finally {
+      await i18n.setLocale("en");
+    }
   });
 
   it("filters by tag query", () => {
