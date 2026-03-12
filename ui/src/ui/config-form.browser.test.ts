@@ -198,6 +198,43 @@ describe("config form renderer", () => {
     expect(container.textContent).toContain("Plugin Enabled");
   });
 
+  it("localizes enum values in zh-CN mode", async () => {
+    const previousLocale = i18n.getLocale();
+    try {
+      await i18n.setLocale("zh-CN");
+
+      const onPatch = vi.fn();
+      const container = document.createElement("div");
+      const schema = {
+        type: "object",
+        properties: {
+          policy: {
+            type: "string",
+            enum: ["deny", "allowlist", "full"],
+          },
+        },
+      };
+      const analysis = analyzeConfigSchema(schema);
+
+      render(
+        renderConfigForm({
+          schema: analysis.schema,
+          uiHints: {},
+          unsupportedPaths: analysis.unsupportedPaths,
+          value: { policy: "allowlist" },
+          onPatch,
+        }),
+        container,
+      );
+
+      expect(container.textContent).toContain("允许列表");
+      expect(container.textContent).toContain("完全放行");
+      expect(container.textContent).toContain("拒绝");
+    } finally {
+      await i18n.setLocale(previousLocale);
+    }
+  });
+
   it("renders tags from uiHints metadata", () => {
     const onPatch = vi.fn();
     const container = document.createElement("div");
@@ -268,6 +305,53 @@ describe("config form renderer", () => {
     }
   });
 
+  it("localizes uiHints labels, help, and placeholders in zh-CN", async () => {
+    const onPatch = vi.fn();
+    const container = document.createElement("div");
+    const schema = {
+      type: "object",
+      properties: {
+        plugins: {
+          type: "object",
+          title: "Plugins",
+          properties: {
+            allow: {
+              type: "string",
+            },
+          },
+        },
+      },
+    };
+    const analysis = analyzeConfigSchema(schema);
+    await i18n.setLocale("zh-CN");
+
+    try {
+      render(
+        renderConfigForm({
+          schema: analysis.schema,
+          uiHints: {
+            "plugins.allow": {
+              label: "Plugin Allowlist",
+              help: "Optional allowlist of plugin IDs; when set, only listed plugins are eligible to load. Use this to enforce approved extension inventories in controlled environments.",
+              placeholder: "Plugin Allowlist",
+            },
+          },
+          unsupportedPaths: analysis.unsupportedPaths,
+          value: {},
+          activeSection: "plugins",
+          onPatch,
+        }),
+        container,
+      );
+
+      expect(container.textContent).toContain("插件允许列表");
+      expect(container.textContent).toContain("可选的插件允许列表");
+      expect(container.querySelector(".cfg-input")?.placeholder).toBe("插件允许列表");
+    } finally {
+      await i18n.setLocale("en");
+    }
+  });
+
   it("filters by tag query", () => {
     const onPatch = vi.fn();
     const container = document.createElement("div");
@@ -286,10 +370,10 @@ describe("config form renderer", () => {
       container,
     );
 
-    expect(container.textContent).toContain("Gateway");
+    expect(container.textContent).toContain("网关");
     expect(container.textContent).toContain("Token");
-    expect(container.textContent).not.toContain("Allow From");
-    expect(container.textContent).not.toContain("Mode");
+    expect(container.textContent).not.toContain("允许来源");
+    expect(container.textContent).not.toContain("模式");
   });
 
   it("does not treat plain text as tag filter", () => {
@@ -310,7 +394,7 @@ describe("config form renderer", () => {
       container,
     );
 
-    expect(container.textContent).toContain('No settings match "security"');
+    expect(container.textContent).toContain("No settings match “security”");
   });
 
   it("requires both text and tag when combined", () => {
@@ -332,7 +416,7 @@ describe("config form renderer", () => {
     );
 
     expect(container.textContent).toContain("Token");
-    expect(container.textContent).not.toContain('No settings match "token tag:security"');
+    expect(container.textContent).not.toContain("No settings match “token tag:security”");
 
     const noMatchContainer = document.createElement("div");
     render(
@@ -348,7 +432,7 @@ describe("config form renderer", () => {
       }),
       noMatchContainer,
     );
-    expect(noMatchContainer.textContent).toContain('No settings match "mode tag:security"');
+    expect(noMatchContainer.textContent).toContain("No settings match “mode tag:security”");
   });
 
   it("supports SecretInput unions in additionalProperties maps", () => {

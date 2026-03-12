@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# OpenClaw Installer for macOS and Linux
-# Usage: curl -fsSL --proto '=https' --tlsv1.2 https://openclaw.ai/install.sh | bash
+# OneClaw Installer for macOS and Linux
+# Usage: curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/hkyutong/OneClaw/main/scripts/install.sh | bash
 
 BOLD='\033[1m'
 ACCENT='\033[38;2;255;77;77m'       # coral-bright  #ff4d4d
@@ -15,7 +15,7 @@ ERROR='\033[38;2;230;57;70m'        # coral-mid     #e63946
 MUTED='\033[38;2;90;100;128m'       # text-muted    #5a6480
 NC='\033[0m' # No Color
 
-DEFAULT_TAGLINE="All your chats, one OpenClaw."
+DEFAULT_TAGLINE="All your chats, powered by OneClaw."
 NODE_MIN_MAJOR=22
 NODE_MIN_MINOR=12
 NODE_MIN_VERSION="${NODE_MIN_MAJOR}.${NODE_MIN_MINOR}"
@@ -235,7 +235,7 @@ print_gum_status() {
 print_installer_banner() {
     if [[ -n "$GUM" ]]; then
         local title tagline hint card
-        title="$("$GUM" style --foreground "#ff4d4d" --bold "🦞 OpenClaw Installer")"
+        title="$("$GUM" style --foreground "#ff4d4d" --bold "🦞 OneClaw Installer")"
         tagline="$("$GUM" style --foreground "#8892b0" "$TAGLINE")"
         hint="$("$GUM" style --foreground "#5a6480" "modern installer mode")"
         card="$(printf '%s\n%s\n%s' "$title" "$tagline" "$hint")"
@@ -245,7 +245,7 @@ print_installer_banner() {
     fi
 
     echo -e "${ACCENT}${BOLD}"
-    echo "  🦞 OpenClaw Installer"
+    echo "  🦞 OneClaw Installer"
     echo -e "${NC}${INFO}  ${TAGLINE}${NC}"
     echo ""
 }
@@ -261,7 +261,7 @@ detect_os_or_die() {
     if [[ "$OS" == "unknown" ]]; then
         ui_error "Unsupported operating system"
         echo "This installer supports macOS and Linux (including WSL)."
-        echo "For Windows, use: iwr -useb https://openclaw.ai/install.ps1 | iex"
+        echo "For Windows, use: iwr -useb https://raw.githubusercontent.com/hkyutong/OneClaw/main/scripts/install.ps1 | iex"
         exit 1
     fi
 
@@ -1003,7 +1003,7 @@ print_usage() {
 OpenClaw installer (macOS + Linux)
 
 Usage:
-  curl -fsSL --proto '=https' --tlsv1.2 https://openclaw.ai/install.sh | bash -s -- [options]
+  curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/hkyutong/OneClaw/main/scripts/install.sh | bash -s -- [options]
 
 Options:
   --install-method, --method npm|git   Install via npm (default) or from a git checkout
@@ -1033,9 +1033,9 @@ Environment variables:
   SHARP_IGNORE_GLOBAL_LIBVIPS=0|1    Default: 1 (avoid sharp building against global libvips)
 
 Examples:
-  curl -fsSL --proto '=https' --tlsv1.2 https://openclaw.ai/install.sh | bash
-  curl -fsSL --proto '=https' --tlsv1.2 https://openclaw.ai/install.sh | bash -s -- --no-onboard
-  curl -fsSL --proto '=https' --tlsv1.2 https://openclaw.ai/install.sh | bash -s -- --install-method git --no-onboard
+  curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/hkyutong/OneClaw/main/scripts/install.sh | bash
+  curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/hkyutong/OneClaw/main/scripts/install.sh | bash -s -- --no-onboard
+  curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/hkyutong/OneClaw/main/scripts/install.sh | bash -s -- --install-method git --no-onboard
 EOF
 }
 
@@ -1223,7 +1223,7 @@ print_homebrew_admin_fix() {
     echo "  2) Ask an Administrator to grant admin rights, then sign out/in:"
     echo "     sudo dseditgroup -o edit -a ${current_user} -t user admin"
     echo "Then retry:"
-    echo "  curl -fsSL https://openclaw.ai/install.sh | bash"
+    echo "  curl -fsSL https://raw.githubusercontent.com/hkyutong/OneClaw/main/scripts/install.sh | bash"
 }
 
 install_homebrew() {
@@ -1377,7 +1377,7 @@ ensure_node22_active_shell() {
         echo "  nvm use 22"
         echo "  nvm alias default 22"
         echo "Then open a new shell and rerun:"
-        echo "  curl -fsSL https://openclaw.ai/install.sh | bash"
+        echo "  curl -fsSL https://raw.githubusercontent.com/hkyutong/OneClaw/main/scripts/install.sh | bash"
     else
         echo "Install/select Node.js 22+ and ensure it is first on PATH, then rerun installer."
     fi
@@ -2398,7 +2398,7 @@ main() {
         ui_kv "Checkout" "$final_git_dir"
         ui_kv "Wrapper" "$HOME/.local/bin/openclaw"
         ui_kv "Update command" "openclaw update --restart"
-        ui_kv "Switch to npm" "curl -fsSL --proto '=https' --tlsv1.2 https://openclaw.ai/install.sh | bash -s -- --install-method npm"
+        ui_kv "Switch to npm" "curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/hkyutong/OneClaw/main/scripts/install.sh | bash -s -- --install-method npm"
     elif [[ "$is_upgrade" == "true" ]]; then
         ui_info "Upgrade complete"
         if [[ -r /dev/tty && -w /dev/tty ]]; then

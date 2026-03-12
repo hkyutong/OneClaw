@@ -58,6 +58,19 @@ function resolveChannelValue(
 
 const EXTRA_CHANNEL_FIELDS = ["groupPolicy", "streamMode", "dmPolicy"] as const;
 
+function localizeExtraChannelField(field: (typeof EXTRA_CHANNEL_FIELDS)[number]): string {
+  switch (field) {
+    case "groupPolicy":
+      return "群组策略";
+    case "streamMode":
+      return "流式模式";
+    case "dmPolicy":
+      return "私信策略";
+    default:
+      return field;
+  }
+}
+
 function renderExtraChannelFields(value: Record<string, unknown>) {
   const entries = EXTRA_CHANNEL_FIELDS.flatMap((field) => {
     if (!(field in value)) {
@@ -73,7 +86,7 @@ function renderExtraChannelFields(value: Record<string, unknown>) {
       ${entries.map(
         ([field, raw]) => html`
           <div>
-            <span class="label">${field}</span>
+            <span class="label">${localizeExtraChannelField(field as (typeof EXTRA_CHANNEL_FIELDS)[number])}</span>
             <span>${formatChannelExtraValue(raw)}</span>
           </div>
         `,
@@ -87,13 +100,13 @@ export function renderChannelConfigForm(props: ChannelConfigFormProps) {
   const normalized = analysis.schema;
   if (!normalized) {
     return html`
-      <div class="callout danger">当前 schema 不可用，请改用原始模式。</div>
+      <div class="callout danger">当前配置结构暂不可用，请改用原始模式。</div>
     `;
   }
   const node = resolveSchemaNode(normalized, ["channels", props.channelId]);
   if (!node) {
     return html`
-      <div class="callout danger">当前频道配置 schema 不可用。</div>
+      <div class="callout danger">当前频道配置结构暂不可用。</div>
     `;
   }
   const configValue = props.configValue ?? {};
@@ -123,7 +136,7 @@ export function renderChannelConfigSection(params: { channelId: string; props: C
       ${
         props.configSchemaLoading
           ? html`
-              <div class="muted">正在加载配置 schema…</div>
+              <div class="muted">正在加载配置结构…</div>
             `
           : renderChannelConfigForm({
               channelId,

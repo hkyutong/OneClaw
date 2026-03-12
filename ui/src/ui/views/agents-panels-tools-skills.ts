@@ -9,6 +9,7 @@ import {
   resolveToolProfile,
   TOOL_SECTIONS,
 } from "./agents-utils.ts";
+import { localizeGatewayError } from "./overview-hints.ts";
 import type { SkillGroup } from "./skills-grouping.ts";
 import { groupSkills } from "./skills-grouping.ts";
 import {
@@ -16,6 +17,22 @@ import {
   computeSkillReasons,
   renderSkillStatusChips,
 } from "./skills-shared.ts";
+
+function localizeProfileSource(source: "agent override" | "global default" | "default"): string {
+  switch (source) {
+    case "agent override":
+      return "代理覆盖";
+    case "global default":
+      return "全局默认";
+    default:
+      return "默认";
+  }
+}
+
+function resolveProfileLabel(profile: string): string {
+  const option = PROFILE_OPTIONS.find((entry) => entry.id === profile);
+  return option?.label ?? profile;
+}
 
 export function renderAgentTools(params: {
   agentId: string;
@@ -155,7 +172,9 @@ export function renderAgentTools(params: {
       ${
         params.toolsCatalogError
           ? html`
-              <div class="callout warn" style="margin-top: 12px">无法加载运行时工具目录，当前显示后备列表。</div>
+              <div class="callout warn" style="margin-top: 12px">
+                ${localizeGatewayError(params.toolsCatalogError) ?? "无法加载运行时工具目录，当前显示后备列表。"}
+              </div>
             `
           : nothing
       }
@@ -170,7 +189,7 @@ export function renderAgentTools(params: {
         hasAgentAllow
           ? html`
               <div class="callout info" style="margin-top: 12px">
-                当前代理使用了配置中的显式 allowlist，工具覆盖项请在 Config 页中管理。
+                当前代理使用了配置中的显式允许列表，请在“配置”页中管理工具覆盖项。
               </div>
             `
           : nothing
@@ -179,7 +198,7 @@ export function renderAgentTools(params: {
         hasGlobalAllow
           ? html`
               <div class="callout info" style="margin-top: 12px">
-                全局已设置 tools.allow，代理无法启用被全局阻止的工具。
+                全局已设置 <span class="mono">tools.allow</span>，代理无法启用被全局阻止的工具。
               </div>
             `
           : nothing
@@ -188,11 +207,11 @@ export function renderAgentTools(params: {
       <div class="agent-tools-meta" style="margin-top: 16px;">
         <div class="agent-kv">
           <div class="label">预设</div>
-          <div class="mono">${profile}</div>
+          <div class="mono">${resolveProfileLabel(profile)}</div>
         </div>
         <div class="agent-kv">
           <div class="label">来源</div>
-          <div>${profileSource === "agent override" ? "代理覆盖" : profileSource === "global default" ? "全局默认" : "默认"}</div>
+          <div>${localizeProfileSource(profileSource)}</div>
         </div>
         ${
           params.configDirty
@@ -240,7 +259,7 @@ export function renderAgentTools(params: {
                   ${
                     "source" in section && section.source === "plugin"
                       ? html`
-                          <span class="mono" style="margin-left: 6px">plugin</span>
+                          <span class="mono" style="margin-left: 6px">插件</span>
                         `
                       : nothing
                   }
@@ -256,9 +275,9 @@ export function renderAgentTools(params: {
                     const source =
                       catalogTool.source === "plugin"
                         ? catalogTool.pluginId
-                          ? `plugin:${catalogTool.pluginId}`
-                          : "plugin"
-                        : "core";
+                          ? `插件：${catalogTool.pluginId}`
+                          : "插件"
+                        : "内置";
                     const isOptional = catalogTool.optional === true;
                     return html`
                       <div class="agent-tool-row">
@@ -349,7 +368,7 @@ export function renderAgentSkills(params: {
         <div>
           <div class="card-title">技能</div>
           <div class="card-sub">
-            代理级技能 allowlist 与工作区技能。
+            代理级技能允许列表与工作区技能。
             ${
               totalCount > 0
                 ? html`<span class="mono">${enabledCount}/${totalCount}</span>`
@@ -394,11 +413,11 @@ export function renderAgentSkills(params: {
       ${
         usingAllowlist
           ? html`
-              <div class="callout info" style="margin-top: 12px">当前代理正在使用自定义技能 allowlist。</div>
+              <div class="callout info" style="margin-top: 12px">当前代理正在使用自定义技能允许列表。</div>
             `
           : html`
               <div class="callout info" style="margin-top: 12px">
-                当前全部技能均已启用。禁用任意技能后会自动创建代理级 allowlist。
+                当前全部技能均已启用。禁用任意技能后会自动创建代理级允许列表。
               </div>
             `
       }
@@ -413,7 +432,11 @@ export function renderAgentSkills(params: {
       }
       ${
         params.error
-          ? html`<div class="callout danger" style="margin-top: 12px;">${params.error}</div>`
+          ? html`
+              <div class="callout danger" style="margin-top: 12px;">
+                ${localizeGatewayError(params.error) ?? params.error}
+              </div>
+            `
           : nothing
       }
 

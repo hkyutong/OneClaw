@@ -158,16 +158,32 @@ pnpm oneclaw onboard
 这意味着：
 
 - 现有 OpenClaw 用户迁移成本更低
-- ClawGUI 可以直接接入本仓库的 Docker 安装流
+- OneClaw Installer 可以直接接入本仓库的 Docker 安装流
 - 后续可以继续逐步推进更深层的品牌替换
 
-## 配合 ClawGUI
+## 配合 OneClaw Installer
 
-如果你使用 `ClawGUI` 图形化安装器：
+如果你使用 `OneClaw Installer` 图形化安装器：
 
 - 安装器会下载本仓库源码包
 - 安装器会调用本仓库的 `docker-setup.sh`
 - 安装器会生成 OneClaw 的图形化设置与验证入口
+
+安装器源码现在也已经并入本仓库，主要目录如下：
+
+- `apps/desktop-installer`
+- `packages/installer-core`
+- `packages/macos-installer`
+- `docs/installer`
+
+常用命令：
+
+```bash
+pnpm installer:build
+pnpm installer:dev
+pnpm installer:dev:web
+pnpm installer:package:macos
+```
 
 ## 开发
 
@@ -201,4 +217,4 @@ pnpm openclaw onboard --install-daemon
 
 - OneClaw 品牌入口统一
 - 中文安装与上手体验
-- 与 ClawGUI 图形安装器稳定对接
+- 与 OneClaw Installer 稳定对接

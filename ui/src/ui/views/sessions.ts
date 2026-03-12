@@ -37,12 +37,50 @@ export type SessionsProps = {
 const THINK_LEVELS = ["", "off", "minimal", "low", "medium", "high", "xhigh"] as const;
 const BINARY_THINK_LEVELS = ["", "off", "on"] as const;
 const VERBOSE_LEVELS = [
-  { value: "", label: "inherit" },
-  { value: "off", label: "off（明确关闭）" },
-  { value: "on", label: "on" },
-  { value: "full", label: "full" },
+  { value: "", label: "继承" },
+  { value: "off", label: "关闭（明确关闭）" },
+  { value: "on", label: "开启" },
+  { value: "full", label: "完整" },
 ] as const;
 const REASONING_LEVELS = ["", "off", "on", "stream"] as const;
+
+function localizeThinkingLevel(level: string): string {
+  switch (level) {
+    case "":
+      return t("sessions.inherit");
+    case "off":
+      return "关闭";
+    case "minimal":
+      return "最少";
+    case "low":
+      return "低";
+    case "medium":
+      return "中";
+    case "high":
+      return "高";
+    case "xhigh":
+      return "极高";
+    case "on":
+      return "开启";
+    default:
+      return level;
+  }
+}
+
+function localizeReasoningLevel(level: string): string {
+  switch (level) {
+    case "":
+      return t("sessions.inherit");
+    case "off":
+      return "关闭";
+    case "on":
+      return "开启";
+    case "stream":
+      return "流式";
+    default:
+      return level;
+  }
+}
 
 function normalizeProviderId(provider?: string | null): string {
   if (!provider) {
@@ -276,7 +314,7 @@ function renderRow(
           ${thinkLevels.map(
             (level) =>
               html`<option value=${level} ?selected=${thinking === level}>
-                ${level || t("sessions.inherit")}
+                ${localizeThinkingLevel(level)}
               </option>`,
           )}
         </select>
@@ -308,7 +346,7 @@ function renderRow(
           ${reasoningLevels.map(
             (level) =>
               html`<option value=${level} ?selected=${reasoning === level}>
-                ${level || t("sessions.inherit")}
+                ${localizeReasoningLevel(level)}
               </option>`,
           )}
         </select>

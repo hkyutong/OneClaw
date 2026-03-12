@@ -260,16 +260,16 @@ export const filterSessionsByQuery = <TSession extends UsageSessionQueryTarget>(
     }
     const normalizedKey = normalizeQueryText(term.key);
     if (!QUERY_KEYS.has(normalizedKey)) {
-      warnings.push(`Unknown filter: ${term.key}`);
+      warnings.push(`未知筛选项：${term.key}`);
       continue;
     }
     if (term.value === "") {
-      warnings.push(`Missing value for ${term.key}`);
+      warnings.push(`筛选项缺少值：${term.key}`);
     }
     if (normalizedKey === "has") {
       const allowed = new Set(["tools", "errors", "context", "usage", "model", "provider"]);
       if (term.value && !allowed.has(normalizeQueryText(term.value))) {
-        warnings.push(`Unknown has:${term.value}`);
+        warnings.push(`未知条件：has:${term.value}`);
       }
     }
     if (
@@ -278,7 +278,7 @@ export const filterSessionsByQuery = <TSession extends UsageSessionQueryTarget>(
       )
     ) {
       if (term.value && parseQueryNumber(term.value) === null) {
-        warnings.push(`Invalid number for ${term.key}`);
+        warnings.push(`筛选项数值无效：${term.key}`);
       }
     }
   }

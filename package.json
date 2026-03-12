@@ -264,6 +264,19 @@
     "gateway:watch": "node scripts/watch-node.mjs gateway --force",
     "gen:host-env-policy:swift": "node scripts/generate-host-env-security-policy-swift.mjs --write",
     "ghsa:patch": "node scripts/ghsa-patch.mjs",
+    "installer:build": "pnpm installer:build:core && pnpm installer:build:macos && pnpm installer:build:desktop",
+    "installer:build:core": "pnpm --filter @oneclaw/installer-core build",
+    "installer:build:desktop": "pnpm --filter @oneclaw/desktop-installer build",
+    "installer:build:macos": "pnpm --filter @oneclaw/macos-installer build",
+    "installer:dev": "pnpm installer:build:core && pnpm installer:build:macos && npm-run-all2 -p installer:dev:ui installer:dev:shell",
+    "installer:dev:shell": "wait-on tcp:127.0.0.1:1420 && pnpm --filter @oneclaw/desktop-installer dev:electron",
+    "installer:dev:ui": "pnpm --filter @oneclaw/desktop-installer dev",
+    "installer:dev:web": "pnpm installer:build:core && pnpm installer:build:macos && npm-run-all2 -p installer:dev:web:backend installer:dev:web:ui",
+    "installer:dev:web:backend": "pnpm --filter @oneclaw/macos-installer dev:server",
+    "installer:dev:web:ui": "pnpm --filter @oneclaw/desktop-installer dev",
+    "installer:package:macos": "pnpm installer:build && node scripts/package-macos-installer.mjs",
+    "installer:package:macos:x64": "pnpm installer:build && node scripts/package-macos-installer.mjs --arch x64",
+    "installer:typecheck": "pnpm installer:build:core && pnpm --filter @oneclaw/installer-core typecheck && pnpm --filter @oneclaw/macos-installer typecheck && pnpm --filter @oneclaw/desktop-installer typecheck",
     "ios:beta": "bash scripts/ios-beta-release.sh",
     "ios:beta:archive": "bash scripts/ios-beta-archive.sh",
     "ios:beta:prepare": "bash scripts/ios-beta-prepare.sh",
@@ -396,6 +409,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@electron/get": "^2.0.1",
     "@grammyjs/types": "^3.25.0",
     "@lit-labs/signals": "^0.2.0",
     "@lit/context": "^1.1.6",
@@ -408,6 +422,7 @@
     "@vitest/coverage-v8": "^4.0.18",
     "jscpd": "4.0.8",
     "lit": "^3.3.2",
+    "npm-run-all2": "^8.0.4",
     "oxfmt": "0.38.0",
     "oxlint": "^1.53.0",
     "oxlint-tsgolint": "^0.16.0",
@@ -415,7 +430,8 @@
     "tsdown": "0.21.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "wait-on": "^8.0.2"
   },
   "peerDependencies": {
     "@napi-rs/canvas": "^0.1.89",

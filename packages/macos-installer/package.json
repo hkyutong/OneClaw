@@ -1,0 +1,29 @@
+{
+  "name": "@oneclaw/macos-installer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "macOS installer backend for the OneClaw desktop installer.",
+  "bin": {
+    "oneclaw-installer-macos": "./dist/cli.js"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev:server": "tsx src/cli.ts serve",
+    "inspect": "tsx src/cli.ts inspect",
+    "run:install": "tsx src/cli.ts install",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@lydell/node-pty": "1.2.0-beta.3",
+    "@oneclaw/installer-core": "workspace:*"
+  }
+}

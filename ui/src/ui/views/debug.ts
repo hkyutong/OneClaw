@@ -52,7 +52,7 @@ export function renderDebug(props: DebugProps) {
               securitySummary
                 ? html`<div class="callout ${securityTone}" style="margin-top: 8px;">
                   安全审计：${securityLabel}${info > 0 ? ` · ${info} 条提示` : ""}。如需详情，请运行
-                  <span class="mono">openclaw security audit --deep</span>。
+                  <span class="mono">oneclaw security audit --deep</span>。
                 </div>`
                 : nothing
             }

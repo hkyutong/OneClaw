@@ -54,14 +54,30 @@ export function localizeGatewayError(
   if (lower.includes("not_paired") || lower.includes("not paired")) {
     return t("errors.pairingRequired");
   }
+  if (
+    lower.includes("invalid connect params") ||
+    lower.includes("must be equal to constant") ||
+    lower.includes("must match a schema in anyof")
+  ) {
+    return "控制台连接参数与当前网关协议不匹配，请刷新页面后重试。";
+  }
+  if (lower.includes("protocol mismatch")) {
+    return "控制台与网关协议版本不匹配，请刷新页面或重新打开控制台。";
+  }
   if (lower.includes("unauthorized")) {
     return t("errors.unauthorized");
+  }
+  if (lower.includes("control ui requires device identity")) {
+    return "当前控制台需要设备身份认证，请在本机或安全上下文中重新打开。";
   }
   if (lower.includes("device identity required")) {
     return t("errors.deviceIdentityRequired");
   }
   if (lower.includes("secure context")) {
     return t("errors.secureContextRequired");
+  }
+  if (lower.includes("fetch failed") || lower.includes("failed to fetch")) {
+    return "网络请求失败，请检查网关地址、网络连接或浏览器权限后重试。";
   }
   if (lower.includes("connect failed")) {
     return t("errors.connectFailed");

@@ -3,6 +3,7 @@ import { icons } from "../icons.ts";
 import type { ConfigUiHints } from "../types.ts";
 import { matchesNodeSearch, parseConfigSearchQuery, renderNode } from "./config-form.node.ts";
 import {
+  formatConfigNoMatchMessage,
   hintForPath,
   humanize,
   localizeConfigText,
@@ -297,14 +298,15 @@ function matchesSearch(params: {
   const criteria = parseConfigSearchQuery(params.query);
   const q = criteria.text;
   const meta = SECTION_META[params.key];
+  const hasTagFilters = criteria.tags.length > 0;
 
   // Check key name
-  if (q && params.key.toLowerCase().includes(q)) {
+  if (!hasTagFilters && q && params.key.toLowerCase().includes(q)) {
     return true;
   }
 
   // Check label and description
-  if (q && meta) {
+  if (!hasTagFilters && q && meta) {
     if (meta.label.toLowerCase().includes(q)) {
       return true;
     }
@@ -325,14 +327,25 @@ function matchesSearch(params: {
 export function renderConfigForm(props: ConfigFormProps) {
   if (!props.schema) {
     return html`
-      <div class="muted">Schema 不可用。</div>
+      <div class="muted">
+        ${
+          localizeConfigText("Config schema is currently unavailable.") ??
+          "Config schema is currently unavailable."
+        }
+      </div>
     `;
   }
   const schema = props.schema;
   const value = props.value ?? {};
   if (schemaType(schema) !== "object" || !schema.properties) {
     return html`
-      <div class="callout danger">当前 schema 不受支持，请切换到 Raw 模式。</div>
+      <div class="callout danger">
+        ${
+          localizeConfigText(
+            "This config shape is not supported in form mode right now. Switch to raw mode.",
+          ) ?? "This config shape is not supported in form mode right now. Switch to raw mode."
+        }
+      </div>
     `;
   }
   const unsupported = new Set(props.unsupportedPaths ?? []);
@@ -393,7 +406,12 @@ export function renderConfigForm(props: ConfigFormProps) {
       <div class="config-empty">
         <div class="config-empty__icon">${icons.search}</div>
         <div class="config-empty__text">
-          ${searchQuery ? `没有与 “${searchQuery}” 匹配的设置` : "当前分区没有可显示的设置"}
+          ${
+            searchQuery
+              ? formatConfigNoMatchMessage(searchQuery)
+              : (localizeConfigText("No settings available in this section") ??
+                "No settings available in this section")
+          }
         </div>
       </div>
     `;
@@ -407,8 +425,11 @@ export function renderConfigForm(props: ConfigFormProps) {
               const { sectionKey, subsectionKey, schema: node } = subsectionContext;
               const hint = hintForPath([sectionKey, subsectionKey], props.uiHints);
               const label =
-                hint?.label ?? localizeConfigText(node.title) ?? humanize(subsectionKey);
-              const description = hint?.help ?? localizeConfigText(node.description) ?? "";
+                localizeConfigText(hint?.label) ??
+                localizeConfigText(node.title) ??
+                humanize(subsectionKey);
+              const description =
+                localizeConfigText(hint?.help) ?? localizeConfigText(node.description) ?? "";
               const sectionValue = value[sectionKey];
               const scopedValue =
                 sectionValue && typeof sectionValue === "object"

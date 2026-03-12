@@ -15,13 +15,85 @@ export { SUPPORTED_LOCALES, isSupportedLocale };
 const LOCALE_STORAGE_KEY = "oneclaw.i18n.locale";
 const LEGACY_LOCALE_STORAGE_KEY = "openclaw.i18n.locale";
 
-function resolveUrlLocale(): Locale | null {
+function isTestRuntime(): boolean {
+  if (typeof process !== "undefined" && process.env?.VITEST === "true") {
+    return true;
+  }
+  try {
+    return import.meta.env?.MODE === "test";
+  } catch {
+    return false;
+  }
+}
+
+function syncDocumentLocale(locale: Locale) {
+  if (typeof document === "undefined") {
+    return;
+  }
+  document.documentElement.lang = locale;
+  document.title = locale.toLowerCase().startsWith("zh") ? "OneClaw 控制台" : "OneClaw Control";
+}
+
+export function resolveUrlLocale(): Locale | null {
   if (typeof window === "undefined") {
     return null;
   }
   const params = new URLSearchParams(window.location.search);
   const queryLocale = params.get("locale") ?? params.get("lang");
   return isSupportedLocale(queryLocale) ? queryLocale : null;
+}
+
+export function resolveDocumentLocale(): Locale | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+  const docLocale = document.documentElement.lang?.trim();
+  return isSupportedLocale(docLocale) ? docLocale : null;
+}
+
+export function resolveStartupLocale(params: {
+  queryLocale?: Locale | null;
+  documentLocale?: Locale | null;
+  savedLocale?: string | null;
+  legacySavedLocale?: string | null;
+  navigatorLanguage?: string;
+  testRuntime?: boolean;
+}): Locale {
+  const {
+    queryLocale = null,
+    documentLocale = null,
+    savedLocale = null,
+    legacySavedLocale = null,
+    navigatorLanguage = "en-US",
+    testRuntime = false,
+  } = params;
+
+  if (queryLocale) {
+    return queryLocale;
+  }
+
+  const normalizedSaved = isSupportedLocale(savedLocale)
+    ? savedLocale
+    : isSupportedLocale(legacySavedLocale)
+      ? legacySavedLocale
+      : null;
+  if (normalizedSaved) {
+    if (
+      !(normalizedSaved === DEFAULT_LOCALE && documentLocale && documentLocale !== DEFAULT_LOCALE)
+    ) {
+      return normalizedSaved;
+    }
+  }
+
+  if (documentLocale) {
+    return documentLocale;
+  }
+
+  if (testRuntime) {
+    return DEFAULT_LOCALE;
+  }
+
+  return resolveNavigatorLocale(navigatorLanguage);
 }
 
 class I18nManager {
@@ -35,25 +107,29 @@ class I18nManager {
 
   private resolveInitialLocale(): Locale {
     const queryLocale = resolveUrlLocale();
-    if (queryLocale) {
-      return queryLocale;
-    }
+    const documentLocale = resolveDocumentLocale();
     const saved =
       localStorage.getItem(LOCALE_STORAGE_KEY) ?? localStorage.getItem(LEGACY_LOCALE_STORAGE_KEY);
-    if (isSupportedLocale(saved)) {
-      if (saved === localStorage.getItem(LEGACY_LOCALE_STORAGE_KEY)) {
-        localStorage.setItem(LOCALE_STORAGE_KEY, saved);
-        localStorage.removeItem(LEGACY_LOCALE_STORAGE_KEY);
-      }
-      return saved;
+    const legacySaved = localStorage.getItem(LEGACY_LOCALE_STORAGE_KEY);
+    if (saved === legacySaved && isSupportedLocale(saved)) {
+      localStorage.setItem(LOCALE_STORAGE_KEY, saved);
+      localStorage.removeItem(LEGACY_LOCALE_STORAGE_KEY);
     }
-    return resolveNavigatorLocale(navigator.language);
+    return resolveStartupLocale({
+      queryLocale,
+      documentLocale,
+      savedLocale: saved,
+      legacySavedLocale: legacySaved,
+      navigatorLanguage: navigator.language,
+      testRuntime: isTestRuntime(),
+    });
   }
 
   private loadLocale() {
     const initialLocale = this.resolveInitialLocale();
     if (initialLocale === DEFAULT_LOCALE) {
       this.locale = DEFAULT_LOCALE;
+      syncDocumentLocale(this.locale);
       return;
     }
     // Use the normal locale setter so startup locale loading follows the same
@@ -87,6 +163,7 @@ class I18nManager {
     this.locale = locale;
     localStorage.setItem(LOCALE_STORAGE_KEY, locale);
     localStorage.removeItem(LEGACY_LOCALE_STORAGE_KEY);
+    syncDocumentLocale(locale);
     this.notify();
   }
 

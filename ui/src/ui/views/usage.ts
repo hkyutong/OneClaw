@@ -378,7 +378,7 @@ export function renderUsage(props: UsageProps) {
             selectedCount > 0
               ? html`<span class="usage-filter-badge">${selectedCount}</span>`
               : html`
-                  <span class="usage-filter-badge">All</span>
+                  <span class="usage-filter-badge">全部</span>
                 `
           }
         </summary>
@@ -393,7 +393,7 @@ export function renderUsage(props: UsageProps) {
               }}
               ?disabled=${allSelected}
             >
-              Select All
+              全选
             </button>
             <button
               class="btn btn-sm"
@@ -404,7 +404,7 @@ export function renderUsage(props: UsageProps) {
               }}
               ?disabled=${selectedCount === 0}
             >
-              Clear
+              清空
             </button>
           </div>
           <div class="usage-filter-options">

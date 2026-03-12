@@ -20,6 +20,48 @@ export type JsonSchema = {
 };
 
 const CONFIG_TEXT_MAP = new Map<string, string>([
+  ["OpenClawConfig", "OneClaw 配置"],
+  ["OneClawConfig", "OneClaw 配置"],
+  ["Settings", "设置"],
+  ["Config", "配置"],
+  ["Search settings...", "搜索设置..."],
+  ["Tag Filters:", "标签筛选："],
+  ["Add tags", "添加标签"],
+  ["All Settings", "全部设置"],
+  ["No changes", "没有更改"],
+  ["Reload", "重新加载"],
+  ["Save", "保存"],
+  ["Apply", "应用"],
+  ["Update", "更新"],
+  ["Form", "表单"],
+  ["Raw", "原始"],
+  ["Review pending changes", "查看待提交更改"],
+  ["Loading schema...", "正在加载 schema…"],
+  ["Raw JSON5", "原始 JSON5"],
+  ["Please select...", "请选择..."],
+  ["Add", "添加"],
+  ["Add entry", "添加条目"],
+  ["Remove item", "移除此项"],
+  ["Key", "键名"],
+  ["JSON value", "JSON 值"],
+  ["Custom entries", "自定义条目"],
+  ["No custom entries.", "暂无自定义条目。"],
+  ["No entries yet. Click “Add” to create one.", "暂时没有条目。点击“添加”即可创建。"],
+  ["No settings available in this section", "当前分区没有可显示的设置"],
+  ["No settings match", "没有与"],
+  ["Default value:", "默认值："],
+  ["Reset to default", "重置为默认值"],
+  [
+    "Safe form editing is unavailable for some fields. Switch to raw mode to avoid losing config.",
+    "表单视图无法安全编辑部分字段。请改用原始模式，避免丢失配置项。",
+  ],
+  ["Config schema is currently unavailable.", "配置结构暂不可用。"],
+  [
+    "This config shape is not supported in form mode right now. Switch to raw mode.",
+    "当前配置结构暂不支持表单编辑，请切换到原始模式。",
+  ],
+  ["item", "项"],
+  ["items", "项"],
   ["Plugins", "插件"],
   ["Plugin Allowlist", "插件允许列表"],
   ["Plugin Denylist", "插件拒绝列表"],
@@ -154,6 +196,7 @@ const CONFIG_TAG_MAP = new Map<string, string>([
   ["auth", "认证"],
   ["network", "网络"],
   ["access", "访问"],
+  ["secret", "机密"],
   ["privacy", "隐私"],
   ["observability", "可观测性"],
   ["performance", "性能"],
@@ -168,6 +211,75 @@ const CONFIG_TAG_MAP = new Map<string, string>([
 ]);
 
 const CONFIG_TOKEN_MAP = new Map<string, string>([
+  ["Gateway", "网关"],
+  ["Auth", "认证"],
+  ["Token", "令牌"],
+  ["Tokens", "令牌"],
+  ["Password", "密码"],
+  ["Mode", "模式"],
+  ["Modes", "模式"],
+  ["Bind", "绑定"],
+  ["Port", "端口"],
+  ["Ports", "端口"],
+  ["Host", "主机"],
+  ["Hosts", "主机"],
+  ["Proxy", "代理"],
+  ["Proxies", "代理"],
+  ["Header", "请求头"],
+  ["Headers", "请求头"],
+  ["Origin", "来源"],
+  ["Origins", "来源"],
+  ["Allowed", "允许"],
+  ["Allow", "允许"],
+  ["Denied", "拒绝"],
+  ["Deny", "拒绝"],
+  ["From", "来源"],
+  ["To", "目标"],
+  ["Default", "默认"],
+  ["Session", "会话"],
+  ["Sessions", "会话"],
+  ["Channel", "频道"],
+  ["Channels", "频道"],
+  ["Message", "消息"],
+  ["Messages", "消息"],
+  ["Agent", "代理"],
+  ["Agents", "代理"],
+  ["Skill", "技能"],
+  ["Skills", "技能"],
+  ["Tool", "工具"],
+  ["Tools", "工具"],
+  ["Node", "节点"],
+  ["Nodes", "节点"],
+  ["Browser", "浏览器"],
+  ["Browsers", "浏览器"],
+  ["Web", "网页"],
+  ["Media", "媒体"],
+  ["Audio", "音频"],
+  ["Model", "模型"],
+  ["Models", "模型"],
+  ["Provider", "提供商"],
+  ["Providers", "提供商"],
+  ["Runtime", "运行时"],
+  ["Workspace", "工作区"],
+  ["Command", "命令"],
+  ["Commands", "命令"],
+  ["Cron", "定时任务"],
+  ["Job", "任务"],
+  ["Jobs", "任务"],
+  ["Status", "状态"],
+  ["Health", "健康"],
+  ["Local", "本地"],
+  ["Remote", "远程"],
+  ["Timeout", "超时"],
+  ["Interval", "间隔"],
+  ["Verbose", "详细输出"],
+  ["Reasoning", "推理"],
+  ["Thinking", "思考"],
+  ["File", "文件"],
+  ["Files", "文件"],
+  ["UI", "界面"],
+  ["Id", "ID"],
+  ["IDs", "ID"],
   ["Plugin", "插件"],
   ["Plugins", "插件"],
   ["Allowlist", "允许列表"],
@@ -212,8 +324,61 @@ const CONFIG_TOKEN_MAP = new Map<string, string>([
   ["All", "全部"],
 ]);
 
+const CONFIG_VALUE_MAP = new Map<string, string>([
+  ["valid", "有效"],
+  ["invalid", "无效"],
+  ["unknown", "未知"],
+  ["none", "无"],
+  ["default", "默认"],
+  ["inherit", "继承"],
+  ["custom", "自定义"],
+  ["all", "全部"],
+  ["off", "关闭"],
+  ["on", "开启"],
+  ["enabled", "已启用"],
+  ["disabled", "已禁用"],
+  ["true", "是"],
+  ["false", "否"],
+  ["auto", "自动"],
+  ["loopback", "仅本机"],
+  ["lan", "局域网"],
+  ["tailnet", "Tailscale 网络"],
+  ["allow", "允许"],
+  ["deny", "拒绝"],
+  ["allowlist", "允许列表"],
+  ["denylist", "拒绝列表"],
+  ["full", "完全放行"],
+  ["on-miss", "未命中时询问"],
+  ["always", "始终询问"],
+  ["token", "令牌"],
+  ["password", "密码"],
+  ["main", "主会话"],
+  ["isolated", "隔离会话"],
+  ["announce", "发布摘要"],
+  ["webhook", "Webhook 回调"],
+  ["internal", "内部"],
+]);
+
+const CONFIG_TEXT_LOOKUP = new Map<string, string>(
+  Array.from(CONFIG_TEXT_MAP.entries(), ([key, value]) => [key.toLowerCase(), value]),
+);
+
+const CONFIG_TOKEN_LOOKUP = new Map<string, string>(
+  Array.from(CONFIG_TOKEN_MAP.entries(), ([key, value]) => [key.toLowerCase(), value]),
+);
+
 function isChineseConfigLocale(): boolean {
-  return i18n.getLocale().toLowerCase().startsWith("zh");
+  const activeLocale = i18n.getLocale().toLowerCase();
+  if (activeLocale.startsWith("zh")) {
+    return true;
+  }
+  if (typeof document !== "undefined") {
+    const documentLocale = document.documentElement.lang?.toLowerCase().trim();
+    if (documentLocale?.startsWith("zh")) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function normalizeConfigText(raw: string): string {
@@ -222,15 +387,33 @@ function normalizeConfigText(raw: string): string {
 
 function localizeConfigPhrase(raw: string): string {
   const normalized = normalizeConfigText(raw);
+  const itemCount = normalized.match(/^(\d+)\s+items?$/i);
+  if (itemCount) {
+    return `${itemCount[1]} 项`;
+  }
   const direct = CONFIG_TEXT_MAP.get(normalized);
   if (direct) {
     return direct;
   }
+  const lowerDirect = CONFIG_TEXT_LOOKUP.get(normalized.toLowerCase());
+  if (lowerDirect) {
+    return lowerDirect;
+  }
   const tokens = normalized.split(" ");
-  if (tokens.length === 0 || !tokens.every((token) => CONFIG_TOKEN_MAP.has(token))) {
+  if (
+    tokens.length === 0 ||
+    !tokens.every(
+      (token) => CONFIG_TOKEN_MAP.has(token) || CONFIG_TOKEN_LOOKUP.has(token.toLowerCase()),
+    )
+  ) {
     return raw;
   }
-  return tokens.map((token) => CONFIG_TOKEN_MAP.get(token) ?? token).join("");
+  return tokens
+    .map(
+      (token) =>
+        CONFIG_TOKEN_MAP.get(token) ?? CONFIG_TOKEN_LOOKUP.get(token.toLowerCase()) ?? token,
+    )
+    .join("");
 }
 
 export function localizeConfigText(raw?: string): string | undefined {
@@ -238,6 +421,44 @@ export function localizeConfigText(raw?: string): string | undefined {
     return raw;
   }
   return localizeConfigPhrase(raw);
+}
+
+export function localizeConfigCount(count: number, noun: "item" | "change"): string {
+  if (!isChineseConfigLocale()) {
+    return `${count} ${noun}${count === 1 ? "" : "s"}`;
+  }
+  return noun === "change" ? `${count} 处更改` : `${count} 项`;
+}
+
+export function formatConfigNoMatchMessage(query: string): string {
+  if (!isChineseConfigLocale()) {
+    return `No settings match “${query}”`;
+  }
+  return `没有与 “${query}” 匹配的设置`;
+}
+
+export function localizeConfigValue(raw: unknown): string {
+  if (!isChineseConfigLocale()) {
+    return String(raw);
+  }
+  if (typeof raw === "boolean") {
+    return raw ? "是" : "否";
+  }
+  if (typeof raw === "number") {
+    return String(raw);
+  }
+  if (typeof raw !== "string") {
+    return String(raw);
+  }
+  const normalized = raw.trim();
+  if (!normalized) {
+    return normalized;
+  }
+  const direct = CONFIG_VALUE_MAP.get(normalized.toLowerCase());
+  if (direct) {
+    return direct;
+  }
+  return localizeConfigText(normalized) ?? normalized;
 }
 
 export function localizeConfigTag(raw: string): string {

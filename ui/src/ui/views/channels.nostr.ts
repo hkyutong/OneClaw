@@ -1,4 +1,5 @@
 import { html, nothing } from "lit";
+import { t } from "../../i18n/index.ts";
 import { formatRelativeTimestamp } from "../format.ts";
 import type { ChannelAccountSnapshot, NostrStatus } from "../types.ts";
 import { renderChannelConfigSection } from "./channels.config.ts";
@@ -66,12 +67,12 @@ export function renderNostrCard(params: {
         </div>
         <div class="status-list account-card-status">
           <div>
-            <span class="label">Running</span>
-            <span>${account.running ? "是" : "否"}</span>
+            <span class="label">${t("channels.running")}</span>
+            <span>${account.running ? t("common.yes") : t("common.no")}</span>
           </div>
           <div>
-            <span class="label">Configured</span>
-            <span>${account.configured ? "是" : "否"}</span>
+            <span class="label">${t("channels.configured")}</span>
+            <span>${account.configured ? t("common.yes") : t("common.no")}</span>
           </div>
           <div>
             <span class="label">公钥</span>
@@ -79,7 +80,7 @@ export function renderNostrCard(params: {
           </div>
           <div>
             <span class="label">最后入站</span>
-            <span>${account.lastInboundAt ? formatRelativeTimestamp(account.lastInboundAt) : "不适用"}</span>
+            <span>${account.lastInboundAt ? formatRelativeTimestamp(account.lastInboundAt) : t("common.na")}</span>
           </div>
           ${
             account.lastError
@@ -169,7 +170,7 @@ export function renderNostrCard(params: {
                     ? html`<div><span class="label">简介</span><span style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${about}</span></div>`
                     : nothing
                 }
-                ${nip05 ? html`<div><span class="label">NIP-05</span><span>${nip05}</span></div>` : nothing}
+                ${nip05 ? html`<div><span class="label">NIP-05 标识</span><span>${nip05}</span></div>` : nothing}
               </div>
             `
             : html`
@@ -198,12 +199,12 @@ export function renderNostrCard(params: {
           : html`
             <div class="status-list" style="margin-top: 16px;">
               <div>
-                <span class="label">Configured</span>
-                <span>${summaryConfigured ? "是" : "否"}</span>
+                <span class="label">${t("channels.configured")}</span>
+                <span>${summaryConfigured ? t("common.yes") : t("common.no")}</span>
               </div>
               <div>
-                <span class="label">Running</span>
-                <span>${summaryRunning ? "是" : "否"}</span>
+                <span class="label">${t("channels.running")}</span>
+                <span>${summaryRunning ? t("common.yes") : t("common.no")}</span>
               </div>
               <div>
                 <span class="label">公钥</span>
@@ -213,7 +214,7 @@ export function renderNostrCard(params: {
               </div>
               <div>
                 <span class="label">最后启动</span>
-                <span>${summaryLastStartAt ? formatRelativeTimestamp(summaryLastStartAt) : "不适用"}</span>
+                <span>${summaryLastStartAt ? formatRelativeTimestamp(summaryLastStartAt) : t("common.na")}</span>
               </div>
             </div>
           `

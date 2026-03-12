@@ -1,6 +1,12 @@
 import { LitElement } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { i18n, I18nController, isSupportedLocale } from "../i18n/index.ts";
+import {
+  i18n,
+  I18nController,
+  isSupportedLocale,
+  resolveDocumentLocale,
+  resolveUrlLocale,
+} from "../i18n/index.ts";
 import {
   handleChannelConfigReload as handleChannelConfigReloadInternal,
   handleChannelConfigSave as handleChannelConfigSaveInternal,
@@ -108,7 +114,7 @@ function resolveOnboardingMode(): boolean {
   return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
 }
 
-@customElement("openclaw-app")
+@customElement("oneclaw-app")
 export class OpenClawApp extends LitElement {
   private i18nController = new I18nController(this);
   clientInstanceId = generateUUID();
@@ -116,7 +122,11 @@ export class OpenClawApp extends LitElement {
   @state() settings: UiSettings = loadSettings();
   constructor() {
     super();
-    if (isSupportedLocale(this.settings.locale)) {
+    const preferredLocale = resolveUrlLocale() ?? resolveDocumentLocale();
+    if (preferredLocale) {
+      this.settings = { ...this.settings, locale: preferredLocale };
+      void i18n.setLocale(preferredLocale);
+    } else if (isSupportedLocale(this.settings.locale)) {
       void i18n.setLocale(this.settings.locale);
     }
   }
@@ -573,7 +583,7 @@ export class OpenClawApp extends LitElement {
       });
       this.execApprovalQueue = this.execApprovalQueue.filter((entry) => entry.id !== active.id);
     } catch (err) {
-      this.execApprovalError = `Exec approval failed: ${String(err)}`;
+      this.execApprovalError = `执行审批处理失败：${String(err)}`;
     } finally {
       this.execApprovalBusy = false;
     }
@@ -636,4 +646,8 @@ export class OpenClawApp extends LitElement {
   render() {
     return renderApp(this as unknown as AppViewState);
   }
+}
+
+if (typeof customElements !== "undefined" && !customElements.get("openclaw-app")) {
+  customElements.define("openclaw-app", OpenClawApp);
 }

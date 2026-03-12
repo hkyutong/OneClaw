@@ -238,6 +238,7 @@ html.theme-transition::view-transition-new(theme) {
   }
 }
 
+oneclaw-app,
 openclaw-app {
   display: block;
   position: relative;

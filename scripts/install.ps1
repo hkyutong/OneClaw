@@ -1,11 +1,11 @@
-# OpenClaw Installer for Windows (PowerShell)
-# Usage: iwr -useb https://openclaw.ai/install.ps1 | iex
-# Or: & ([scriptblock]::Create((iwr -useb https://openclaw.ai/install.ps1))) -NoOnboard
+# OneClaw Installer for Windows (PowerShell)
+# Usage: iwr -useb https://raw.githubusercontent.com/hkyutong/OneClaw/main/scripts/install.ps1 | iex
+# Or: & ([scriptblock]::Create((iwr -useb https://raw.githubusercontent.com/hkyutong/OneClaw/main/scripts/install.ps1))) -NoOnboard
 
 param(
     [string]$InstallMethod = "npm",
     [string]$Tag = "latest",
-    [string]$GitDir = "$env:USERPROFILE\openclaw",
+    [string]$GitDir = "$env:USERPROFILE\OneClaw",
     [switch]$NoOnboard,
     [switch]$NoGitUpdate,
     [switch]$DryRun
@@ -34,8 +34,8 @@ function Write-Host {
 
 function Write-Banner {
     Write-Host ""
-    Write-Host "${ACCENT}  🦞 OpenClaw Installer$NC" -Level info
-    Write-Host "${MUTED}  All your chats, one OpenClaw.$NC" -Level info
+    Write-Host "${ACCENT}  🦞 OneClaw Installer$NC" -Level info
+    Write-Host "${MUTED}  All your chats, powered by OneClaw.$NC" -Level info
     Write-Host ""
 }
 

@@ -469,7 +469,7 @@ function renderAgentOverview(params: {
             <input
               .value=${fallbackText}
               ?disabled=${!configForm || configLoading || configSaving}
-              placeholder="provider/model, provider/model"
+              placeholder="例如 openai/gpt-4.1、anthropic/claude-sonnet-4"
               @input=${(e: Event) =>
                 onModelFallbacksChange(
                   agent.id,

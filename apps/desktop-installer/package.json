@@ -1,0 +1,65 @@
+{
+  "name": "@oneclaw/desktop-installer",
+  "version": "0.1.0",
+  "private": true,
+  "author": "OneClaw Installer",
+  "description": "Desktop shell for the OneClaw installer.",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "dev:electron": "cross-env ONECLAW_INSTALLER_DESKTOP_DEV_SERVER_URL=http://127.0.0.1:1420 electron .",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "dist": "electron-builder",
+    "dist:dir": "electron-builder --dir"
+  },
+  "dependencies": {
+    "@oneclaw/installer-core": "workspace:*",
+    "@oneclaw/macos-installer": "workspace:*",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "7zip-bin": "^5.2.0",
+    "electron": "32.3.3",
+    "electron-builder": "^24.13.3",
+    "vite": "^7.3.1"
+  },
+  "build": {
+    "appId": "top.hkgpt.oneclaw.installer",
+    "electronVersion": "32.3.3",
+    "productName": "OneClaw Installer",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    }
+  }
+}

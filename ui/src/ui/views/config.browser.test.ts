@@ -1,5 +1,6 @@
 import { render } from "lit";
 import { describe, expect, it, vi } from "vitest";
+import { i18n } from "../../i18n/lib/translate.ts";
 import { renderConfig } from "./config.ts";
 
 describe("config view", () => {
@@ -43,8 +44,8 @@ describe("config view", () => {
   } {
     const buttons = Array.from(container.querySelectorAll("button"));
     return {
-      saveButton: buttons.find((btn) => btn.textContent?.trim() === "Save"),
-      applyButton: buttons.find((btn) => btn.textContent?.trim() === "Apply"),
+      saveButton: buttons.find((btn) => btn.textContent?.trim() === "保存"),
+      applyButton: buttons.find((btn) => btn.textContent?.trim() === "应用"),
     };
   }
 
@@ -70,7 +71,7 @@ describe("config view", () => {
     );
 
     const saveButton = Array.from(container.querySelectorAll("button")).find(
-      (btn) => btn.textContent?.trim() === "Save",
+      (btn) => btn.textContent?.trim() === "保存",
     );
     expect(saveButton).not.toBeUndefined();
     expect(saveButton?.disabled).toBe(false);
@@ -90,7 +91,7 @@ describe("config view", () => {
     );
 
     const saveButton = Array.from(container.querySelectorAll("button")).find(
-      (btn) => btn.textContent?.trim() === "Save",
+      (btn) => btn.textContent?.trim() === "保存",
     );
     expect(saveButton).not.toBeUndefined();
     expect(saveButton?.disabled).toBe(true);
@@ -146,7 +147,7 @@ describe("config view", () => {
     );
 
     const btn = Array.from(container.querySelectorAll("button")).find(
-      (b) => b.textContent?.trim() === "Raw",
+      (b) => b.textContent?.trim() === "原始",
     );
     expect(btn).toBeTruthy();
     btn?.click();
@@ -172,7 +173,7 @@ describe("config view", () => {
     );
 
     const btn = Array.from(container.querySelectorAll("button")).find(
-      (b) => b.textContent?.trim() === "Gateway",
+      (b) => b.textContent?.trim() === "网关",
     );
     expect(btn).toBeTruthy();
     btn?.click();
@@ -200,16 +201,22 @@ describe("config view", () => {
     expect(onSearchChange).toHaveBeenCalledWith("gateway");
   });
 
-  it("shows all tag options in compact tag picker", () => {
+  it("shows all tag options in compact tag picker", async () => {
     const container = document.createElement("div");
-    render(renderConfig(baseProps()), container);
+    await i18n.setLocale("zh-CN");
 
-    const options = Array.from(container.querySelectorAll(".config-search__tag-option")).map(
-      (option) => option.textContent?.trim(),
-    );
-    expect(options).toContain("tag:security");
-    expect(options).toContain("tag:advanced");
-    expect(options).toHaveLength(15);
+    try {
+      render(renderConfig(baseProps()), container);
+
+      const options = Array.from(container.querySelectorAll(".config-search__tag-option")).map(
+        (option) => option.textContent?.trim(),
+      );
+      expect(options).toContain("安全");
+      expect(options).toContain("高级");
+      expect(options).toHaveLength(15);
+    } finally {
+      await i18n.setLocale("en");
+    }
   });
 
   it("updates search query when toggling a tag option", () => {

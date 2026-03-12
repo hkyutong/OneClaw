@@ -110,8 +110,8 @@ export function renderOverview(props: OverviewProps) {
         <div class="muted" style="margin-top: 8px">
           ${t("overview.auth.required")}
           <div style="margin-top: 6px">
-            <span class="mono">oneclaw dashboard --no-open</span> → tokenized URL<br />
-            <span class="mono">oneclaw doctor --generate-gateway-token</span> → set token
+            <span class="mono">oneclaw dashboard --no-open</span> → 获取带令牌的访问链接<br />
+            <span class="mono">oneclaw doctor --generate-gateway-token</span> → 生成新的网关令牌
           </div>
           <div style="margin-top: 6px">
             <a

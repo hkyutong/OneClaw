@@ -5,7 +5,9 @@ import {
   hintForPath,
   humanize,
   localizeConfigTag,
+  localizeConfigCount,
   localizeConfigText,
+  localizeConfigValue,
   pathKey,
   schemaType,
   type JsonSchema,
@@ -159,8 +161,11 @@ function resolveFieldMeta(
   hints: ConfigUiHints,
 ): FieldMeta {
   const hint = hintForPath(path, hints);
-  const label = hint?.label ?? localizeConfigText(schema.title) ?? humanize(String(path.at(-1)));
-  const help = hint?.help ?? localizeConfigText(schema.description);
+  const label =
+    localizeConfigText(hint?.label) ??
+    localizeConfigText(schema.title) ??
+    humanize(String(path.at(-1)));
+  const help = localizeConfigText(hint?.help) ?? localizeConfigText(schema.description);
   const schemaTags = normalizeTags(schema["x-tags"] ?? schema.tags);
   const hintTags = normalizeTags(hint?.tags);
   return {
@@ -400,10 +405,7 @@ export function renderNode(params: {
                 ?disabled=${disabled}
                 @click=${() => onPatch(path, lit)}
               >
-                ${
-                  // oxlint-disable typescript/no-base-to-string
-                  String(lit)
-                }
+                ${localizeConfigValue(lit)}
               </button>
             `,
             )}
@@ -463,7 +465,7 @@ export function renderNode(params: {
                 ?disabled=${disabled}
                 @click=${() => onPatch(path, opt)}
               >
-                ${String(opt)}
+                ${localizeConfigValue(opt)}
               </button>
             `,
             )}
@@ -549,12 +551,12 @@ function renderTextInput(params: {
   const isSensitive =
     (hint?.sensitive ?? false) && !/^\$\{[^}]*\}$/.test(String(value ?? "").trim());
   const placeholder =
-    hint?.placeholder ??
+    localizeConfigText(hint?.placeholder) ??
     // oxlint-disable typescript/no-base-to-string
     (isSensitive
       ? "••••"
       : schema.default !== undefined
-        ? `默认值：${String(schema.default)}`
+        ? `${localizeConfigText("Default value:") ?? "Default value:"}${localizeConfigValue(schema.default)}`
         : "");
   const displayValue = value ?? "";
 
@@ -597,7 +599,7 @@ function renderTextInput(params: {
           <button
             type="button"
             class="cfg-input__reset"
-            title="重置为默认值"
+            title=${localizeConfigText("Reset to default") ?? "Reset to default"}
             ?disabled=${disabled}
             @click=${() => onPatch(path, schema.default)}
           >↺</button>
@@ -693,10 +695,10 @@ function renderSelect(params: {
           onPatch(path, val === unset ? undefined : options[Number(val)]);
         }}
       >
-        <option value=${unset}>请选择...</option>
+        <option value=${unset}>${localizeConfigText("Please select...") ?? "Please select..."}</option>
         ${options.map(
           (opt, idx) => html`
-          <option value=${String(idx)}>${String(opt)}</option>
+          <option value=${String(idx)}>${localizeConfigValue(opt)}</option>
         `,
         )}
       </select>
@@ -850,7 +852,7 @@ function renderArray(params: {
           ${showLabel ? html`<span class="cfg-array__label">${label}</span>` : nothing}
           ${renderTags(tags)}
         </div>
-        <span class="cfg-array__count">${arr.length} 项</span>
+        <span class="cfg-array__count">${localizeConfigCount(arr.length, "item")}</span>
         <button
           type="button"
           class="cfg-array__add"
@@ -861,7 +863,7 @@ function renderArray(params: {
           }}
         >
           <span class="cfg-array__add-icon">${icons.plus}</span>
-          添加
+          ${localizeConfigText("Add") ?? "Add"}
         </button>
       </div>
       ${help ? html`<div class="cfg-array__help">${help}</div>` : nothing}
@@ -869,7 +871,12 @@ function renderArray(params: {
       ${
         arr.length === 0
           ? html`
-              <div class="cfg-array__empty">暂时没有条目。点击“添加”即可创建。</div>
+              <div class="cfg-array__empty">
+                ${
+                  localizeConfigText("No entries yet. Click “Add” to create one.") ??
+                  "No entries yet. Click “Add” to create one."
+                }
+              </div>
             `
           : html`
         <div class="cfg-array__items">
@@ -881,7 +888,7 @@ function renderArray(params: {
                 <button
                   type="button"
                   class="cfg-array__item-remove"
-                  title="移除此项"
+                  title=${localizeConfigText("Remove item") ?? "Remove item"}
                   ?disabled=${disabled}
                   @click=${() => {
                     const next = [...arr];
@@ -955,7 +962,9 @@ function renderMapField(params: {
   return html`
     <div class="cfg-map">
       <div class="cfg-map__header">
-        <span class="cfg-map__label">自定义条目</span>
+        <span class="cfg-map__label">
+          ${localizeConfigText("Custom entries") ?? "Custom entries"}
+        </span>
         <button
           type="button"
           class="cfg-map__add"
@@ -973,14 +982,16 @@ function renderMapField(params: {
           }}
         >
           <span class="cfg-map__add-icon">${icons.plus}</span>
-          添加条目
+          ${localizeConfigText("Add entry") ?? "Add entry"}
         </button>
       </div>
 
       ${
         visibleEntries.length === 0
           ? html`
-              <div class="cfg-map__empty">暂无自定义条目。</div>
+              <div class="cfg-map__empty">
+                ${localizeConfigText("No custom entries.") ?? "No custom entries."}
+              </div>
             `
           : html`
         <div class="cfg-map__items">
@@ -994,7 +1005,7 @@ function renderMapField(params: {
                     <input
                       type="text"
                       class="cfg-input cfg-input--sm"
-                      placeholder="键名"
+                      placeholder=${localizeConfigText("Key") ?? "Key"}
                       .value=${key}
                       ?disabled=${disabled}
                       @change=${(e: Event) => {
@@ -1015,7 +1026,7 @@ function renderMapField(params: {
                   <button
                     type="button"
                     class="cfg-map__item-remove"
-                    title="移除此项"
+                    title=${localizeConfigText("Remove item") ?? "Remove item"}
                     ?disabled=${disabled}
                     @click=${() => {
                       const next = { ...value };
@@ -1032,7 +1043,7 @@ function renderMapField(params: {
                       ? html`
                         <textarea
                           class="cfg-textarea cfg-textarea--sm"
-                          placeholder="JSON 值"
+                          placeholder=${localizeConfigText("JSON value") ?? "JSON value"}
                           rows="2"
                           .value=${fallback}
                           ?disabled=${disabled}

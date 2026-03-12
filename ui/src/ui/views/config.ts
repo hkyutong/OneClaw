@@ -346,8 +346,10 @@ function resolveSubsections(params: {
   }
   const entries = Object.entries(schema.properties).map(([subKey, node]) => {
     const hint = hintForPath([key, subKey], uiHints);
-    const label = hint?.label ?? localizeConfigText(node.title) ?? humanize(subKey);
-    const description = hint?.help ?? localizeConfigText(node.description) ?? "";
+    const label =
+      localizeConfigText(hint?.label) ?? localizeConfigText(node.title) ?? humanize(subKey);
+    const description =
+      localizeConfigText(hint?.help) ?? localizeConfigText(node.description) ?? "";
     const order = hint?.order ?? 50;
     return { key: subKey, label, description, order };
   });

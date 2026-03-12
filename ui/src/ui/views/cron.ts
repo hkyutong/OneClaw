@@ -1313,7 +1313,7 @@ export function renderCron(props: CronProps) {
                                     })}
                                 >
                                   <option value="announce">频道公告（通过频道发送）</option>
-                                  <option value="webhook">Webhook（HTTP POST）</option>
+                                  <option value="webhook">${t("cron.form.webhookPost")}</option>
                                 </select>
                               </label>
                               <label class="field">

@@ -4,6 +4,7 @@ import {
 } from "../../../src/gateway/events.js";
 import { GATEWAY_CLIENT_NAMES } from "../../../src/gateway/protocol/client-info.js";
 import { ConnectErrorDetailCodes } from "../../../src/gateway/protocol/connect-error-details.js";
+import { i18n } from "../i18n/index.ts";
 import { CHAT_SESSIONS_ACTIVE_MINUTES, flushChatQueueForEvent } from "./app-chat.ts";
 import type { EventLogEntry } from "./app-events.ts";
 import {
@@ -49,16 +50,26 @@ function isGenericBrowserFetchFailure(message: string): boolean {
   return /^(?:typeerror:\s*)?(?:fetch failed|failed to fetch)$/i.test(message.trim());
 }
 
+function isChineseUiLocale(): boolean {
+  return i18n.getLocale().toLowerCase().startsWith("zh");
+}
+
 function formatAuthCloseErrorMessage(code: string | null, fallback: string): string {
   const resolvedCode = code ?? "";
   if (resolvedCode === ConnectErrorDetailCodes.AUTH_TOKEN_MISMATCH) {
-    return "unauthorized: gateway token mismatch (open dashboard URL with current token)";
+    return isChineseUiLocale()
+      ? "认证失败：网关令牌不匹配，请使用当前令牌重新打开控制台链接。"
+      : "unauthorized: gateway token mismatch (open dashboard URL with current token)";
   }
   if (resolvedCode === ConnectErrorDetailCodes.AUTH_RATE_LIMITED) {
-    return "unauthorized: too many failed authentication attempts (retry later)";
+    return isChineseUiLocale()
+      ? "认证失败：尝试次数过多，请稍后再试。"
+      : "unauthorized: too many failed authentication attempts (retry later)";
   }
   if (resolvedCode === ConnectErrorDetailCodes.AUTH_UNAUTHORIZED) {
-    return "unauthorized: authentication failed";
+    return isChineseUiLocale()
+      ? "认证失败：凭据无效或已过期。"
+      : "unauthorized: authentication failed";
   }
   return fallback;
 }
@@ -244,7 +255,9 @@ export function connectGateway(host: GatewayHost) {
               : error.message;
           return;
         }
-        host.lastError = `disconnected (${code}): ${reason || "no reason"}`;
+        host.lastError = isChineseUiLocale()
+          ? `连接已断开（${code}）：${reason || "未提供原因"}`
+          : `disconnected (${code}): ${reason || "no reason"}`;
       } else {
         host.lastError = null;
         host.lastErrorCode = null;
@@ -260,7 +273,9 @@ export function connectGateway(host: GatewayHost) {
       if (host.client !== client) {
         return;
       }
-      host.lastError = `event gap detected (expected seq ${expected}, got ${received}); refresh recommended`;
+      host.lastError = isChineseUiLocale()
+        ? `事件流出现缺口（期望序号 ${expected}，实际收到 ${received}），建议刷新页面。`
+        : `event gap detected (expected seq ${expected}, got ${received}); refresh recommended`;
       host.lastErrorCode = null;
     },
   });

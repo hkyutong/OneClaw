@@ -103,7 +103,7 @@ export function resolveAgentEmoji(
 }
 
 export function agentBadgeText(agentId: string, defaultId: string | null) {
-  return defaultId && agentId === defaultId ? "default" : null;
+  return defaultId && agentId === defaultId ? "默认" : null;
 }
 
 export function formatBytes(bytes?: number) {
@@ -154,7 +154,7 @@ export function buildAgentContext(
   const workspaceFromFiles =
     agentFilesList && agentFilesList.agentId === agent.id ? agentFilesList.workspace : null;
   const workspace =
-    workspaceFromFiles || config.entry?.workspace || config.defaults?.workspace || "default";
+    workspaceFromFiles || config.entry?.workspace || config.defaults?.workspace || "默认";
   const modelLabel = config.entry?.model
     ? resolveModelLabel(config.entry?.model)
     : resolveModelLabel(config.defaults?.model);
@@ -172,7 +172,7 @@ export function buildAgentContext(
     model: modelLabel,
     identityName,
     identityEmoji,
-    skillsLabel: skillFilter ? `${skillCount} selected` : "all skills",
+    skillsLabel: skillFilter ? `已选择 ${skillCount} 个` : "全部技能",
     isDefault: Boolean(defaultId && agent.id === defaultId),
   };
 }
@@ -189,14 +189,14 @@ export function resolveModelLabel(model?: unknown): string {
     const primary = record.primary?.trim();
     if (primary) {
       const fallbackCount = Array.isArray(record.fallbacks) ? record.fallbacks.length : 0;
-      return fallbackCount > 0 ? `${primary} (+${fallbackCount} fallback)` : primary;
+      return fallbackCount > 0 ? `${primary}（另有 ${fallbackCount} 个回退模型）` : primary;
     }
   }
   return "-";
 }
 
 export function normalizeModelValue(label: string): string {
-  const match = label.match(/^(.+) \(\+\d+ fallback\)$/);
+  const match = label.match(/^(.+)（另有 \d+ 个回退模型）$/);
   return match ? match[1] : label;
 }
 
@@ -408,7 +408,7 @@ export function buildModelOptions(
   }
   if (options.length === 0) {
     return html`
-      <option value="" disabled>没有已配置的模型</option>
+      <option value="" disabled>没有可选模型</option>
     `;
   }
   return options.map((option) => html`<option value=${option.value}>${option.label}</option>`);
