@@ -48,6 +48,77 @@ cd OneClaw
 3. 启动 OneClaw 的初始化向导
 4. 启动 Docker Gateway 服务
 
+### Windows Docker 部署
+
+Windows 推荐统一走这条路径：
+
+- Windows 11 / Windows 10
+- WSL2
+- Ubuntu
+- Docker Desktop
+
+不要把 OneClaw 当成“原生 Windows 直装”项目来部署；推荐做法是在 `WSL2` 里的 Ubuntu 环境中运行 `docker-setup.sh`。
+
+#### 1. 安装 WSL2 和 Ubuntu
+
+请以管理员身份打开 PowerShell，执行：
+
+```powershell
+wsl --install -d Ubuntu
+wsl --update
+wsl -l -v
+```
+
+执行完成后，重启 Windows，然后首次打开 Ubuntu，按提示创建 Linux 用户名和密码。
+
+#### 2. 安装 Docker Desktop
+
+- 安装并启动 Docker Desktop
+- 确认启用了 `WSL 2` 后端
+- 在 `Settings > Resources > WSL Integration` 中勾选你的 Ubuntu 发行版
+
+#### 3. 在 WSL 的 Ubuntu 里部署 OneClaw
+
+打开 Ubuntu，执行：
+
+```bash
+sudo apt update
+sudo apt install -y git
+git clone https://github.com/hkyutong/OneClaw.git
+cd OneClaw
+chmod +x docker-setup.sh
+./docker-setup.sh
+```
+
+建议：
+
+- 把仓库放在 Ubuntu 的 Linux 文件系统里，例如 `~/OneClaw`
+- 不要把运行目录放在 `/mnt/c/...` 这种 Windows 挂载路径里
+
+#### 4. 初始化时如何配置模型
+
+- 初始化向导里优先选择 `YutoAPI`
+- 填写 `YutoAPI` 发放的 `API key`
+- 这里使用的是 OpenAI-compatible 协议，不代表要填写 OpenAI 官方 key
+
+#### 5. 常用命令
+
+在 `WSL` 的 `OneClaw` 目录里执行：
+
+```bash
+docker compose ps
+docker compose logs -f oneclaw-gateway
+docker compose run --rm oneclaw-cli doctor
+docker compose run --rm oneclaw-cli dashboard --no-open
+```
+
+如果你重启了 Windows，可以重新进入 Ubuntu 后执行：
+
+```bash
+cd ~/OneClaw
+docker compose restart oneclaw-gateway
+```
+
 ## 推荐模型 API
 
 默认推荐在初始化向导里优先选择 `YutoAPI`。
