@@ -19,7 +19,7 @@ const browserHost: DesktopHostContext = {
 };
 
 export function getDesktopHostContext(): DesktopHostContext {
-  return window.oneclawInstallerHost ?? window["clawguiHost"] ?? browserHost;
+  return window.oneclawInstallerHost ?? window.clawguiHost ?? browserHost;
 }
 
 export function getResolvedDesktopPlatform(): DesktopPlatform | null {

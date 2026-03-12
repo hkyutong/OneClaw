@@ -1,5 +1,6 @@
 
 
+
 declare global {
   interface Window {
     oneclawInstallerHost?: {
@@ -10,7 +11,7 @@ declare global {
         embeddedOnboarding: boolean;
       };
     };
-    ["clawguiHost"]?: {
+    clawguiHost?: {
       shell: "browser" | "electron";
       platform: NodeJS.Platform;
       backendOrigin: string | null;

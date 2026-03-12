@@ -280,7 +280,8 @@ async function approveLatestLocalDashboardRequest(
       (right.ts ?? 0) - (left.ts ?? 0),
   );
   const nextRequest =
-    pendingSorted.find((item) => !previousIds.has(item.requestId)) ?? pendingSorted[0];
+    pendingSorted.find((item: DashboardPairingRequest) => !previousIds.has(item.requestId)) ??
+    pendingSorted[0];
 
   if (!nextRequest?.requestId) {
     return;
