@@ -54,6 +54,7 @@ cd OneClaw
 
 - 统一接入 OpenAI、Claude、Gemini、GLM、Qwen、DeepSeek、Kimi、MiniMax 等主流模型
 - 初始化向导里已把 `YutoAPI API key` 放在首位
+- `YUTOAPI_API_KEY` 指的是 YutoAPI 发放的 key；协议兼容 OpenAI，但不要把它理解成必须填写 OpenAI 官方 key
 - 官网与购买入口：<https://gptapi.asia>
 
 如果你已经有 `YUTOAPI_API_KEY`，也可以先写进环境变量，再运行：

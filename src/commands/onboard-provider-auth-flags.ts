@@ -60,7 +60,7 @@ export const ONBOARD_PROVIDER_AUTH_FLAGS: ReadonlyArray<OnboardProviderAuthFlag>
     authChoice: "yutoapi-api-key",
     cliFlag: "--yutoapi-api-key",
     cliOption: "--yutoapi-api-key <key>",
-    description: "YutoAPI API key",
+    description: "YutoAPI-issued API key",
   },
   {
     optionKey: "mistralApiKey",

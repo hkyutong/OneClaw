@@ -26,7 +26,7 @@ const AUTH_CHOICE_GROUP_DEFS: {
   {
     value: "yutoapi",
     label: "YutoAPI",
-    hint: "Recommended multi-model gateway",
+    hint: "OpenAI-compatible gateway (use a YutoAPI-issued key)",
     choices: ["yutoapi-api-key"],
   },
   {
@@ -207,7 +207,7 @@ const AUTH_CHOICE_GROUP_DEFS: {
 
 const PROVIDER_AUTH_CHOICE_OPTION_HINTS: Partial<Record<AuthChoice, string>> = {
   "yutoapi-api-key":
-    "Recommended multi-model gateway for OpenAI, Claude, Gemini, GLM, Qwen, and more",
+    "Recommended multi-model gateway for OpenAI, Claude, Gemini, GLM, Qwen, and more. Use a YutoAPI-issued key, not an OpenAI official key.",
   "litellm-api-key": "Unified gateway for 100+ LLM providers",
   "cloudflare-ai-gateway-api-key": "Account ID + Gateway ID + API key",
   "venice-api-key": "Privacy-focused inference (uncensored models)",
@@ -218,7 +218,7 @@ const PROVIDER_AUTH_CHOICE_OPTION_HINTS: Partial<Record<AuthChoice, string>> = {
 };
 
 const PROVIDER_AUTH_CHOICE_OPTION_LABELS: Partial<Record<AuthChoice, string>> = {
-  "yutoapi-api-key": "YutoAPI API key",
+  "yutoapi-api-key": "YutoAPI API key (YutoAPI-issued)",
   "moonshot-api-key": "Kimi API key (.ai)",
   "moonshot-api-key-cn": "Kimi API key (.cn)",
   "kimi-code-api-key": "Kimi Code API key (subscription)",

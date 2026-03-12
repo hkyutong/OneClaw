@@ -568,6 +568,7 @@ async function promptYutoApiModelId(params: {
       [
         "Could not load the YutoAPI model list automatically.",
         `Reason: ${formatVerificationError(error)}`,
+        "Make sure you entered a YutoAPI-issued key instead of an OpenAI official key.",
         "You can still type the model ID manually.",
       ].join("\n"),
       "YutoAPI",
@@ -606,9 +607,10 @@ async function promptYutoApiKey(params: {
     config: params.config,
     provider: YUTOAPI_PROVIDER_ID,
     envLabel: "YUTOAPI_API_KEY",
-    promptMessage: "Enter YutoAPI API key",
+    promptMessage: "Enter YutoAPI API key (issued by YutoAPI, not OpenAI)",
     normalize: normalizeSecretInput,
-    validate: (value) => (normalizeSecretInput(value) ? undefined : "YutoAPI API key is required."),
+    validate: (value) =>
+      normalizeSecretInput(value) ? undefined : "A YutoAPI-issued API key is required.",
     prompter: params.prompter,
     secretInputMode: params.secretInputMode,
     setCredential: async (apiKey) => {
@@ -1008,6 +1010,7 @@ export async function promptYutoApiConfig(params: {
     [
       "YutoAPI is the recommended multi-model gateway for OneClaw.",
       "It gives you one API endpoint for OpenAI, Claude, Gemini, GLM, Qwen, DeepSeek, Kimi, MiniMax, and more.",
+      "Use a YutoAPI-issued API key here. Do not paste an OpenAI official API key unless YutoAPI explicitly issued it.",
       `Get or buy your API key at: ${YUTOAPI_PORTAL_URL}`,
     ].join("\n"),
     "YutoAPI",
