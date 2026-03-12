@@ -12,6 +12,18 @@ type Subscriber = (locale: Locale) => void;
 
 export { SUPPORTED_LOCALES, isSupportedLocale };
 
+const LOCALE_STORAGE_KEY = "oneclaw.i18n.locale";
+const LEGACY_LOCALE_STORAGE_KEY = "openclaw.i18n.locale";
+
+function resolveUrlLocale(): Locale | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const params = new URLSearchParams(window.location.search);
+  const queryLocale = params.get("locale") ?? params.get("lang");
+  return isSupportedLocale(queryLocale) ? queryLocale : null;
+}
+
 class I18nManager {
   private locale: Locale = DEFAULT_LOCALE;
   private translations: Partial<Record<Locale, TranslationMap>> = { [DEFAULT_LOCALE]: en };
@@ -22,8 +34,17 @@ class I18nManager {
   }
 
   private resolveInitialLocale(): Locale {
-    const saved = localStorage.getItem("openclaw.i18n.locale");
+    const queryLocale = resolveUrlLocale();
+    if (queryLocale) {
+      return queryLocale;
+    }
+    const saved =
+      localStorage.getItem(LOCALE_STORAGE_KEY) ?? localStorage.getItem(LEGACY_LOCALE_STORAGE_KEY);
     if (isSupportedLocale(saved)) {
+      if (saved === localStorage.getItem(LEGACY_LOCALE_STORAGE_KEY)) {
+        localStorage.setItem(LOCALE_STORAGE_KEY, saved);
+        localStorage.removeItem(LEGACY_LOCALE_STORAGE_KEY);
+      }
       return saved;
     }
     return resolveNavigatorLocale(navigator.language);
@@ -64,7 +85,8 @@ class I18nManager {
     }
 
     this.locale = locale;
-    localStorage.setItem("openclaw.i18n.locale", locale);
+    localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+    localStorage.removeItem(LEGACY_LOCALE_STORAGE_KEY);
     this.notify();
   }
 

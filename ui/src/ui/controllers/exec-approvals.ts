@@ -1,3 +1,4 @@
+import { t } from "../../i18n/index.ts";
 import type { GatewayBrowserClient } from "../gateway.ts";
 import { cloneConfigObject, removePathValue, setPathValue } from "./config/form-utils.ts";
 
@@ -91,7 +92,7 @@ export async function loadExecApprovals(
   try {
     const rpc = resolveExecApprovalsRpc(target);
     if (!rpc) {
-      state.lastError = "Select a node before loading exec approvals.";
+      state.lastError = t("errors.requestFailed");
       return;
     }
     const res = await state.client.request<ExecApprovalsSnapshot>(rpc.method, rpc.params);
@@ -125,13 +126,13 @@ export async function saveExecApprovals(
   try {
     const baseHash = state.execApprovalsSnapshot?.hash;
     if (!baseHash) {
-      state.lastError = "Exec approvals hash missing; reload and retry.";
+      state.lastError = "缺少执行审批配置哈希，请刷新后重试。";
       return;
     }
     const file = state.execApprovalsForm ?? state.execApprovalsSnapshot?.file ?? {};
     const rpc = resolveExecApprovalsSaveRpc(target, { file, baseHash });
     if (!rpc) {
-      state.lastError = "Select a node before saving exec approvals.";
+      state.lastError = "请先选择一个节点，再保存执行审批配置。";
       return;
     }
     await state.client.request(rpc.method, rpc.params);

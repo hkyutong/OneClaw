@@ -86,6 +86,7 @@ import { renderGatewayUrlConfirmation } from "./views/gateway-url-confirmation.t
 import { renderInstances } from "./views/instances.ts";
 import { renderLogs } from "./views/logs.ts";
 import { renderNodes } from "./views/nodes.ts";
+import { localizeGatewayError } from "./views/overview-hints.ts";
 import { renderOverview } from "./views/overview.ts";
 import { renderSessions } from "./views/sessions.ts";
 import { renderSkills } from "./views/skills.ts";
@@ -251,11 +252,11 @@ export function renderApp(state: AppViewState) {
           </button>
           <div class="brand">
             <div class="brand-logo">
-              <img src=${basePath ? `${basePath}/favicon.svg` : "/favicon.svg"} alt="OpenClaw" />
+              <img src=${basePath ? `${basePath}/favicon.svg` : "/favicon.svg"} alt="OneClaw" />
             </div>
             <div class="brand-text">
-              <div class="brand-title">OPENCLAW</div>
-              <div class="brand-sub">Gateway Dashboard</div>
+              <div class="brand-title">ONECLAW</div>
+              <div class="brand-sub">${t("brand.dashboardSubtitle")}</div>
             </div>
           </div>
         </div>
@@ -322,13 +323,13 @@ export function renderApp(state: AppViewState) {
         ${
           availableUpdate
             ? html`<div class="update-banner callout danger" role="alert">
-              <strong>Update available:</strong> v${availableUpdate.latestVersion}
-              (running v${availableUpdate.currentVersion}).
+              <strong>${t("updateBanner.available")}：</strong> v${availableUpdate.latestVersion}
+              （${t("updateBanner.running")} v${availableUpdate.currentVersion}）
               <button
                 class="btn btn--sm update-banner__btn"
                 ?disabled=${state.updateRunning || !state.connected}
                 @click=${() => runUpdate(state)}
-              >${state.updateRunning ? "Updating…" : "Update now"}</button>
+              >${state.updateRunning ? t("updateBanner.updating") : t("updateBanner.updateNow")}</button>
             </div>`
             : nothing
         }
@@ -338,7 +339,11 @@ export function renderApp(state: AppViewState) {
             ${state.tab === "usage" ? nothing : html`<div class="page-sub">${subtitleForTab(state.tab)}</div>`}
           </div>
           <div class="page-meta">
-            ${state.lastError ? html`<div class="pill danger">${state.lastError}</div>` : nothing}
+            ${
+              state.lastError
+                ? html`<div class="pill danger">${localizeGatewayError(state.lastError, state.lastErrorCode)}</div>`
+                : nothing
+            }
             ${isChat ? renderChatControls(state) : nothing}
           </div>
         </section>

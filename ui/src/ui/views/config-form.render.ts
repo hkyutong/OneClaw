@@ -239,39 +239,39 @@ const sectionIcons = {
 // Section metadata
 export const SECTION_META: Record<string, { label: string; description: string }> = {
   env: {
-    label: "Environment Variables",
-    description: "Environment variables passed to the gateway process",
+    label: "环境变量",
+    description: "传递给网关进程的环境变量",
   },
-  update: { label: "Updates", description: "Auto-update settings and release channel" },
-  agents: { label: "Agents", description: "Agent configurations, models, and identities" },
-  auth: { label: "Authentication", description: "API keys and authentication profiles" },
+  update: { label: "更新", description: "自动更新设置与发布通道" },
+  agents: { label: "代理", description: "代理配置、模型与身份信息" },
+  auth: { label: "认证", description: "API 密钥与认证配置" },
   channels: {
-    label: "Channels",
-    description: "Messaging channels (Telegram, Discord, Slack, etc.)",
+    label: "频道",
+    description: "消息频道（Telegram、Discord、Slack 等）",
   },
-  messages: { label: "Messages", description: "Message handling and routing settings" },
-  commands: { label: "Commands", description: "Custom slash commands" },
-  hooks: { label: "Hooks", description: "Webhooks and event hooks" },
-  skills: { label: "Skills", description: "Skill packs and capabilities" },
-  tools: { label: "Tools", description: "Tool configurations (browser, search, etc.)" },
-  gateway: { label: "Gateway", description: "Gateway server settings (port, auth, binding)" },
-  wizard: { label: "Setup Wizard", description: "Setup wizard state and history" },
+  messages: { label: "消息", description: "消息处理与路由设置" },
+  commands: { label: "命令", description: "自定义斜杠命令" },
+  hooks: { label: "钩子", description: "Webhook 与事件钩子" },
+  skills: { label: "技能", description: "技能包与能力设置" },
+  tools: { label: "工具", description: "工具配置（浏览器、搜索等）" },
+  gateway: { label: "网关", description: "网关服务设置（端口、认证、绑定）" },
+  wizard: { label: "安装向导", description: "安装向导状态与历史记录" },
   // Additional sections
-  meta: { label: "Metadata", description: "Gateway metadata and version information" },
-  logging: { label: "Logging", description: "Log levels and output configuration" },
-  browser: { label: "Browser", description: "Browser automation settings" },
-  ui: { label: "UI", description: "User interface preferences" },
-  models: { label: "Models", description: "AI model configurations and providers" },
-  bindings: { label: "Bindings", description: "Key bindings and shortcuts" },
-  broadcast: { label: "Broadcast", description: "Broadcast and notification settings" },
-  audio: { label: "Audio", description: "Audio input/output settings" },
-  session: { label: "Session", description: "Session management and persistence" },
-  cron: { label: "Cron", description: "Scheduled tasks and automation" },
-  web: { label: "Web", description: "Web server and API settings" },
-  discovery: { label: "Discovery", description: "Service discovery and networking" },
-  canvasHost: { label: "Canvas Host", description: "Canvas rendering and display" },
-  talk: { label: "Talk", description: "Voice and speech settings" },
-  plugins: { label: "Plugins", description: "Plugin management and extensions" },
+  meta: { label: "元数据", description: "网关元数据与版本信息" },
+  logging: { label: "日志", description: "日志级别与输出配置" },
+  browser: { label: "浏览器", description: "浏览器自动化设置" },
+  ui: { label: "界面", description: "用户界面偏好" },
+  models: { label: "模型", description: "AI 模型配置与供应商设置" },
+  bindings: { label: "快捷键", description: "按键绑定与快捷方式" },
+  broadcast: { label: "广播", description: "广播与通知设置" },
+  audio: { label: "音频", description: "音频输入输出设置" },
+  session: { label: "会话", description: "会话管理与持久化" },
+  cron: { label: "定时任务", description: "计划任务与自动化" },
+  web: { label: "网页", description: "Web 服务与 API 设置" },
+  discovery: { label: "服务发现", description: "服务发现与网络设置" },
+  canvasHost: { label: "Canvas 主机", description: "Canvas 渲染与显示设置" },
+  talk: { label: "语音", description: "语音与语音识别设置" },
+  plugins: { label: "插件", description: "插件管理与扩展" },
 };
 
 function getSectionIcon(key: string) {
@@ -319,14 +319,14 @@ function matchesSearch(params: {
 export function renderConfigForm(props: ConfigFormProps) {
   if (!props.schema) {
     return html`
-      <div class="muted">Schema unavailable.</div>
+      <div class="muted">Schema 不可用。</div>
     `;
   }
   const schema = props.schema;
   const value = props.value ?? {};
   if (schemaType(schema) !== "object" || !schema.properties) {
     return html`
-      <div class="callout danger">Unsupported schema. Use Raw.</div>
+      <div class="callout danger">当前 schema 不受支持，请切换到 Raw 模式。</div>
     `;
   }
   const unsupported = new Set(props.unsupportedPaths ?? []);
@@ -387,7 +387,7 @@ export function renderConfigForm(props: ConfigFormProps) {
       <div class="config-empty">
         <div class="config-empty__icon">${icons.search}</div>
         <div class="config-empty__text">
-          ${searchQuery ? `No settings match "${searchQuery}"` : "No settings in this section"}
+          ${searchQuery ? `没有与 “${searchQuery}” 匹配的设置` : "当前分区没有可显示的设置"}
         </div>
       </div>
     `;

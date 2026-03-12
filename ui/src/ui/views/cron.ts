@@ -21,6 +21,7 @@ import type {
   CronSortDir,
 } from "../types.ts";
 import type { CronFormState } from "../ui-types.ts";
+import { localizeGatewayError } from "./overview-hints.ts";
 
 export type CronProps = {
   basePath: string;
@@ -148,13 +149,43 @@ function buildChannelOptions(props: CronProps): string[] {
 
 function resolveChannelLabel(props: CronProps, channel: string): string {
   if (channel === "last") {
-    return "last";
+    return "最近使用的频道";
   }
   const meta = props.channelMeta?.find((entry) => entry.id === channel);
   if (meta?.label) {
     return meta.label;
   }
   return props.channelLabels?.[channel] ?? channel;
+}
+
+function formatDeliveryModeLabel(mode?: string | null): string {
+  if (mode === "announce") {
+    return "频道公告";
+  }
+  if (mode === "webhook") {
+    return "Webhook 回调";
+  }
+  return mode ?? "";
+}
+
+function formatSessionTargetLabel(target?: string): string {
+  if (target === "main") {
+    return "主会话";
+  }
+  if (target === "isolated") {
+    return "独立会话";
+  }
+  return target ?? "";
+}
+
+function formatWakeModeLabel(mode?: string): string {
+  if (mode === "now") {
+    return "立即唤醒";
+  }
+  if (mode === "next-heartbeat") {
+    return "下次心跳时唤醒";
+  }
+  return mode ?? "";
 }
 
 function renderRunFilterDropdown(params: {
@@ -283,8 +314,8 @@ function fieldLabelForKey(
     payloadThinking: t("cron.form.thinking"),
     timeoutSeconds: t("cron.form.timeoutSeconds"),
     deliveryTo: t("cron.form.to"),
-    failureAlertAfter: "Failure alert after",
-    failureAlertCooldownSeconds: "Failure alert cooldown",
+    failureAlertAfter: "失败告警阈值",
+    failureAlertCooldownSeconds: "告警冷却时间",
   };
   return labels[key];
 }
@@ -420,7 +451,7 @@ export function renderCron(props: CronProps) {
         <button class="btn" ?disabled=${props.loading} @click=${props.onRefresh}>
           ${props.loading ? t("cron.summary.refreshing") : t("cron.summary.refresh")}
         </button>
-        ${props.error ? html`<span class="muted">${props.error}</span>` : nothing}
+        ${props.error ? html`<span class="muted">${localizeGatewayError(props.error)}</span>` : nothing}
       </div>
     </section>
 
@@ -1039,7 +1070,7 @@ export function renderCron(props: CronProps) {
                 <div class="cron-help">${t("cron.form.clearAgentHelp")}</div>
               </label>
               <label class="field cron-span-2">
-                ${renderFieldLabel("Session key")}
+                ${renderFieldLabel(t("cron.labels.sessionKey"))}
                 <input
                   id="cron-session-key"
                   .value=${props.form.sessionKey}
@@ -1049,9 +1080,7 @@ export function renderCron(props: CronProps) {
                     })}
                   placeholder="agent:main:main"
                 />
-                <div class="cron-help">
-                  Optional routing key for job delivery and wake routing.
-                </div>
+                <div class="cron-help">${t("cron.labels.sessionKeyHelp")}</div>
               </label>
               ${
                 isCronSchedule
@@ -1115,7 +1144,7 @@ export function renderCron(props: CronProps) {
                 isAgentTurn
                   ? html`
                       <label class="field cron-span-2">
-                        ${renderFieldLabel("Account ID")}
+                        ${renderFieldLabel(t("cron.labels.accountId"))}
                         <input
                           id="cron-delivery-account-id"
                           .value=${props.form.deliveryAccountId}
@@ -1127,9 +1156,7 @@ export function renderCron(props: CronProps) {
                             })}
                           placeholder="default"
                         />
-                        <div class="cron-help">
-                          Optional channel account ID for multi-account setups.
-                        </div>
+                        <div class="cron-help">${t("cron.labels.accountIdHelp")}</div>
                       </label>
                       <label class="field checkbox cron-checkbox cron-span-2">
                         <input
@@ -1140,10 +1167,8 @@ export function renderCron(props: CronProps) {
                               payloadLightContext: (e.target as HTMLInputElement).checked,
                             })}
                         />
-                        <span class="field-checkbox__label">Light context</span>
-                        <div class="cron-help">
-                          Use lightweight bootstrap context for this agent job.
-                        </div>
+                        <span class="field-checkbox__label">${t("cron.labels.lightContext")}</span>
+                        <div class="cron-help">${t("cron.labels.lightContextHelp")}</div>
                       </label>
                       <label class="field">
                         ${renderFieldLabel(t("cron.form.model"))}
@@ -1180,7 +1205,7 @@ export function renderCron(props: CronProps) {
                 isAgentTurn
                   ? html`
                       <label class="field cron-span-2">
-                        ${renderFieldLabel("Failure alerts")}
+                        ${renderFieldLabel(t("cron.labels.failureAlerts"))}
                         <select
                           .value=${props.form.failureAlertMode}
                           @change=${(e: Event) =>
@@ -1189,19 +1214,17 @@ export function renderCron(props: CronProps) {
                                 .value as CronFormState["failureAlertMode"],
                             })}
                         >
-                          <option value="inherit">Inherit global setting</option>
-                          <option value="disabled">Disable for this job</option>
-                          <option value="custom">Custom per-job settings</option>
+                          <option value="inherit">${t("cron.labels.inheritGlobalSetting")}</option>
+                          <option value="disabled">${t("cron.labels.disableForThisJob")}</option>
+                          <option value="custom">${t("cron.labels.customPerJobSettings")}</option>
                         </select>
-                        <div class="cron-help">
-                          Control when this job sends repeated-failure alerts.
-                        </div>
+                        <div class="cron-help">${t("cron.labels.failureAlertsHelp")}</div>
                       </label>
                       ${
                         props.form.failureAlertMode === "custom"
                           ? html`
                               <label class="field">
-                                ${renderFieldLabel("Alert after")}
+                                ${renderFieldLabel(t("cron.labels.alertAfter"))}
                                 <input
                                   id="cron-failure-alert-after"
                                   .value=${props.form.failureAlertAfter}
@@ -1217,14 +1240,14 @@ export function renderCron(props: CronProps) {
                                     })}
                                   placeholder="2"
                                 />
-                                <div class="cron-help">Consecutive errors before alerting.</div>
+                                <div class="cron-help">${t("cron.labels.alertAfterHelp")}</div>
                                 ${renderFieldError(
                                   props.fieldErrors.failureAlertAfter,
                                   errorIdForField("failureAlertAfter"),
                                 )}
                               </label>
                               <label class="field">
-                                ${renderFieldLabel("Cooldown (seconds)")}
+                                ${renderFieldLabel("告警冷却时间（秒）")}
                                 <input
                                   id="cron-failure-alert-cooldown-seconds"
                                   .value=${props.form.failureAlertCooldownSeconds}
@@ -1241,14 +1264,14 @@ export function renderCron(props: CronProps) {
                                     })}
                                   placeholder="3600"
                                 />
-                                <div class="cron-help">Minimum seconds between alerts.</div>
+                                <div class="cron-help">两次失败告警之间的最短间隔秒数。</div>
                                 ${renderFieldError(
                                   props.fieldErrors.failureAlertCooldownSeconds,
                                   errorIdForField("failureAlertCooldownSeconds"),
                                 )}
                               </label>
                               <label class="field">
-                                ${renderFieldLabel("Alert channel")}
+                                ${renderFieldLabel("告警频道")}
                                 <select
                                   .value=${props.form.failureAlertChannel || "last"}
                                   @change=${(e: Event) =>
@@ -1265,7 +1288,7 @@ export function renderCron(props: CronProps) {
                                 </select>
                               </label>
                               <label class="field">
-                                ${renderFieldLabel("Alert to")}
+                                ${renderFieldLabel("告警发送到")}
                                 <input
                                   .value=${props.form.failureAlertTo}
                                   list="cron-delivery-to-suggestions"
@@ -1273,14 +1296,14 @@ export function renderCron(props: CronProps) {
                                     props.onFormChange({
                                       failureAlertTo: (e.target as HTMLInputElement).value,
                                     })}
-                                  placeholder="+1555... or chat id"
+                                  placeholder="+1555... 或聊天 ID"
                                 />
                                 <div class="cron-help">
-                                  Optional recipient override for failure alerts.
+                                  可选：为失败告警单独指定接收人。
                                 </div>
                               </label>
                               <label class="field">
-                                ${renderFieldLabel("Alert mode")}
+                                ${renderFieldLabel("告警模式")}
                                 <select
                                   .value=${props.form.failureAlertDeliveryMode || "announce"}
                                   @change=${(e: Event) =>
@@ -1289,19 +1312,19 @@ export function renderCron(props: CronProps) {
                                         .value as CronFormState["failureAlertDeliveryMode"],
                                     })}
                                 >
-                                  <option value="announce">Announce (via channel)</option>
-                                  <option value="webhook">Webhook (HTTP POST)</option>
+                                  <option value="announce">频道公告（通过频道发送）</option>
+                                  <option value="webhook">Webhook（HTTP POST）</option>
                                 </select>
                               </label>
                               <label class="field">
-                                ${renderFieldLabel("Alert account ID")}
+                                ${renderFieldLabel("告警账号 ID")}
                                 <input
                                   .value=${props.form.failureAlertAccountId}
                                   @input=${(e: Event) =>
                                     props.onFormChange({
                                       failureAlertAccountId: (e.target as HTMLInputElement).value,
                                     })}
-                                  placeholder="Account ID for multi-account setups"
+                                  placeholder="多账号场景下填写对应账号 ID"
                                 />
                               </label>
                             `
@@ -1510,8 +1533,8 @@ function renderJob(job: CronJob, props: CronProps) {
           <span class=${`chip ${job.enabled ? "chip-ok" : "chip-danger"}`}>
             ${job.enabled ? t("cron.jobList.enabled") : t("cron.jobList.disabled")}
           </span>
-          <span class="chip">${job.sessionTarget}</span>
-          <span class="chip">${job.wakeMode}</span>
+          <span class="chip">${formatSessionTargetLabel(job.sessionTarget)}</span>
+          <span class="chip">${formatWakeModeLabel(job.wakeMode)}</span>
         </div>
         <div class="row cron-job-actions">
           <button
@@ -1562,7 +1585,7 @@ function renderJob(job: CronJob, props: CronProps) {
               selectAnd(() => props.onRun(job, "due"));
             }}
           >
-            Run if due
+            到期时运行
           </button>
           <button
             class="btn"
@@ -1605,7 +1628,7 @@ function renderJobPayload(job: CronJob) {
         ? ` (${delivery.to})`
         : ""
       : delivery?.channel || delivery?.to
-        ? ` (${delivery.channel ?? "last"}${delivery.to ? ` -> ${delivery.to}` : ""})`
+        ? ` (${delivery.channel === "last" || !delivery.channel ? "最近使用的频道" : delivery.channel}${delivery.to ? ` -> ${delivery.to}` : ""})`
         : "";
 
   return html`
@@ -1617,7 +1640,7 @@ function renderJobPayload(job: CronJob) {
       delivery
         ? html`<div class="cron-job-detail">
             <span class="cron-job-detail-label">${t("cron.jobDetail.delivery")}</span>
-            <span class="muted cron-job-detail-value">${delivery.mode}${deliveryTarget}</span>
+            <span class="muted cron-job-detail-value">${formatDeliveryModeLabel(delivery.mode)}${deliveryTarget}</span>
           </div>`
         : nothing
     }
@@ -1717,9 +1740,9 @@ function renderRun(entry: CronRunLogEntry, basePath: string) {
   const usage = entry.usage;
   const usageSummary =
     usage && typeof usage.total_tokens === "number"
-      ? `${usage.total_tokens} tokens`
+      ? `${usage.total_tokens} 令牌`
       : usage && typeof usage.input_tokens === "number" && typeof usage.output_tokens === "number"
-        ? `${usage.input_tokens} in / ${usage.output_tokens} out`
+        ? `输入 ${usage.input_tokens} / 输出 ${usage.output_tokens}`
         : null;
   return html`
     <div class="list-item cron-run-entry">
@@ -1739,7 +1762,7 @@ function renderRun(entry: CronRunLogEntry, basePath: string) {
       <div class="list-meta cron-run-entry__meta">
         <div>${formatMs(entry.ts)}</div>
         ${typeof entry.runAtMs === "number" ? html`<div class="muted">${t("cron.runEntry.runAt")} ${formatMs(entry.runAtMs)}</div>` : nothing}
-        <div class="muted">${entry.durationMs ?? 0}ms</div>
+        <div class="muted">${entry.durationMs ?? 0} 毫秒</div>
         ${
           typeof entry.nextRunAtMs === "number"
             ? html`<div class="muted">${formatRunNextLabel(entry.nextRunAtMs)}</div>`

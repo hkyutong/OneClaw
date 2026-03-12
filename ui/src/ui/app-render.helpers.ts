@@ -337,6 +337,24 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+function normalizeKnownSessionDisplayName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+  const lower = trimmed.toLowerCase();
+  if (lower === "main session") {
+    return "主会话";
+  }
+  if (lower.startsWith("subagent:")) {
+    return `子代理：${trimmed.slice(trimmed.indexOf(":") + 1).trim()}`;
+  }
+  if (lower.startsWith("cron:")) {
+    return `定时任务：${trimmed.slice(trimmed.indexOf(":") + 1).trim()}`;
+  }
+  return trimmed;
+}
+
 /**
  * Parse a session key to extract type information and a human-readable
  * fallback display name.  Exported for testing.
@@ -346,17 +364,17 @@ export function parseSessionKey(key: string): SessionKeyInfo {
 
   // ── Main session ─────────────────────────────────
   if (key === "main" || key === "agent:main:main") {
-    return { prefix: "", fallbackName: "Main Session" };
+    return { prefix: "", fallbackName: "主会话" };
   }
 
   // ── Subagent ─────────────────────────────────────
   if (key.includes(":subagent:")) {
-    return { prefix: "Subagent:", fallbackName: "Subagent:" };
+    return { prefix: "子代理：", fallbackName: "子代理：" };
   }
 
   // ── Cron job ─────────────────────────────────────
   if (normalized.startsWith("cron:") || key.includes(":cron:")) {
-    return { prefix: "Cron:", fallbackName: "Cron Job:" };
+    return { prefix: "定时任务：", fallbackName: "定时任务：" };
   }
 
   // ── Direct chat  (agent:<x>:<channel>:direct:<id>) ──
@@ -373,13 +391,13 @@ export function parseSessionKey(key: string): SessionKeyInfo {
   if (groupMatch) {
     const channel = groupMatch[1];
     const channelLabel = CHANNEL_LABELS[channel] ?? capitalize(channel);
-    return { prefix: "", fallbackName: `${channelLabel} Group` };
+    return { prefix: "", fallbackName: `${channelLabel} 群组` };
   }
 
   // ── Channel-prefixed legacy keys (e.g. "bluebubbles:g-…") ──
   for (const ch of KNOWN_CHANNEL_KEYS) {
     if (key === ch || key.startsWith(`${ch}:`)) {
-      return { prefix: "", fallbackName: `${CHANNEL_LABELS[ch]} Session` };
+      return { prefix: "", fallbackName: `${CHANNEL_LABELS[ch]} 会话` };
     }
   }
 
@@ -404,10 +422,10 @@ export function resolveSessionDisplayName(
   };
 
   if (label && label !== key) {
-    return applyTypedPrefix(label);
+    return applyTypedPrefix(normalizeKnownSessionDisplayName(label));
   }
   if (displayName && displayName !== key) {
-    return applyTypedPrefix(displayName);
+    return applyTypedPrefix(normalizeKnownSessionDisplayName(displayName));
   }
   return fallbackName;
 }
@@ -503,14 +521,14 @@ export function renderThemeToggle(state: AppViewState) {
 
   return html`
     <div class="theme-toggle" style="--theme-index: ${index};">
-      <div class="theme-toggle__track" role="group" aria-label="Theme">
+      <div class="theme-toggle__track" role="group" aria-label="主题">
         <span class="theme-toggle__indicator"></span>
         <button
           class="theme-toggle__button ${state.themeMode === "system" ? "active" : ""}"
           @click=${applyTheme("system")}
           aria-pressed=${state.themeMode === "system"}
-          aria-label="System theme"
-          title="System"
+          aria-label="跟随系统主题"
+          title="系统"
         >
           ${renderMonitorIcon()}
         </button>
@@ -518,8 +536,8 @@ export function renderThemeToggle(state: AppViewState) {
           class="theme-toggle__button ${state.themeMode === "light" ? "active" : ""}"
           @click=${applyTheme("light")}
           aria-pressed=${state.themeMode === "light"}
-          aria-label="Light theme"
-          title="Light"
+          aria-label="浅色主题"
+          title="浅色"
         >
           ${renderSunIcon()}
         </button>
@@ -527,8 +545,8 @@ export function renderThemeToggle(state: AppViewState) {
           class="theme-toggle__button ${state.themeMode === "dark" ? "active" : ""}"
           @click=${applyTheme("dark")}
           aria-pressed=${state.themeMode === "dark"}
-          aria-label="Dark theme"
-          title="Dark"
+          aria-label="深色主题"
+          title="深色"
         >
           ${renderMoonIcon()}
         </button>

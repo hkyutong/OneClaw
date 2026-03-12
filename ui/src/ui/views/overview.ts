@@ -6,7 +6,7 @@ import { formatRelativeTimestamp, formatDurationHuman } from "../format.ts";
 import type { GatewayHelloOk } from "../gateway.ts";
 import { formatNextRun } from "../presenter.ts";
 import type { UiSettings } from "../storage.ts";
-import { shouldShowPairingHint } from "./overview-hints.ts";
+import { localizeGatewayError, shouldShowPairingHint } from "./overview-hints.ts";
 
 export type OverviewProps = {
   connected: boolean;
@@ -50,8 +50,8 @@ export function renderOverview(props: OverviewProps) {
       <div class="muted" style="margin-top: 8px">
         ${t("overview.pairing.hint")}
         <div style="margin-top: 6px">
-          <span class="mono">openclaw devices list</span><br />
-          <span class="mono">openclaw devices approve &lt;requestId&gt;</span>
+          <span class="mono">oneclaw devices list</span><br />
+          <span class="mono">oneclaw devices approve &lt;requestId&gt;</span>
         </div>
         <div style="margin-top: 6px; font-size: 12px;">
           ${t("overview.pairing.mobileHint")}
@@ -62,8 +62,8 @@ export function renderOverview(props: OverviewProps) {
             href="https://docs.openclaw.ai/web/control-ui#device-pairing-first-connection"
             target=${EXTERNAL_LINK_TARGET}
             rel=${buildExternalLinkRel()}
-            title="Device pairing docs (opens in new tab)"
-            >Docs: Device pairing</a
+            title=${t("overview.docs.pairing")}
+            >${t("overview.docs.pairing")}</a
           >
         </div>
       </div>
@@ -110,8 +110,8 @@ export function renderOverview(props: OverviewProps) {
         <div class="muted" style="margin-top: 8px">
           ${t("overview.auth.required")}
           <div style="margin-top: 6px">
-            <span class="mono">openclaw dashboard --no-open</span> → tokenized URL<br />
-            <span class="mono">openclaw doctor --generate-gateway-token</span> → set token
+            <span class="mono">oneclaw dashboard --no-open</span> → tokenized URL<br />
+            <span class="mono">oneclaw doctor --generate-gateway-token</span> → set token
           </div>
           <div style="margin-top: 6px">
             <a
@@ -119,8 +119,8 @@ export function renderOverview(props: OverviewProps) {
               href="https://docs.openclaw.ai/web/dashboard"
               target=${EXTERNAL_LINK_TARGET}
               rel=${buildExternalLinkRel()}
-              title="Control UI auth docs (opens in new tab)"
-              >Docs: Control UI auth</a
+              title=${t("overview.docs.auth")}
+              >${t("overview.docs.auth")}</a
             >
           </div>
         </div>
@@ -128,15 +128,15 @@ export function renderOverview(props: OverviewProps) {
     }
     return html`
       <div class="muted" style="margin-top: 8px">
-        ${t("overview.auth.failed", { command: "openclaw dashboard --no-open" })}
+        ${t("overview.auth.failed", { command: "oneclaw dashboard --no-open" })}
         <div style="margin-top: 6px">
           <a
             class="session-link"
             href="https://docs.openclaw.ai/web/dashboard"
             target=${EXTERNAL_LINK_TARGET}
             rel=${buildExternalLinkRel()}
-            title="Control UI auth docs (opens in new tab)"
-            >Docs: Control UI auth</a
+            title=${t("overview.docs.auth")}
+            >${t("overview.docs.auth")}</a
           >
         </div>
       </div>
@@ -174,8 +174,8 @@ export function renderOverview(props: OverviewProps) {
             href="https://docs.openclaw.ai/gateway/tailscale"
             target=${EXTERNAL_LINK_TARGET}
             rel=${buildExternalLinkRel()}
-            title="Tailscale Serve docs (opens in new tab)"
-            >Docs: Tailscale Serve</a
+            title=${t("overview.docs.tailscale")}
+            >${t("overview.docs.tailscale")}</a
           >
           <span class="muted"> · </span>
           <a
@@ -183,8 +183,8 @@ export function renderOverview(props: OverviewProps) {
             href="https://docs.openclaw.ai/web/control-ui#insecure-http"
             target=${EXTERNAL_LINK_TARGET}
             rel=${buildExternalLinkRel()}
-            title="Insecure HTTP docs (opens in new tab)"
-            >Docs: Insecure HTTP</a
+            title=${t("overview.docs.insecure")}
+            >${t("overview.docs.insecure")}</a
           >
         </div>
       </div>
@@ -226,7 +226,7 @@ export function renderOverview(props: OverviewProps) {
                       const v = (e.target as HTMLInputElement).value;
                       props.onSettingsChange({ ...props.settings, token: v });
                     }}
-                    placeholder="OPENCLAW_GATEWAY_TOKEN"
+                    placeholder=${t("overview.access.tokenPlaceholder")}
                   />
                 </label>
                 <label class="field">
@@ -238,7 +238,7 @@ export function renderOverview(props: OverviewProps) {
                       const v = (e.target as HTMLInputElement).value;
                       props.onPasswordChange(v);
                     }}
-                    placeholder="system or shared password"
+                    placeholder="系统密码或共享密码"
                   />
                 </label>
               `
@@ -307,7 +307,7 @@ export function renderOverview(props: OverviewProps) {
         ${
           props.lastError
             ? html`<div class="callout danger" style="margin-top: 14px;">
-              <div>${props.lastError}</div>
+              <div>${localizeGatewayError(props.lastError, props.lastErrorCode)}</div>
               ${pairingHint ?? ""}
               ${authHint ?? ""}
               ${insecureContextHint ?? ""}

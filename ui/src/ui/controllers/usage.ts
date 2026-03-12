@@ -30,6 +30,7 @@ type UsageDateInterpretationParams = {
   utcOffset?: string;
 };
 
+const USAGE_DATE_PARAMS_STORAGE_KEY = "oneclaw.control.usage.date-params.v1";
 const LEGACY_USAGE_DATE_PARAMS_STORAGE_KEY = "openclaw.control.usage.date-params.v1";
 const LEGACY_USAGE_DATE_PARAMS_DEFAULT_GATEWAY_KEY = "__default__";
 const LEGACY_USAGE_DATE_PARAMS_MODE_RE = /unexpected property ['"]mode['"]/i;
@@ -56,10 +57,12 @@ function loadLegacyUsageDateParamsCache(): Set<string> {
   }
   try {
     const raw = storage.getItem(LEGACY_USAGE_DATE_PARAMS_STORAGE_KEY);
-    if (!raw) {
+    const nextRaw = storage.getItem(USAGE_DATE_PARAMS_STORAGE_KEY);
+    const resolvedRaw = nextRaw ?? raw;
+    if (!resolvedRaw) {
       return new Set<string>();
     }
-    const parsed = JSON.parse(raw) as { unsupportedGatewayKeys?: unknown } | null;
+    const parsed = JSON.parse(resolvedRaw) as { unsupportedGatewayKeys?: unknown } | null;
     if (!parsed || !Array.isArray(parsed.unsupportedGatewayKeys)) {
       return new Set<string>();
     }
@@ -81,9 +84,10 @@ function persistLegacyUsageDateParamsCache(cache: Set<string>) {
   }
   try {
     storage.setItem(
-      LEGACY_USAGE_DATE_PARAMS_STORAGE_KEY,
+      USAGE_DATE_PARAMS_STORAGE_KEY,
       JSON.stringify({ unsupportedGatewayKeys: Array.from(cache) }),
     );
+    storage.removeItem(LEGACY_USAGE_DATE_PARAMS_STORAGE_KEY);
   } catch {
     // ignore quota/private-mode failures
   }

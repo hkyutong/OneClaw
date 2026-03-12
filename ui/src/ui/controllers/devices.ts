@@ -90,7 +90,7 @@ export async function rejectDevicePairing(state: DevicesState, requestId: string
   if (!state.client || !state.connected) {
     return;
   }
-  const confirmed = window.confirm("Reject this device pairing request?");
+  const confirmed = window.confirm("确定要拒绝这个设备的配对请求吗？");
   if (!confirmed) {
     return;
   }
@@ -127,7 +127,7 @@ export async function rotateDeviceToken(
           scopes: res.scopes ?? params.scopes ?? [],
         });
       }
-      window.prompt("New device token (copy and store securely):", res.token);
+      window.prompt("新的设备令牌（请立即复制并妥善保存）：", res.token);
     }
     await loadDevices(state);
   } catch (err) {
@@ -142,7 +142,7 @@ export async function revokeDeviceToken(
   if (!state.client || !state.connected) {
     return;
   }
-  const confirmed = window.confirm(`Revoke token for ${params.deviceId} (${params.role})?`);
+  const confirmed = window.confirm(`确定要撤销 ${params.deviceId}（${params.role}）的令牌吗？`);
   if (!confirmed) {
     return;
   }

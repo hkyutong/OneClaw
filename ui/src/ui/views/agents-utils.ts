@@ -404,7 +404,7 @@ export function buildModelOptions(
   const options = resolveConfiguredModels(configForm);
   const hasCurrent = current ? options.some((option) => option.value === current) : false;
   if (current && !hasCurrent) {
-    options.unshift({ value: current, label: `Current (${current})` });
+    options.unshift({ value: current, label: `当前值（${current}）` });
   }
   if (options.length === 0) {
     return html`

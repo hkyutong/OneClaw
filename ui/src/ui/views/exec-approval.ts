@@ -29,31 +29,31 @@ export function renderExecApprovalPrompt(state: AppViewState) {
   }
   const request = active.request;
   const remainingMs = active.expiresAtMs - Date.now();
-  const remaining = remainingMs > 0 ? `expires in ${formatRemaining(remainingMs)}` : "expired";
+  const remaining = remainingMs > 0 ? `${formatRemaining(remainingMs)} 后过期` : "已过期";
   const queueCount = state.execApprovalQueue.length;
   return html`
     <div class="exec-approval-overlay" role="dialog" aria-live="polite">
       <div class="exec-approval-card">
         <div class="exec-approval-header">
           <div>
-            <div class="exec-approval-title">Exec approval needed</div>
+            <div class="exec-approval-title">需要执行授权</div>
             <div class="exec-approval-sub">${remaining}</div>
           </div>
           ${
             queueCount > 1
-              ? html`<div class="exec-approval-queue">${queueCount} pending</div>`
+              ? html`<div class="exec-approval-queue">待处理 ${queueCount} 条</div>`
               : nothing
           }
         </div>
         <div class="exec-approval-command mono">${request.command}</div>
         <div class="exec-approval-meta">
-          ${renderMetaRow("Host", request.host)}
-          ${renderMetaRow("Agent", request.agentId)}
-          ${renderMetaRow("Session", request.sessionKey)}
-          ${renderMetaRow("CWD", request.cwd)}
-          ${renderMetaRow("Resolved", request.resolvedPath)}
-          ${renderMetaRow("Security", request.security)}
-          ${renderMetaRow("Ask", request.ask)}
+          ${renderMetaRow("主机", request.host)}
+          ${renderMetaRow("代理", request.agentId)}
+          ${renderMetaRow("会话", request.sessionKey)}
+          ${renderMetaRow("工作目录", request.cwd)}
+          ${renderMetaRow("解析路径", request.resolvedPath)}
+          ${renderMetaRow("安全策略", request.security)}
+          ${renderMetaRow("询问策略", request.ask)}
         </div>
         ${
           state.execApprovalError
@@ -66,21 +66,21 @@ export function renderExecApprovalPrompt(state: AppViewState) {
             ?disabled=${state.execApprovalBusy}
             @click=${() => state.handleExecApprovalDecision("allow-once")}
           >
-            Allow once
+            允许一次
           </button>
           <button
             class="btn"
             ?disabled=${state.execApprovalBusy}
             @click=${() => state.handleExecApprovalDecision("allow-always")}
           >
-            Always allow
+            始终允许
           </button>
           <button
             class="btn danger"
             ?disabled=${state.execApprovalBusy}
             @click=${() => state.handleExecApprovalDecision("deny")}
           >
-            Deny
+            拒绝
           </button>
         </div>
       </div>

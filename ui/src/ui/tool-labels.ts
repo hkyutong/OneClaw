@@ -4,29 +4,29 @@
  */
 
 export const TOOL_LABELS: Record<string, string> = {
-  exec: "Run Command",
-  bash: "Run Command",
-  read: "Read File",
-  write: "Write File",
-  edit: "Edit File",
-  apply_patch: "Apply Patch",
-  web_search: "Web Search",
-  web_fetch: "Fetch Page",
-  browser: "Browser",
-  message: "Send Message",
-  image: "Generate Image",
-  canvas: "Canvas",
-  cron: "Cron",
-  gateway: "Gateway",
-  nodes: "Nodes",
-  memory_search: "Search Memory",
-  memory_get: "Get Memory",
-  session_status: "Session Status",
-  sessions_list: "List Sessions",
-  sessions_history: "Session History",
-  sessions_send: "Send to Session",
-  sessions_spawn: "Spawn Session",
-  agents_list: "List Agents",
+  exec: "运行命令",
+  bash: "运行命令",
+  read: "读取文件",
+  write: "写入文件",
+  edit: "编辑文件",
+  apply_patch: "应用补丁",
+  web_search: "网页搜索",
+  web_fetch: "抓取网页",
+  browser: "浏览器",
+  message: "发送消息",
+  image: "生成图片",
+  canvas: "画布",
+  cron: "定时任务",
+  gateway: "网关",
+  nodes: "节点",
+  memory_search: "搜索记忆",
+  memory_get: "读取记忆",
+  session_status: "会话状态",
+  sessions_list: "会话列表",
+  sessions_history: "会话历史",
+  sessions_send: "发送到会话",
+  sessions_spawn: "创建会话",
+  agents_list: "代理列表",
 };
 
 export function friendlyToolName(raw: string): string {
@@ -34,6 +34,5 @@ export function friendlyToolName(raw: string): string {
   if (mapped) {
     return mapped;
   }
-  // Title-case fallback: "some_tool_name" → "Some Tool Name"
-  return raw.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return raw.replace(/_/g, " ");
 }

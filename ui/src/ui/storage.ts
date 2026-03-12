@@ -1,6 +1,8 @@
-const KEY = "openclaw.control.settings.v1";
+const KEY = "oneclaw.control.settings.v1";
+const LEGACY_KEY = "openclaw.control.settings.v1";
+const TOKEN_SESSION_KEY_PREFIX = "oneclaw.control.token.v1:";
 const LEGACY_TOKEN_SESSION_KEY = "openclaw.control.token.v1";
-const TOKEN_SESSION_KEY_PREFIX = "openclaw.control.token.v1:";
+const LEGACY_TOKEN_SESSION_KEY_PREFIX = "openclaw.control.token.v1:";
 
 type PersistedUiSettings = Omit<UiSettings, "token"> & { token?: never };
 
@@ -57,14 +59,24 @@ function tokenSessionKeyForGateway(gatewayUrl: string): string {
   return `${TOKEN_SESSION_KEY_PREFIX}${normalizeGatewayTokenScope(gatewayUrl)}`;
 }
 
+function legacyTokenSessionKeyForGateway(gatewayUrl: string): string {
+  return `${LEGACY_TOKEN_SESSION_KEY_PREFIX}${normalizeGatewayTokenScope(gatewayUrl)}`;
+}
+
 function loadSessionToken(gatewayUrl: string): string {
   try {
     const storage = getSessionStorage();
     if (!storage) {
       return "";
     }
+    const key = tokenSessionKeyForGateway(gatewayUrl);
+    const legacyKey = legacyTokenSessionKeyForGateway(gatewayUrl);
+    const token = storage.getItem(key) ?? storage.getItem(legacyKey) ?? "";
     storage.removeItem(LEGACY_TOKEN_SESSION_KEY);
-    const token = storage.getItem(tokenSessionKeyForGateway(gatewayUrl)) ?? "";
+    if (!storage.getItem(key) && token.trim()) {
+      storage.setItem(key, token.trim());
+    }
+    storage.removeItem(legacyKey);
     return token.trim();
   } catch {
     return "";
@@ -79,12 +91,15 @@ function persistSessionToken(gatewayUrl: string, token: string) {
     }
     storage.removeItem(LEGACY_TOKEN_SESSION_KEY);
     const key = tokenSessionKeyForGateway(gatewayUrl);
+    const legacyKey = legacyTokenSessionKeyForGateway(gatewayUrl);
     const normalized = token.trim();
     if (normalized) {
       storage.setItem(key, normalized);
+      storage.removeItem(legacyKey);
       return;
     }
     storage.removeItem(key);
+    storage.removeItem(legacyKey);
   } catch {
     // best-effort
   }
@@ -119,11 +134,13 @@ export function loadSettings(): UiSettings {
   };
 
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY);
     if (!raw) {
       return defaults;
     }
     const parsed = JSON.parse(raw) as Partial<UiSettings>;
+    const loadedFromLegacy =
+      localStorage.getItem(KEY) == null && localStorage.getItem(LEGACY_KEY) != null;
     const { theme, mode } = parseThemeSelection(
       (parsed as { theme?: unknown }).theme,
       (parsed as { themeMode?: unknown }).themeMode,
@@ -174,7 +191,7 @@ export function loadSettings(): UiSettings {
           : defaults.navGroupsCollapsed,
       locale: isSupportedLocale(parsed.locale) ? parsed.locale : undefined,
     };
-    if ("token" in parsed) {
+    if ("token" in parsed || loadedFromLegacy) {
       persistSettings(settings);
     }
     return settings;
@@ -204,4 +221,5 @@ function persistSettings(next: UiSettings) {
     ...(next.locale ? { locale: next.locale } : {}),
   };
   localStorage.setItem(KEY, JSON.stringify(persisted));
+  localStorage.removeItem(LEGACY_KEY);
 }
