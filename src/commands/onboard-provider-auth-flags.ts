@@ -4,6 +4,7 @@ type OnboardProviderAuthOptionKey = keyof Pick<
   OnboardOptions,
   | "anthropicApiKey"
   | "openaiApiKey"
+  | "yutoapiApiKey"
   | "mistralApiKey"
   | "openrouterApiKey"
   | "kilocodeApiKey"
@@ -53,6 +54,13 @@ export const ONBOARD_PROVIDER_AUTH_FLAGS: ReadonlyArray<OnboardProviderAuthFlag>
     cliFlag: "--openai-api-key",
     cliOption: "--openai-api-key <key>",
     description: "OpenAI API key",
+  },
+  {
+    optionKey: "yutoapiApiKey",
+    authChoice: "yutoapi-api-key",
+    cliFlag: "--yutoapi-api-key",
+    cliOption: "--yutoapi-api-key <key>",
+    description: "YutoAPI API key",
   },
   {
     optionKey: "mistralApiKey",

@@ -68,6 +68,8 @@ import {
   CustomApiError,
   parseNonInteractiveCustomApiFlags,
   resolveCustomProviderId,
+  YUTOAPI_BASE_URL,
+  YUTOAPI_PROVIDER_ID,
 } from "../../onboard-custom.js";
 import type { AuthChoice, OnboardOptions } from "../../onboard-types.js";
 import { applyOpenAIConfig } from "../../openai-model-default.js";
@@ -587,6 +589,68 @@ export async function applyNonInteractiveAuthChoice(params: {
       mode: "api_key",
     });
     return applyOpenAIConfig(nextConfig);
+  }
+
+  if (authChoice === "yutoapi-api-key") {
+    if (!opts.customModelId?.trim()) {
+      runtime.error(
+        [
+          'Auth choice "yutoapi-api-key" requires --custom-model-id.',
+          "Example: oneclaw onboard --non-interactive --auth-choice yutoapi-api-key --custom-model-id gpt-4o-mini",
+        ].join("\n"),
+      );
+      runtime.exit(1);
+      return null;
+    }
+
+    try {
+      const customAuth = parseNonInteractiveCustomApiFlags({
+        baseUrl: YUTOAPI_BASE_URL,
+        modelId: opts.customModelId,
+        compatibility: "openai",
+        apiKey: opts.yutoapiApiKey,
+        providerId: YUTOAPI_PROVIDER_ID,
+      });
+      const resolvedYutoApiKey = await resolveApiKey({
+        provider: YUTOAPI_PROVIDER_ID,
+        cfg: baseConfig,
+        flagValue: customAuth.apiKey,
+        flagName: "--yutoapi-api-key",
+        envVar: "YUTOAPI_API_KEY",
+        envVarName: "YUTOAPI_API_KEY",
+        runtime,
+        required: true,
+      });
+      if (!resolvedYutoApiKey) {
+        return null;
+      }
+      const yutoApiKeyInput =
+        requestedSecretInputMode === "ref"
+          ? toStoredSecretInput(resolvedYutoApiKey)
+          : resolvedYutoApiKey.key;
+      if (!yutoApiKeyInput) {
+        return null;
+      }
+      const result = applyCustomApiConfig({
+        config: nextConfig,
+        baseUrl: customAuth.baseUrl,
+        modelId: customAuth.modelId,
+        compatibility: customAuth.compatibility,
+        apiKey: yutoApiKeyInput,
+        providerId: customAuth.providerId,
+      });
+      return result.config;
+    } catch (err) {
+      if (err instanceof CustomApiError) {
+        runtime.error(`Invalid YutoAPI config: ${err.message}`);
+        runtime.exit(1);
+        return null;
+      }
+      const reason = err instanceof Error ? err.message : String(err);
+      runtime.error(`Invalid YutoAPI config: ${reason}`);
+      runtime.exit(1);
+      return null;
+    }
   }
 
   if (authChoice === "openrouter-api-key") {

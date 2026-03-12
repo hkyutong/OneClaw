@@ -130,18 +130,12 @@ export async function runOnboardingWizard(
     }));
 
   if (opts.mode === "remote" && flow === "quickstart") {
-    await prompter.note(
-      "快速开始仅支持本地网关，已自动切换到手动设置。",
-      "快速开始",
-    );
+    await prompter.note("快速开始仅支持本地网关，已自动切换到手动设置。", "快速开始");
     flow = "advanced";
   }
 
   if (snapshot.exists) {
-    await prompter.note(
-      onboardHelpers.summarizeExistingConfig(baseConfig),
-      "已检测到现有配置",
-    );
+    await prompter.note(onboardHelpers.summarizeExistingConfig(baseConfig), "已检测到现有配置");
 
     const action = await prompter.select({
       message: "如何处理现有配置",
@@ -370,9 +364,7 @@ export async function runOnboardingWizard(
             {
               value: "local",
               label: "本地网关（当前机器）",
-              hint: localProbe.ok
-                ? `网关可访问（${localUrl}）`
-                : `未检测到网关（${localUrl}）`,
+              hint: localProbe.ok ? `网关可访问（${localUrl}）` : `未检测到网关（${localUrl}）`,
             },
             {
               value: "remote",
@@ -415,7 +407,8 @@ export async function runOnboardingWizard(
 
   const { ensureAuthProfileStore } = await import("../agents/auth-profiles.js");
   const { promptAuthChoiceGrouped } = await import("../commands/auth-choice-prompt.js");
-  const { promptCustomApiConfig } = await import("../commands/onboard-custom.js");
+  const { promptCustomApiConfig, promptYutoApiConfig } =
+    await import("../commands/onboard-custom.js");
   const { applyAuthChoice, resolvePreferredProviderForAuthChoice, warnIfModelConfigLooksOff } =
     await import("../commands/auth-choice.js");
   const { applyPrimaryModel, promptDefaultModel } = await import("../commands/model-picker.js");
@@ -440,6 +433,14 @@ export async function runOnboardingWizard(
       secretInputMode: opts.secretInputMode,
     });
     nextConfig = customResult.config;
+  } else if (authChoice === "yutoapi-api-key") {
+    const yutoApiResult = await promptYutoApiConfig({
+      prompter,
+      runtime,
+      config: nextConfig,
+      secretInputMode: opts.secretInputMode,
+    });
+    nextConfig = yutoApiResult.config;
   } else {
     const authResult = await applyAuthChoice({
       authChoice,
@@ -459,7 +460,7 @@ export async function runOnboardingWizard(
     }
   }
 
-  if (authChoiceFromPrompt && authChoice !== "custom-api-key") {
+  if (authChoiceFromPrompt && authChoice !== "custom-api-key" && authChoice !== "yutoapi-api-key") {
     const modelSelection = await promptDefaultModel({
       config: nextConfig,
       prompter,

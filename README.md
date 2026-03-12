@@ -25,8 +25,8 @@ OneClaw 是一个面向个人设备与自托管场景的多通道 AI 网关与�
 ### 1. 克隆仓库
 
 ```bash
-git clone git@github.com:hkyutong/One-Claw.git
-cd One-Claw
+git clone git@github.com:hkyutong/OneClaw.git
+cd OneClaw
 ```
 
 ### 2. 准备依赖
@@ -47,6 +47,20 @@ cd One-Claw
 2. 构建或拉取 Docker 运行镜像
 3. 启动 OneClaw 的初始化向导
 4. 启动 Docker Gateway 服务
+
+## 推荐模型 API
+
+默认推荐在初始化向导里优先选择 `YutoAPI`。
+
+- 统一接入 OpenAI、Claude、Gemini、GLM、Qwen、DeepSeek、Kimi、MiniMax 等主流模型
+- 初始化向导里已把 `YutoAPI API key` 放在首位
+- 官网与购买入口：<https://gptapi.asia>
+
+如果你已经有 `YUTOAPI_API_KEY`，也可以先写进环境变量，再运行：
+
+```bash
+pnpm oneclaw onboard
+```
 
 ## 与上游兼容说明
 

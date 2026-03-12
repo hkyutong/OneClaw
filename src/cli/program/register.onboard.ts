@@ -56,10 +56,7 @@ export function registerOnboardCommand(program: Command) {
         `\n${theme.muted("文档：")} ${formatDocsLink("/cli/onboard", "docs.openclaw.ai/cli/onboard")}\n`,
     )
     .option("--workspace <dir>", "Agent 工作区目录（默认：~/.oneclaw/workspace）")
-    .option(
-      "--reset",
-      "运行向导前重置配置、凭据与会话（工作区仅在 --reset-scope full 时重置）",
-    )
+    .option("--reset", "运行向导前重置配置、凭据与会话（工作区仅在 --reset-scope full 时重置）")
     .option("--reset-scope <scope>", "重置范围：config|config+creds+sessions|full")
     .option("--non-interactive", "无提示运行", false)
     .option(
@@ -70,20 +67,11 @@ export function registerOnboardCommand(program: Command) {
     .option("--flow <flow>", "向导流程：quickstart|advanced|manual")
     .option("--mode <mode>", "向导模式：local|remote")
     .option("--auth-choice <choice>", `认证方式：${AUTH_CHOICE_HELP}`)
-    .option(
-      "--token-provider <id>",
-      "Token 提供商 ID（无交互模式；配合 --auth-choice token 使用）",
-    )
+    .option("--token-provider <id>", "Token 提供商 ID（无交互模式；配合 --auth-choice token 使用）")
     .option("--token <token>", "Token 值（无交互模式；配合 --auth-choice token 使用）")
-    .option(
-      "--token-profile-id <id>",
-      "认证配置 ID（无交互模式；默认：<provider>:manual）",
-    )
+    .option("--token-profile-id <id>", "认证配置 ID（无交互模式；默认：<provider>:manual）")
     .option("--token-expires-in <duration>", "可选的 token 过期时间（例如 365d、12h）")
-    .option(
-      "--secret-input-mode <mode>",
-      "API Key 保存方式：plaintext|ref（默认：plaintext）",
-    )
+    .option("--secret-input-mode <mode>", "API Key 保存方式：plaintext|ref（默认：plaintext）")
     .option("--cloudflare-ai-gateway-account-id <id>", "Cloudflare Account ID")
     .option("--cloudflare-ai-gateway-gateway-id <id>", "Cloudflare AI Gateway ID");
 
@@ -147,6 +135,7 @@ export function registerOnboardCommand(program: Command) {
           secretInputMode: opts.secretInputMode as SecretInputMode | undefined,
           anthropicApiKey: opts.anthropicApiKey as string | undefined,
           openaiApiKey: opts.openaiApiKey as string | undefined,
+          yutoapiApiKey: opts.yutoapiApiKey as string | undefined,
           mistralApiKey: opts.mistralApiKey as string | undefined,
           openrouterApiKey: opts.openrouterApiKey as string | undefined,
           kilocodeApiKey: opts.kilocodeApiKey as string | undefined,

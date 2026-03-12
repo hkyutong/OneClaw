@@ -12,7 +12,7 @@ import {
   promptDefaultModel,
   promptModelAllowlist,
 } from "./model-picker.js";
-import { promptCustomApiConfig } from "./onboard-custom.js";
+import { promptCustomApiConfig, promptYutoApiConfig } from "./onboard-custom.js";
 import { randomToken } from "./onboard-helpers.js";
 
 type GatewayAuthChoice = "token" | "password" | "trusted-proxy";
@@ -92,6 +92,9 @@ export async function promptAuthConfig(
   if (authChoice === "custom-api-key") {
     const customResult = await promptCustomApiConfig({ prompter, runtime, config: next });
     next = customResult.config;
+  } else if (authChoice === "yutoapi-api-key") {
+    const yutoApiResult = await promptYutoApiConfig({ prompter, runtime, config: next });
+    next = yutoApiResult.config;
   } else if (authChoice !== "skip") {
     const applied = await applyAuthChoice({
       authChoice,
@@ -120,7 +123,7 @@ export async function promptAuthConfig(
   const anthropicOAuth =
     authChoice === "setup-token" || authChoice === "token" || authChoice === "oauth";
 
-  if (authChoice !== "custom-api-key") {
+  if (authChoice !== "custom-api-key" && authChoice !== "yutoapi-api-key") {
     const allowlistSelection = await promptModelAllowlist({
       config: next,
       prompter,

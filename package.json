@@ -3,15 +3,15 @@
   "version": "2026.3.11",
   "description": "OneClaw 是一个可本地部署的多通道 AI 网关与个人助理运行时",
   "keywords": [],
-  "homepage": "https://github.com/hkyutong/One-Claw#readme",
+  "homepage": "https://github.com/hkyutong/OneClaw#readme",
   "bugs": {
-    "url": "https://github.com/hkyutong/One-Claw/issues"
+    "url": "https://github.com/hkyutong/OneClaw/issues"
   },
   "license": "MIT",
   "author": "",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/hkyutong/One-Claw.git"
+    "url": "git+ssh://git@github.com/hkyutong/OneClaw.git"
   },
   "bin": {
     "oneclaw": "oneclaw.mjs",

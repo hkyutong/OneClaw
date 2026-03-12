@@ -1,4 +1,5 @@
 import { ensureAuthProfileStore, resolveAuthProfileOrder } from "../agents/auth-profiles.js";
+import { modelKey } from "../agents/model-selection.js";
 import type { SecretInput } from "../config/types.secrets.js";
 import { normalizeApiKeyInput, validateApiKeyInput } from "./auth-choice.api-key.js";
 import {
@@ -86,12 +87,14 @@ import {
   applyModelStudioProviderConfigCn,
   setModelStudioApiKey,
 } from "./onboard-auth.js";
+import { promptYutoApiConfig } from "./onboard-custom.js";
 import type { AuthChoice, SecretInputMode } from "./onboard-types.js";
 import { OPENCODE_GO_DEFAULT_MODEL_REF } from "./opencode-go-model-default.js";
 import { OPENCODE_ZEN_DEFAULT_MODEL } from "./opencode-zen-model-default.js";
 import { detectZaiEndpoint } from "./zai-endpoint-detect.js";
 
 const API_KEY_TOKEN_PROVIDER_AUTH_CHOICE: Record<string, AuthChoice> = {
+  yutoapi: "yutoapi-api-key",
   openrouter: "openrouter-api-key",
   litellm: "litellm-api-key",
   "vercel-ai-gateway": "ai-gateway-api-key",
@@ -472,6 +475,21 @@ export async function applyAuthChoiceApiProviders(
       noteDefault,
     });
 
+    return { config: nextConfig, agentModelOverride };
+  }
+
+  if (authChoice === "yutoapi-api-key") {
+    const result = await promptYutoApiConfig({
+      prompter: params.prompter,
+      runtime: params.runtime,
+      config: nextConfig,
+      secretInputMode: requestedSecretInputMode,
+    });
+    nextConfig = result.config;
+    if (result.providerId && result.modelId) {
+      agentModelOverride = modelKey(result.providerId, result.modelId);
+      await noteAgentModel(agentModelOverride);
+    }
     return { config: nextConfig, agentModelOverride };
   }
 

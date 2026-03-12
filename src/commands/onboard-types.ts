@@ -14,6 +14,7 @@ export type AuthChoice =
   | "openai-codex"
   | "openai-api-key"
   | "openrouter-api-key"
+  | "yutoapi-api-key"
   | "kilocode-api-key"
   | "litellm-api-key"
   | "ai-gateway-api-key"
@@ -56,6 +57,7 @@ export type AuthChoice =
   | "custom-api-key"
   | "skip";
 export type AuthChoiceGroupId =
+  | "yutoapi"
   | "openai"
   | "anthropic"
   | "chutes"
@@ -118,6 +120,7 @@ export type OnboardOptions = {
   secretInputMode?: SecretInputMode;
   anthropicApiKey?: string;
   openaiApiKey?: string;
+  yutoapiApiKey?: string;
   mistralApiKey?: string;
   openrouterApiKey?: string;
   kilocodeApiKey?: string;

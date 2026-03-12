@@ -11,7 +11,7 @@ import {
   normalizeSecretInput,
   normalizeOptionalSecretInput,
 } from "../utils/normalize-secret-input.js";
-import type { WizardPrompter } from "../wizard/prompts.js";
+import type { WizardPrompter, WizardSelectOption } from "../wizard/prompts.js";
 import { ensureApiKeyFromEnvOrPrompt } from "./auth-choice.apply-helpers.js";
 import { applyPrimaryModel } from "./model-picker.js";
 import { normalizeAlias } from "./models/shared.js";
@@ -20,10 +20,52 @@ import type { SecretInputMode } from "./onboard-types.js";
 const DEFAULT_CONTEXT_WINDOW = CONTEXT_WINDOW_HARD_MIN_TOKENS;
 const DEFAULT_MAX_TOKENS = 4096;
 const VERIFY_TIMEOUT_MS = 30_000;
+const MANUAL_YUTOAPI_MODEL_VALUE = "__manual_yutoapi_model__";
+
+export const YUTOAPI_BASE_URL = "https://gptapi.asia/v1";
+export const YUTOAPI_PROVIDER_ID = "yutoapi";
+export const YUTOAPI_PORTAL_URL = "https://gptapi.asia";
+
+const YUTOAPI_MODEL_PRIORITY = [
+  "gpt-5",
+  "gpt-4.1",
+  "gpt-4o",
+  "o3",
+  "o4",
+  "claude",
+  "gemini",
+  "glm",
+  "qwen",
+  "deepseek",
+  "kimi",
+  "minimax",
+] as const;
 
 function normalizeContextWindowForCustomModel(value: unknown): number {
   const parsed = typeof value === "number" && Number.isFinite(value) ? Math.floor(value) : 0;
   return parsed >= CONTEXT_WINDOW_HARD_MIN_TOKENS ? parsed : CONTEXT_WINDOW_HARD_MIN_TOKENS;
+}
+
+function dedupeValues(values: string[]): string[] {
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+  for (const value of values) {
+    const normalized = value.trim();
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    deduped.push(normalized);
+  }
+  return deduped;
+}
+
+function scoreYutoApiModelId(modelId: string): number {
+  const normalized = modelId.trim().toLowerCase();
+  const matchedPriorityIndex = YUTOAPI_MODEL_PRIORITY.findIndex((prefix) =>
+    normalized.startsWith(prefix),
+  );
+  return matchedPriorityIndex >= 0 ? matchedPriorityIndex : YUTOAPI_MODEL_PRIORITY.length + 10;
 }
 
 /**
@@ -353,6 +395,51 @@ async function requestOpenAiVerification(params: {
   }
 }
 
+async function fetchOpenAiCompatibleModelIds(params: {
+  baseUrl: string;
+  apiKey: string;
+}): Promise<string[]> {
+  const endpoint = new URL(
+    "models",
+    params.baseUrl.endsWith("/") ? params.baseUrl : `${params.baseUrl}/`,
+  ).href;
+  const response = await fetchWithTimeout(
+    endpoint,
+    {
+      headers: {
+        Accept: "application/json",
+        ...buildOpenAiHeaders(params.apiKey),
+      },
+    },
+    VERIFY_TIMEOUT_MS,
+  );
+  if (!response.ok) {
+    throw new Error(`status ${response.status}`);
+  }
+  const payload = (await response.json()) as {
+    data?: Array<{ id?: unknown }>;
+  };
+  const modelIds = dedupeValues(
+    (payload.data ?? [])
+      .map((entry) => (typeof entry.id === "string" ? entry.id.trim() : ""))
+      .filter(Boolean),
+  );
+  if (modelIds.length === 0) {
+    throw new Error("no models returned");
+  }
+  return modelIds.toSorted((left, right) => {
+    const priorityDiff = scoreYutoApiModelId(left) - scoreYutoApiModelId(right);
+    if (priorityDiff !== 0) {
+      return priorityDiff;
+    }
+    const lengthDiff = left.length - right.length;
+    if (lengthDiff !== 0) {
+      return lengthDiff;
+    }
+    return left.localeCompare(right);
+  });
+}
+
 async function requestAnthropicVerification(params: {
   baseUrl: string;
   apiKey: string;
@@ -444,6 +531,91 @@ async function promptCustomApiModelId(prompter: WizardPrompter): Promise<string>
       validate: (val) => (val.trim() ? undefined : "Model ID is required"),
     })
   ).trim();
+}
+
+async function promptYutoApiModelId(params: {
+  prompter: WizardPrompter;
+  apiKey: string;
+}): Promise<string> {
+  try {
+    const modelIds = await fetchOpenAiCompatibleModelIds({
+      baseUrl: YUTOAPI_BASE_URL,
+      apiKey: params.apiKey,
+    });
+    const options: Array<WizardSelectOption> = modelIds.slice(0, 8).map((modelId) => ({
+      value: modelId,
+      label: modelId,
+      hint:
+        scoreYutoApiModelId(modelId) < YUTOAPI_MODEL_PRIORITY.length
+          ? "Recommended"
+          : "Available from YutoAPI",
+    }));
+    options.push({
+      value: MANUAL_YUTOAPI_MODEL_VALUE,
+      label: "Enter another model ID",
+      hint: "Use this if the model you want is not in the quick list.",
+    });
+    const selected = await params.prompter.select({
+      message: "Choose a YutoAPI model",
+      options,
+      initialValue: options[0]?.value,
+    });
+    if (selected !== MANUAL_YUTOAPI_MODEL_VALUE) {
+      return selected;
+    }
+  } catch (error) {
+    await params.prompter.note(
+      [
+        "Could not load the YutoAPI model list automatically.",
+        `Reason: ${formatVerificationError(error)}`,
+        "You can still type the model ID manually.",
+      ].join("\n"),
+      "YutoAPI",
+    );
+  }
+
+  return (
+    await params.prompter.text({
+      message: "YutoAPI model ID",
+      placeholder: "e.g. gpt-4o-mini, claude-3-7-sonnet, gemini-2.5-pro",
+      validate: (value) => (value.trim() ? undefined : "YutoAPI model ID is required."),
+    })
+  ).trim();
+}
+
+type YutoApiRetryChoice = "apiKey" | "model" | "both";
+
+async function promptYutoApiRetryChoice(prompter: WizardPrompter): Promise<YutoApiRetryChoice> {
+  return await prompter.select({
+    message: "What would you like to change?",
+    options: [
+      { value: "apiKey", label: "Change API key" },
+      { value: "model", label: "Change model" },
+      { value: "both", label: "Change API key and model" },
+    ],
+  });
+}
+
+async function promptYutoApiKey(params: {
+  prompter: WizardPrompter;
+  config: OpenClawConfig;
+  secretInputMode?: SecretInputMode;
+}): Promise<{ apiKey?: SecretInput; resolvedApiKey: string }> {
+  let apiKeyInput: SecretInput | undefined;
+  const resolvedApiKey = await ensureApiKeyFromEnvOrPrompt({
+    config: params.config,
+    provider: YUTOAPI_PROVIDER_ID,
+    envLabel: "YUTOAPI_API_KEY",
+    promptMessage: "Enter YutoAPI API key",
+    normalize: normalizeSecretInput,
+    validate: (value) => (normalizeSecretInput(value) ? undefined : "YutoAPI API key is required."),
+    prompter: params.prompter,
+    secretInputMode: params.secretInputMode,
+    setCredential: async (apiKey) => {
+      apiKeyInput = apiKey;
+    },
+  });
+  return { apiKey: apiKeyInput, resolvedApiKey };
 }
 
 async function applyCustomApiRetryChoice(params: {
@@ -822,4 +994,74 @@ export async function promptCustomApiConfig(params: {
 
   runtime.log(`Configured custom provider: ${result.providerId}/${result.modelId}`);
   return result;
+}
+
+export async function promptYutoApiConfig(params: {
+  prompter: WizardPrompter;
+  runtime: RuntimeEnv;
+  config: OpenClawConfig;
+  secretInputMode?: SecretInputMode;
+}): Promise<CustomApiResult> {
+  const { prompter, runtime, config } = params;
+
+  await prompter.note(
+    [
+      "YutoAPI is the recommended multi-model gateway for OneClaw.",
+      "It gives you one API endpoint for OpenAI, Claude, Gemini, GLM, Qwen, DeepSeek, Kimi, MiniMax, and more.",
+      `Get or buy your API key at: ${YUTOAPI_PORTAL_URL}`,
+    ].join("\n"),
+    "YutoAPI",
+  );
+
+  let { apiKey: yutoApiKeyInput, resolvedApiKey } = await promptYutoApiKey({
+    prompter,
+    config,
+    secretInputMode: params.secretInputMode,
+  });
+
+  let modelId = await promptYutoApiModelId({ prompter, apiKey: resolvedApiKey });
+
+  while (true) {
+    const verifySpinner = prompter.progress("Verifying YutoAPI...");
+    const result = await requestOpenAiVerification({
+      baseUrl: YUTOAPI_BASE_URL,
+      apiKey: resolvedApiKey,
+      modelId,
+    });
+    if (result.ok) {
+      verifySpinner.stop("YutoAPI is ready.");
+      break;
+    }
+
+    if (result.status !== undefined) {
+      verifySpinner.stop(`Verification failed: status ${result.status}`);
+    } else {
+      verifySpinner.stop(`Verification failed: ${formatVerificationError(result.error)}`);
+    }
+    const retryChoice = await promptYutoApiRetryChoice(prompter);
+    if (retryChoice === "apiKey" || retryChoice === "both") {
+      const nextKey = await promptYutoApiKey({
+        prompter,
+        config,
+        secretInputMode: params.secretInputMode,
+      });
+      yutoApiKeyInput = nextKey.apiKey;
+      resolvedApiKey = nextKey.resolvedApiKey;
+    }
+    if (retryChoice === "model" || retryChoice === "both") {
+      modelId = await promptYutoApiModelId({ prompter, apiKey: resolvedApiKey });
+    }
+  }
+
+  const applied = applyCustomApiConfig({
+    config,
+    baseUrl: YUTOAPI_BASE_URL,
+    modelId,
+    compatibility: "openai",
+    apiKey: normalizeOptionalProviderApiKey(yutoApiKeyInput),
+    providerId: YUTOAPI_PROVIDER_ID,
+  });
+
+  runtime.log(`Configured YutoAPI: ${applied.providerId}/${applied.modelId}`);
+  return applied;
 }
