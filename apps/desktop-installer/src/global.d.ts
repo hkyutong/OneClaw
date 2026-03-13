@@ -1,8 +1,6 @@
 
 
 
-
-
 declare global {
   interface Window {
     oneclawInstallerHost?: {

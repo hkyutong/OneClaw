@@ -281,13 +281,25 @@ async function approveLatestLocalDashboardRequest(
 ): Promise<void> {
   const previousIds = new Set(previousPending.map((item) => item.requestId));
   const pendingNow = await listPendingDashboardRequests(repoRoot, env);
-  const pendingSorted = [...pendingNow].toSorted(
-    (left: DashboardPairingRequest, right: DashboardPairingRequest) =>
-      (right.ts ?? 0) - (left.ts ?? 0),
-  );
-  const nextRequest =
-    pendingSorted.find((item: DashboardPairingRequest) => !previousIds.has(item.requestId)) ??
-    pendingSorted[0];
+  let nextRequest: DashboardPairingRequest | undefined;
+
+  for (const item of pendingNow) {
+    if (previousIds.has(item.requestId)) {
+      continue;
+    }
+
+    if (!nextRequest || (item.ts ?? 0) > (nextRequest.ts ?? 0)) {
+      nextRequest = item;
+    }
+  }
+
+  if (!nextRequest) {
+    for (const item of pendingNow) {
+      if (!nextRequest || (item.ts ?? 0) > (nextRequest.ts ?? 0)) {
+        nextRequest = item;
+      }
+    }
+  }
 
   if (!nextRequest?.requestId) {
     return;

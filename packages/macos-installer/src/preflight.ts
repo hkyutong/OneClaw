@@ -261,13 +261,21 @@ async function probeDockerSetup(
 
 async function checkUrlReachable(url: string): Promise<boolean> {
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    const response = await fetch(url, {
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    return response.ok;
+    const result = await runCommand("curl", [
+      "--location",
+      "--silent",
+      "--show-error",
+      "--output",
+      "/dev/null",
+      "--head",
+      "--write-out",
+      "%{http_code}",
+      url,
+    ]);
+    const statusCode = Number(result.stdout.trim());
+    return (
+      result.code === 0 && Number.isFinite(statusCode) && statusCode >= 200 && statusCode < 400
+    );
   } catch {
     return false;
   }

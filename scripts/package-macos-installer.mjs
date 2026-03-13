@@ -331,14 +331,7 @@ async function zipBundle(outputRoot, appBundlePath) {
     await cp(path.join(outputRoot, LAUNCHER_NAME), path.join(packageDir, LAUNCHER_NAME));
     await cp(path.join(outputRoot, GUIDE_NAME), path.join(packageDir, GUIDE_NAME));
 
-    await execFileAsync("ditto", [
-      "-c",
-      "-k",
-      "--sequesterRsrc",
-      "--keepParent",
-      packageDir,
-      zipPath,
-    ]);
+    await execFileAsync("ditto", ["-c", "-k", "--keepParent", "--norsrc", packageDir, zipPath]);
   } finally {
     await rm(stagingRoot, { recursive: true, force: true });
   }
