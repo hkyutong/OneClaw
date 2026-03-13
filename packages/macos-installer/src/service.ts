@@ -11,7 +11,6 @@ import { OnboardingSessionManager } from "./onboarding-session.js";
 import {
   ensureDockerWorkspacePrepared,
   launchDashboardInBrowser,
-  prepareDockerWorkspace,
   launchDoctorInTerminal,
   launchOnboardingInTerminal,
 } from "./openclaw.js";
@@ -283,11 +282,11 @@ export class MacInstallerService {
       }
       this.completeStep(session, "inspect", "预检通过");
 
-      this.startStep(session, "runtime", "下载 OneClaw Docker 安装包");
-      const dockerWorkspace = await prepareDockerWorkspace(paths, (line, level = "info") => {
+      this.startStep(session, "runtime", "准备 OneClaw Docker 工作区");
+      const dockerWorkspace = await ensureDockerWorkspacePrepared(paths, (line, level = "info") => {
         void this.log(session, line, level);
       });
-      this.completeStep(session, "runtime", "OneClaw Docker 安装包已就绪");
+      this.completeStep(session, "runtime", "OneClaw Docker 工作区已就绪");
 
       this.startStep(session, "openclaw", "准备 OneClaw 设置入口");
       await this.log(session, `固定安装版本：${dockerWorkspace.version}`);
