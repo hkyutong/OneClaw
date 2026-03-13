@@ -1,4 +1,4 @@
-import { rm } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { ONECLAW_INSTALL_BUNDLE_LABEL, ONECLAW_INSTALL_BUNDLE_TAG } from "@oneclaw/installer-core";
 import { buildComposeCliRunArgs } from "./compose.js";
@@ -33,6 +33,7 @@ export async function ensureDockerWorkspacePrepared(
 
   if ((await pathExists(setupScriptPath)) && (await pathExists(composeFilePath))) {
     onLog(`复用已存在的 ${ONECLAW_INSTALL_BUNDLE_LABEL} Docker 工作区。`);
+    await ensureDockerComposeLoopbackPorts(repoRoot, onLog);
     const launchers = await createLauncherScripts(paths);
 
     return {
@@ -95,6 +96,7 @@ export async function prepareDockerWorkspace(
     throw new Error("OneClaw Docker 安装文件不完整，请重新执行安装准备。");
   }
 
+  await ensureDockerComposeLoopbackPorts(repoRoot, onLog);
   onLog(`已固定到 ${ONECLAW_INSTALL_BUNDLE_LABEL}（${ONECLAW_INSTALL_BUNDLE_TAG}）。`);
 
   const launchers = await createLauncherScripts(paths);
@@ -435,4 +437,38 @@ async function createLauncherScripts(paths: MacInstallerPaths): Promise<{
 
 function shellQuote(value: string): string {
   return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+async function ensureDockerComposeLoopbackPorts(
+  repoRoot: string,
+  onLog: (line: string, level?: "info" | "error") => void,
+): Promise<void> {
+  const composeFilePath = path.join(repoRoot, "docker-compose.yml");
+  let content = await readFile(composeFilePath, "utf8");
+  const original = content;
+
+  content = content.replace(
+    '- "${OPENCLAW_GATEWAY_PORT:-18789}:18789"',
+    '- "127.0.0.1:${OPENCLAW_GATEWAY_PORT:-18789}:18789"',
+  );
+  content = content.replace(
+    '- "${OPENCLAW_BRIDGE_PORT:-18790}:18790"',
+    '- "127.0.0.1:${OPENCLAW_BRIDGE_PORT:-18790}:18790"',
+  );
+  content = content.replace(
+    '- "${ONECLAW_GATEWAY_PORT:-18789}:18789"',
+    '- "127.0.0.1:${ONECLAW_GATEWAY_PORT:-18789}:18789"',
+  );
+  content = content.replace(
+    '- "${ONECLAW_BRIDGE_PORT:-18790}:18790"',
+    '- "127.0.0.1:${ONECLAW_BRIDGE_PORT:-18790}:18790"',
+  );
+
+  if (content === original) {
+    onLog("已确认 Docker 端口仅绑定本机回环地址。");
+    return;
+  }
+
+  await writeFile(composeFilePath, content, "utf8");
+  onLog("已将 Docker 端口绑定限制为 127.0.0.1。");
 }

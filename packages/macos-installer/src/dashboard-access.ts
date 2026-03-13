@@ -13,6 +13,7 @@ export async function ensureInstallerDashboardAccess(
 ): Promise<void> {
   await ensureControlUiAllowedOrigins(repoRoot, composeEnv, onLog);
   await ensureControlUiAllowInsecureAuth(repoRoot, composeEnv, onLog);
+  await ensureControlUiDeviceAuthDisabled(repoRoot, composeEnv, onLog);
 }
 
 async function ensureControlUiAllowedOrigins(
@@ -68,6 +69,37 @@ async function ensureControlUiAllowInsecureAuth(
       "config",
       "set",
       "gateway.controlUi.allowInsecureAuth",
+      "true",
+    ]),
+    onLog,
+  );
+}
+
+async function ensureControlUiDeviceAuthDisabled(
+  repoRoot: string,
+  composeEnv: NodeJS.ProcessEnv,
+  onLog?: LogFn,
+): Promise<void> {
+  const current = (
+    await readComposeConfigValue(
+      repoRoot,
+      composeEnv,
+      "gateway.controlUi.dangerouslyDisableDeviceAuth",
+    )
+  )?.trim();
+  if (current === "true") {
+    onLog?.("已启用本地 Dashboard 免设备身份模式。");
+    return;
+  }
+
+  onLog?.("正在启用本地 Dashboard 免设备身份模式。");
+  await runComposeLogged(
+    repoRoot,
+    composeEnv,
+    await buildComposeCliRunArgs(repoRoot, composeEnv, [
+      "config",
+      "set",
+      "gateway.controlUi.dangerouslyDisableDeviceAuth",
       "true",
     ]),
     onLog,
