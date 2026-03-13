@@ -11,6 +11,7 @@ import {
   ONECLAW_INSTALL_BUNDLE_REF_URL,
   type ReleaseChannel
 } from "@oneclaw/installer-core";
+import yutoLogoUrl from "../../../yuto-macOS.png?url";
 import {
   checkMacBackendHealth,
   fetchEmbeddedMacOnboarding,
@@ -775,6 +776,7 @@ function App() {
   const canRunDoctor = canLaunchOfficialSetup && setupCompleted;
   const progressPercent = resolveProgressPercent(session, hasInstalledOpenClaw);
   const primaryBlockerAction = resolvePrimaryBlockerAction(inspection, blockedChecks);
+  const installActionStartsPreparation = !session || session.status === "failed";
   const currentStep = resolveCurrentStep({
     backendState,
     blockedCount: blockedChecks.length,
@@ -1112,9 +1114,7 @@ function App() {
           </header>
           <section className="topbar unsupported-topbar">
             <div className="brand-row unsupported-brand-row">
-              <div aria-hidden="true" className="app-logo app-mark">
-                1C
-              </div>
+              <img alt="OneClaw" className="app-logo" src={yutoLogoUrl} />
               <div className="brand-copy">
                 <h1>{text.unsupportedTitle}</h1>
                 <p className="hero-copy">
@@ -1147,9 +1147,7 @@ function App() {
           <section className="topbar">
             <div className="hero-block">
               <div className="brand-row">
-                <div aria-hidden="true" className="app-logo app-mark">
-                  1C
-                </div>
+                <img alt="OneClaw" className="app-logo" src={yutoLogoUrl} />
                 <div className="brand-copy">
                   <h1>{text.heading}</h1>
                   <p className="hero-copy">{text.subtitle}</p>
@@ -1375,16 +1373,27 @@ function App() {
             <div className="action-row">
               <button
                 className="primary-cta"
-                disabled={!canLaunchOfficialSetup || busyAction !== null}
+                disabled={
+                  installActionStartsPreparation
+                    ? !canStartInstall || busyAction !== null
+                    : !canLaunchOfficialSetup || busyAction !== null
+                }
                 onClick={() => {
+                  if (installActionStartsPreparation) {
+                    void handleInstall();
+                    return;
+                  }
+
                   void (supportsEmbeddedOnboarding
                     ? handleStartEmbeddedOnboarding()
                     : handleLaunchOnboardingInTerminal());
                 }}
                 type="button"
               >
-                {session?.status === "failed"
-                  ? text.install.retry
+                {installActionStartsPreparation
+                  ? session?.status === "failed"
+                    ? text.install.retry
+                    : text.check.start
                   : text.install.continue}
               </button>
               <button
@@ -1936,11 +1945,7 @@ function CheckCard(props: {
     <article className={`check-card ${props.item.state}`}>
       <div className="row-between check-card-heading">
         <div className="check-card-title">
-          {usesIcon ? (
-            <div aria-hidden="true" className="check-card-icon app-mark app-mark-compact">
-              1C
-            </div>
-          ) : null}
+          {usesIcon ? <img alt="" className="check-card-icon" src={yutoLogoUrl} /> : null}
           <strong>{localizeCheckTitle(props.language, props.item.id)}</strong>
         </div>
         <span className={`state-chip ${props.item.state}`}>
@@ -1975,12 +1980,15 @@ function resolveCurrentStep(input: {
   }
 
   if (
-    !input.hasInstalledOpenClaw ||
     input.session?.status === "pending" ||
     input.session?.status === "running" ||
     input.session?.status === "failed"
   ) {
     return "install";
+  }
+
+  if (!input.hasInstalledOpenClaw) {
+    return "check";
   }
 
   if (input.guidedSetup?.status === "pending" || input.guidedSetup?.status === "running") {
