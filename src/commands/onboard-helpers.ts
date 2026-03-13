@@ -206,12 +206,19 @@ export function formatControlUiSshHint(params: {
   port: number;
   basePath?: string;
   token?: string;
+  skipDeviceAuth?: boolean;
 }): string {
   const basePath = normalizeControlUiBasePath(params.basePath);
   const uiPath = basePath ? `${basePath}/` : "/";
-  const localUrl = `http://localhost:${params.port}${uiPath}`;
+  const baseUrl = `http://localhost:${params.port}${uiPath}`;
+  const localUrl = withControlUiHashParams(baseUrl, {
+    skipDeviceAuth: params.skipDeviceAuth,
+  });
   const authedUrl = params.token
-    ? `${localUrl}#token=${encodeURIComponent(params.token)}`
+    ? withControlUiHashParams(baseUrl, {
+        token: params.token,
+        skipDeviceAuth: params.skipDeviceAuth,
+      })
     : undefined;
   const sshTarget = resolveSshTargetHint();
   return [
@@ -226,6 +233,23 @@ export function formatControlUiSshHint(params: {
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+function withControlUiHashParams(
+  baseUrl: string,
+  params: { token?: string; skipDeviceAuth?: boolean },
+): string {
+  const parsed = new URL(baseUrl);
+  const hashParams = new URLSearchParams(parsed.hash.startsWith("#") ? parsed.hash.slice(1) : "");
+  if (params.token?.trim()) {
+    hashParams.set("token", params.token.trim());
+  }
+  if (params.skipDeviceAuth) {
+    hashParams.set("skipDeviceAuth", "1");
+  }
+  const nextHash = hashParams.toString();
+  parsed.hash = nextHash ? `#${nextHash}` : "";
+  return parsed.toString();
 }
 
 function resolveSshTargetHint(): string {

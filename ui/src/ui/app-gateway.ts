@@ -37,7 +37,7 @@ import {
 } from "./gateway.ts";
 import { GatewayBrowserClient } from "./gateway.ts";
 import type { Tab } from "./navigation.ts";
-import type { UiSettings } from "./storage.ts";
+import { loadSessionSharedAuthPreference, type UiSettings } from "./storage.ts";
 import type {
   AgentsListResult,
   PresenceEntry,
@@ -212,6 +212,7 @@ export function connectGateway(host: GatewayHost) {
     url: host.settings.gatewayUrl,
     token: host.settings.token.trim() ? host.settings.token : undefined,
     password: host.password.trim() ? host.password : undefined,
+    skipDeviceIdentity: loadSessionSharedAuthPreference(host.settings.gatewayUrl),
     clientName: GATEWAY_CLIENT_NAMES.CONTROL_UI,
     clientVersion,
     mode: "webchat",

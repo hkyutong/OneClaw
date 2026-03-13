@@ -68,12 +68,14 @@ export async function dashboardCommand(
     customBindHost,
     basePath,
   });
+  const preferSharedDashboardAuth = shouldPreferSharedDashboardAuth(cfg, links.httpUrl);
   // Avoid embedding externally managed SecretRef tokens in terminal/clipboard/browser args.
   const includeTokenInUrl = token.length > 0 && !resolvedToken.tokenSecretRefConfigured;
-  // Prefer URL fragment to avoid leaking auth tokens via query params.
-  const dashboardUrl = includeTokenInUrl
-    ? `${links.httpUrl}#token=${encodeURIComponent(token)}`
-    : links.httpUrl;
+  const dashboardUrl = buildDashboardUrl({
+    baseUrl: links.httpUrl,
+    token: includeTokenInUrl ? token : undefined,
+    skipDeviceAuth: preferSharedDashboardAuth,
+  });
 
   runtime.log(`Dashboard URL: ${dashboardUrl}`);
   if (resolvedToken.tokenSecretRefConfigured && token) {
@@ -103,6 +105,7 @@ export async function dashboardCommand(
         port,
         basePath,
         token: includeTokenInUrl ? token || undefined : undefined,
+        skipDeviceAuth: preferSharedDashboardAuth,
       });
     }
   } else {
@@ -114,4 +117,38 @@ export async function dashboardCommand(
   } else if (hint) {
     runtime.log(hint);
   }
+}
+
+function shouldPreferSharedDashboardAuth(cfg: OpenClawConfig, dashboardUrl: string): boolean {
+  if (cfg.gateway?.controlUi?.allowInsecureAuth !== true) {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(dashboardUrl);
+    const host = parsed.hostname.trim().toLowerCase();
+    return (
+      host === "localhost" || host === "::1" || host === "127.0.0.1" || host.startsWith("127.")
+    );
+  } catch {
+    return false;
+  }
+}
+
+function buildDashboardUrl(params: {
+  baseUrl: string;
+  token?: string;
+  skipDeviceAuth?: boolean;
+}): string {
+  const parsed = new URL(params.baseUrl);
+  const hashParams = new URLSearchParams(parsed.hash.startsWith("#") ? parsed.hash.slice(1) : "");
+  if (params.token?.trim()) {
+    hashParams.set("token", params.token.trim());
+  }
+  if (params.skipDeviceAuth) {
+    hashParams.set("skipDeviceAuth", "1");
+  }
+  const nextHash = hashParams.toString();
+  parsed.hash = nextHash ? `#${nextHash}` : "";
+  return parsed.toString();
 }

@@ -42,14 +42,19 @@ function resetRuntime() {
   runtime.exit.mockClear();
 }
 
-function mockSnapshot(token: unknown = "abc") {
+function mockSnapshot(token: unknown = "abc", opts?: { allowInsecureAuth?: boolean }) {
   readConfigFileSnapshotMock.mockResolvedValue({
     path: "/tmp/openclaw.json",
     exists: true,
     raw: "{}",
     parsed: {},
     valid: true,
-    config: { gateway: { auth: { token } } },
+    config: {
+      gateway: {
+        auth: { token },
+        controlUi: opts?.allowInsecureAuth ? { allowInsecureAuth: true } : undefined,
+      },
+    },
     issues: [],
     legacyIssues: [],
   });
@@ -93,6 +98,22 @@ describe("dashboardCommand", () => {
     expect(openUrlMock).toHaveBeenCalledWith("http://127.0.0.1:18789/#token=abc123");
     expect(runtime.log).toHaveBeenCalledWith(
       "Opened in your browser. Keep that tab to control OpenClaw.",
+    );
+  });
+
+  it("adds skipDeviceAuth for local loopback dashboards when insecure local auth is enabled", async () => {
+    mockSnapshot("abc123", { allowInsecureAuth: true });
+    copyToClipboardMock.mockResolvedValue(true);
+    detectBrowserOpenSupportMock.mockResolvedValue({ ok: true });
+    openUrlMock.mockResolvedValue(true);
+
+    await dashboardCommand(runtime);
+
+    expect(copyToClipboardMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:18789/#token=abc123&skipDeviceAuth=1",
+    );
+    expect(openUrlMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:18789/#token=abc123&skipDeviceAuth=1",
     );
   });
 

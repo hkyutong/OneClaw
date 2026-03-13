@@ -3,6 +3,7 @@ const LEGACY_KEY = "openclaw.control.settings.v1";
 const TOKEN_SESSION_KEY_PREFIX = "oneclaw.control.token.v1:";
 const LEGACY_TOKEN_SESSION_KEY = "openclaw.control.token.v1";
 const LEGACY_TOKEN_SESSION_KEY_PREFIX = "openclaw.control.token.v1:";
+const SHARED_AUTH_SESSION_KEY_PREFIX = "oneclaw.control.shared-auth.v1:";
 
 type PersistedUiSettings = Omit<UiSettings, "token"> & { token?: never };
 
@@ -63,6 +64,10 @@ function legacyTokenSessionKeyForGateway(gatewayUrl: string): string {
   return `${LEGACY_TOKEN_SESSION_KEY_PREFIX}${normalizeGatewayTokenScope(gatewayUrl)}`;
 }
 
+function sharedAuthSessionKeyForGateway(gatewayUrl: string): string {
+  return `${SHARED_AUTH_SESSION_KEY_PREFIX}${normalizeGatewayTokenScope(gatewayUrl)}`;
+}
+
 function loadSessionToken(gatewayUrl: string): string {
   try {
     const storage = getSessionStorage();
@@ -100,6 +105,35 @@ function persistSessionToken(gatewayUrl: string, token: string) {
     }
     storage.removeItem(key);
     storage.removeItem(legacyKey);
+  } catch {
+    // best-effort
+  }
+}
+
+export function loadSessionSharedAuthPreference(gatewayUrl: string): boolean {
+  try {
+    const storage = getSessionStorage();
+    if (!storage) {
+      return false;
+    }
+    return storage.getItem(sharedAuthSessionKeyForGateway(gatewayUrl)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function persistSessionSharedAuthPreference(gatewayUrl: string, enabled: boolean) {
+  try {
+    const storage = getSessionStorage();
+    if (!storage) {
+      return;
+    }
+    const key = sharedAuthSessionKeyForGateway(gatewayUrl);
+    if (enabled) {
+      storage.setItem(key, "1");
+      return;
+    }
+    storage.removeItem(key);
   } catch {
     // best-effort
   }

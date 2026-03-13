@@ -95,6 +95,18 @@ function isTrustedRetryEndpoint(url: string): boolean {
   }
 }
 
+function isLoopbackEndpoint(url: string): boolean {
+  try {
+    const gatewayUrl = new URL(url, window.location.href);
+    const host = gatewayUrl.hostname.trim().toLowerCase();
+    return (
+      host === "localhost" || host === "::1" || host === "127.0.0.1" || host.startsWith("127.")
+    );
+  } catch {
+    return false;
+  }
+}
+
 export type GatewayHelloOk = {
   type: "hello-ok";
   protocol: number;
@@ -122,6 +134,7 @@ export type GatewayBrowserClientOptions = {
   url: string;
   token?: string;
   password?: string;
+  skipDeviceIdentity?: boolean;
   clientName?: GatewayClientName;
   clientVersion?: string;
   platform?: string;
@@ -237,10 +250,18 @@ export class GatewayBrowserClient {
     let deviceIdentity: Awaited<ReturnType<typeof loadOrCreateDeviceIdentity>> | null = null;
     let canFallbackToShared = false;
     const explicitGatewayToken = this.opts.token?.trim() || undefined;
+    const explicitSharedAuth = Boolean(explicitGatewayToken || this.opts.password?.trim());
+    // Loopback Control UI installs can opt into shared-auth mode so first-run local
+    // dashboard sessions don't trigger browser device pairing.
+    const shouldSkipDeviceIdentity =
+      this.opts.skipDeviceIdentity === true &&
+      explicitSharedAuth &&
+      isLoopbackEndpoint(this.opts.url);
+    const shouldUseDeviceIdentity = isSecureContext && !shouldSkipDeviceIdentity;
     let authToken = explicitGatewayToken;
     let deviceToken: string | undefined;
 
-    if (isSecureContext) {
+    if (shouldUseDeviceIdentity) {
       deviceIdentity = await loadOrCreateDeviceIdentity();
       const storedToken = loadDeviceAuthToken({
         deviceId: deviceIdentity.deviceId,
@@ -282,7 +303,7 @@ export class GatewayBrowserClient {
         }
       | undefined;
 
-    if (isSecureContext && deviceIdentity) {
+    if (shouldUseDeviceIdentity && deviceIdentity) {
       const signedAtMs = Date.now();
       const nonce = this.connectNonce ?? "";
       const payload = buildDeviceAuthPayload({

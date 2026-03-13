@@ -174,6 +174,37 @@ describe("GatewayBrowserClient", () => {
     expect(signedPayload).toContain("|stored-device-token|nonce-1");
   });
 
+  it("skips device identity for local shared-auth sessions when requested", async () => {
+    const client = new GatewayBrowserClient({
+      url: "ws://127.0.0.1:18789",
+      token: "shared-auth-token",
+      skipDeviceIdentity: true,
+    });
+
+    client.start();
+    const ws = getLatestWebSocket();
+    ws.emitOpen();
+    ws.emitMessage({
+      type: "event",
+      event: "connect.challenge",
+      payload: { nonce: "nonce-1" },
+    });
+    await vi.waitFor(() => expect(ws.sent.length).toBeGreaterThan(0));
+
+    const connectFrame = JSON.parse(ws.sent.at(-1) ?? "{}") as {
+      method?: string;
+      params?: {
+        auth?: { token?: string };
+        device?: unknown;
+      };
+    };
+    expect(connectFrame.method).toBe("connect");
+    expect(connectFrame.params?.auth?.token).toBe("shared-auth-token");
+    expect(connectFrame.params?.device).toBeUndefined();
+    expect(loadOrCreateDeviceIdentityMock).not.toHaveBeenCalled();
+    expect(signDevicePayloadMock).not.toHaveBeenCalled();
+  });
+
   it("retries once with device token after token mismatch when shared token is explicit", async () => {
     vi.useFakeTimers();
     const client = new GatewayBrowserClient({

@@ -2,11 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GATEWAY_EVENT_UPDATE_AVAILABLE } from "../../../src/gateway/events.js";
 import { ConnectErrorDetailCodes } from "../../../src/gateway/protocol/connect-error-details.js";
 import { connectGateway, resolveControlUiClientVersion } from "./app-gateway.ts";
+import { persistSessionSharedAuthPreference } from "./storage.ts";
 
 type GatewayClientMock = {
   start: ReturnType<typeof vi.fn>;
   stop: ReturnType<typeof vi.fn>;
-  options: { clientVersion?: string };
+  options: { clientVersion?: string; skipDeviceIdentity?: boolean };
   emitClose: (info: {
     code: number;
     reason?: string;
@@ -37,6 +38,7 @@ vi.mock("./gateway.ts", () => {
     constructor(
       private opts: {
         clientVersion?: string;
+        skipDeviceIdentity?: boolean;
         onClose?: (info: {
           code: number;
           reason: string;
@@ -49,7 +51,10 @@ vi.mock("./gateway.ts", () => {
       gatewayClientInstances.push({
         start: this.start,
         stop: this.stop,
-        options: { clientVersion: this.opts.clientVersion },
+        options: {
+          clientVersion: this.opts.clientVersion,
+          skipDeviceIdentity: this.opts.skipDeviceIdentity,
+        },
         emitClose: (info) => {
           this.opts.onClose?.({
             code: info.code,
@@ -117,6 +122,7 @@ function createHost() {
 describe("connectGateway", () => {
   beforeEach(() => {
     gatewayClientInstances.length = 0;
+    window.sessionStorage.clear();
   });
 
   it("ignores stale client onGap callbacks after reconnect", () => {
@@ -137,6 +143,16 @@ describe("connectGateway", () => {
     expect(host.lastError).toBe(
       "event gap detected (expected seq 20, got 24); refresh recommended",
     );
+  });
+
+  it("uses session shared-auth preference for local dashboard connects", () => {
+    const host = createHost();
+    persistSessionSharedAuthPreference(host.settings.gatewayUrl, true);
+
+    connectGateway(host);
+    const client = gatewayClientInstances[0];
+    expect(client).toBeDefined();
+    expect(client.options.skipDeviceIdentity).toBe(true);
   });
 
   it("ignores stale client onEvent callbacks after reconnect", () => {

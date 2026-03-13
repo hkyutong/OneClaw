@@ -10,9 +10,10 @@ import {
   OPENCLAW_DOCKER_IMAGE,
   YUTOAPI_BASE_URL,
 } from "./constants.js";
+import { ensureInstallerDashboardAccess } from "./dashboard-access.js";
 import { ensureDockerWorkspacePrepared, type OpenClawInstallResult } from "./openclaw.js";
 import { getDockerConfigDir, getDockerWorkspaceDir } from "./paths.js";
-import { runCommand, runCommandLogged } from "./shell.js";
+import { runCommandLogged } from "./shell.js";
 import type { GuidedProvider, MacInstallerPaths } from "./types.js";
 import { ensureDir } from "./utils.js";
 
@@ -61,6 +62,7 @@ export async function runGuidedDockerSetup(
       "run",
       "--rm",
       "-T",
+      "--no-deps",
       "oneclaw-cli",
       "onboard",
       "--mode",
@@ -87,6 +89,7 @@ export async function runGuidedDockerSetup(
       "run",
       "--rm",
       "-T",
+      "--no-deps",
       "oneclaw-cli",
       "config",
       "set",
@@ -99,7 +102,7 @@ export async function runGuidedDockerSetup(
   await runComposeLogged(
     repoRoot,
     composeEnv,
-    ["run", "--rm", "-T", "oneclaw-cli", "config", "set", "gateway.mode", "local"],
+    ["run", "--rm", "-T", "--no-deps", "oneclaw-cli", "config", "set", "gateway.mode", "local"],
     onLog,
   );
   await runComposeLogged(
@@ -109,6 +112,7 @@ export async function runGuidedDockerSetup(
       "run",
       "--rm",
       "-T",
+      "--no-deps",
       "oneclaw-cli",
       "config",
       "set",
@@ -117,7 +121,7 @@ export async function runGuidedDockerSetup(
     ],
     onLog,
   );
-  await ensureControlUiAllowedOrigins(repoRoot, composeEnv, onLog);
+  await ensureInstallerDashboardAccess(repoRoot, composeEnv, onLog);
 
   onLog("正在启动 OneClaw Gateway。");
   await runComposeLogged(repoRoot, composeEnv, ["up", "-d", "oneclaw-gateway"], onLog);
@@ -312,6 +316,7 @@ async function fixDockerPermissions(
       "run",
       "--rm",
       "-T",
+      "--no-deps",
       "--user",
       "root",
       "--entrypoint",
@@ -319,55 +324,6 @@ async function fixDockerPermissions(
       "oneclaw-cli",
       "-c",
       "find /home/node/.openclaw -xdev -exec chown node:node {} +; [ -d /home/node/.openclaw/workspace/.openclaw ] && chown -R node:node /home/node/.openclaw/workspace/.openclaw || true",
-    ],
-    onLog,
-  );
-}
-
-async function ensureControlUiAllowedOrigins(
-  repoRoot: string,
-  composeEnv: Record<string, string>,
-  onLog: (line: string, level?: "info" | "error") => void,
-): Promise<void> {
-  const current = await runCommand(
-    "docker",
-    [
-      "compose",
-      "run",
-      "--rm",
-      "-T",
-      "oneclaw-cli",
-      "config",
-      "get",
-      "gateway.controlUi.allowedOrigins",
-    ],
-    {
-      cwd: repoRoot,
-      env: { ...process.env, ...composeEnv },
-    },
-  );
-  const output = current.stdout.replace(/\r/g, "").trim();
-
-  if (current.code === 0 && output && output !== "null" && output !== "[]") {
-    onLog("保留现有的 Control UI 来源白名单。");
-    return;
-  }
-
-  const allowedOrigins = `["http://127.0.0.1:${DEFAULT_ONECLAW_GATEWAY_PORT}"]`;
-  onLog(`正在写入 Control UI 来源白名单 ${allowedOrigins}。`);
-  await runComposeLogged(
-    repoRoot,
-    composeEnv,
-    [
-      "run",
-      "--rm",
-      "-T",
-      "oneclaw-cli",
-      "config",
-      "set",
-      "gateway.controlUi.allowedOrigins",
-      allowedOrigins,
-      "--strict-json",
     ],
     onLog,
   );

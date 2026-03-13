@@ -34,7 +34,7 @@ import {
   tabFromPath,
   type Tab,
 } from "./navigation.ts";
-import { saveSettings, type UiSettings } from "./storage.ts";
+import { persistSessionSharedAuthPreference, saveSettings, type UiSettings } from "./storage.ts";
 import { startThemeTransition, type ThemeTransitionContext } from "./theme-transition.ts";
 import {
   colorSchemeForTheme,
@@ -68,6 +68,7 @@ type SettingsHost = {
   themeMediaHandler: ((event: MediaQueryListEvent) => void) | null;
   pendingGatewayUrl?: string | null;
   pendingGatewayToken?: string | null;
+  pendingGatewaySharedAuth?: boolean | null;
 };
 
 export function applySettings(host: SettingsHost, next: UiSettings) {
@@ -108,8 +109,10 @@ export function applySettingsFromUrl(host: SettingsHost) {
   const nextGatewayUrl = gatewayUrlRaw?.trim() ?? "";
   const gatewayUrlChanged = Boolean(nextGatewayUrl && nextGatewayUrl !== host.settings.gatewayUrl);
   const tokenRaw = hashParams.get("token");
+  const skipDeviceAuthRaw = params.get("skipDeviceAuth") ?? hashParams.get("skipDeviceAuth");
   const passwordRaw = params.get("password") ?? hashParams.get("password");
   const sessionRaw = params.get("session") ?? hashParams.get("session");
+  const skipDeviceAuth = parseUrlBoolean(skipDeviceAuthRaw);
   let shouldCleanUrl = false;
 
   if (params.has("token")) {
@@ -125,6 +128,20 @@ export function applySettingsFromUrl(host: SettingsHost) {
       applySettings(host, { ...host.settings, token });
     }
     hashParams.delete("token");
+    shouldCleanUrl = true;
+  }
+
+  if (skipDeviceAuthRaw != null) {
+    if (gatewayUrlChanged) {
+      host.pendingGatewaySharedAuth = skipDeviceAuth;
+    } else if (skipDeviceAuth !== null) {
+      persistSessionSharedAuthPreference(
+        nextGatewayUrl || host.settings.gatewayUrl,
+        skipDeviceAuth,
+      );
+    }
+    params.delete("skipDeviceAuth");
+    hashParams.delete("skipDeviceAuth");
     shouldCleanUrl = true;
   }
 
@@ -153,9 +170,13 @@ export function applySettingsFromUrl(host: SettingsHost) {
       if (!tokenRaw?.trim()) {
         host.pendingGatewayToken = null;
       }
+      if (skipDeviceAuthRaw == null) {
+        host.pendingGatewaySharedAuth = null;
+      }
     } else {
       host.pendingGatewayUrl = null;
       host.pendingGatewayToken = null;
+      host.pendingGatewaySharedAuth = null;
     }
     params.delete("gatewayUrl");
     hashParams.delete("gatewayUrl");
@@ -169,6 +190,26 @@ export function applySettingsFromUrl(host: SettingsHost) {
   const nextHash = hashParams.toString();
   url.hash = nextHash ? `#${nextHash}` : "";
   window.history.replaceState({}, "", url.toString());
+}
+
+function parseUrlBoolean(raw: string | null): boolean | null {
+  if (raw == null) {
+    return null;
+  }
+  const normalized = raw.trim().toLowerCase();
+  if (
+    !normalized ||
+    normalized === "1" ||
+    normalized === "true" ||
+    normalized === "yes" ||
+    normalized === "on"
+  ) {
+    return true;
+  }
+  if (normalized === "0" || normalized === "false" || normalized === "no" || normalized === "off") {
+    return false;
+  }
+  return null;
 }
 
 export function setTab(host: SettingsHost, next: Tab) {

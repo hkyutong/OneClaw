@@ -8,6 +8,7 @@ import {
   OPENCLAW_DOCKER_IMAGE,
   OPENCLAW_REPO_ARCHIVE_URL,
 } from "./constants.js";
+import { ensureInstallerDashboardAccess } from "./dashboard-access.js";
 import { getDockerConfigDir, getDockerWorkspaceDir } from "./paths.js";
 import { runCommand, runCommandChecked, runCommandLogged } from "./shell.js";
 import type { MacInstallerPaths } from "./types.js";
@@ -155,11 +156,12 @@ export async function launchDashboardInBrowser(
     throw new Error("尚未生成 Docker 工作区，请先完成安装准备。");
   }
 
+  await ensureInstallerDashboardAccess(repoRoot, composeEnv);
   const pendingBefore = await listPendingDashboardRequests(repoRoot, composeEnv);
 
   const result = await runCommandChecked(
     "docker",
-    ["compose", "run", "--rm", "-T", "oneclaw-cli", "dashboard", "--no-open"],
+    ["compose", "run", "--rm", "-T", "--no-deps", "oneclaw-cli", "dashboard", "--no-open"],
     {
       cwd: repoRoot,
       env: composeEnv,
@@ -175,9 +177,11 @@ export async function launchDashboardInBrowser(
   const dashboardUrl = applyDashboardLocale(match[1], locale);
   await runCommandChecked("open", [dashboardUrl]);
   await wait(1200);
-  await approveLatestLocalDashboardRequest(repoRoot, composeEnv, pendingBefore);
-  await wait(400);
-  await runCommandChecked("open", [dashboardUrl]);
+  const approved = await approveLatestLocalDashboardRequest(repoRoot, composeEnv, pendingBefore);
+  if (approved) {
+    await wait(400);
+    await runCommandChecked("open", [dashboardUrl]);
+  }
 
   return {
     dashboardUrl,
@@ -258,7 +262,7 @@ async function listPendingDashboardRequests(
   try {
     const result = await runCommandChecked(
       "docker",
-      ["compose", "run", "--rm", "-T", "oneclaw-cli", "devices", "list", "--json"],
+      ["compose", "run", "--rm", "-T", "--no-deps", "oneclaw-cli", "devices", "list", "--json"],
       {
         cwd: repoRoot,
         env,
@@ -278,7 +282,7 @@ async function approveLatestLocalDashboardRequest(
   repoRoot: string,
   env: NodeJS.ProcessEnv,
   previousPending: DashboardPairingRequest[],
-): Promise<void> {
+): Promise<boolean> {
   const previousIds = new Set(previousPending.map((item) => item.requestId));
   const pendingNow = await listPendingDashboardRequests(repoRoot, env);
   let nextRequest: DashboardPairingRequest | undefined;
@@ -302,7 +306,7 @@ async function approveLatestLocalDashboardRequest(
   }
 
   if (!nextRequest?.requestId) {
-    return;
+    return false;
   }
 
   await runCommandChecked(
@@ -312,6 +316,7 @@ async function approveLatestLocalDashboardRequest(
       "run",
       "--rm",
       "-T",
+      "--no-deps",
       "oneclaw-cli",
       "devices",
       "approve",
@@ -323,6 +328,7 @@ async function approveLatestLocalDashboardRequest(
       env,
     },
   );
+  return true;
 }
 
 function isLocalDashboardRequest(request: DashboardPairingRequest): boolean {
@@ -401,7 +407,7 @@ async function createLauncherScripts(paths: MacInstallerPaths): Promise<{
     envPrelude,
     "clear",
     "echo 'OneClaw 安装器正在运行 OneClaw Doctor...'",
-    "docker compose run --rm oneclaw-cli doctor",
+    "docker compose run --rm --no-deps oneclaw-cli doctor",
     "code=$?",
     "echo ''",
     "echo '验证已结束。按回车关闭这个窗口。'",

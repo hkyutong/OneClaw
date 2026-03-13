@@ -67,7 +67,7 @@ import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exe
 import type { SkillMessage } from "./controllers/skills.ts";
 import type { GatewayBrowserClient, GatewayHelloOk } from "./gateway.ts";
 import type { Tab } from "./navigation.ts";
-import { loadSettings, type UiSettings } from "./storage.ts";
+import { loadSettings, persistSessionSharedAuthPreference, type UiSettings } from "./storage.ts";
 import type { ResolvedTheme, ThemeMode, ThemeName } from "./theme.ts";
 import type {
   AgentsListResult,
@@ -191,6 +191,7 @@ export class OpenClawApp extends LitElement {
   @state() execApprovalError: string | null = null;
   @state() pendingGatewayUrl: string | null = null;
   pendingGatewayToken: string | null = null;
+  pendingGatewaySharedAuth: boolean | null = null;
 
   @state() configLoading = false;
   @state() configRaw = "{\n}\n";
@@ -595,8 +596,11 @@ export class OpenClawApp extends LitElement {
       return;
     }
     const nextToken = this.pendingGatewayToken?.trim() || "";
+    const nextSharedAuth = this.pendingGatewaySharedAuth === true;
     this.pendingGatewayUrl = null;
     this.pendingGatewayToken = null;
+    this.pendingGatewaySharedAuth = null;
+    persistSessionSharedAuthPreference(nextGatewayUrl, nextSharedAuth);
     applySettingsInternal(this as unknown as Parameters<typeof applySettingsInternal>[0], {
       ...this.settings,
       gatewayUrl: nextGatewayUrl,
@@ -608,6 +612,7 @@ export class OpenClawApp extends LitElement {
   handleGatewayUrlCancel() {
     this.pendingGatewayUrl = null;
     this.pendingGatewayToken = null;
+    this.pendingGatewaySharedAuth = null;
   }
 
   // Sidebar handlers for tool output viewing
