@@ -1,6 +1,10 @@
 # OneClaw
 
-OneClaw 是一个自托管的多通道网关和运行时。
+<p align="center">
+  <img src="./oneclaw.png" alt="OneClaw" width="160" />
+</p>
+
+OneClaw 的使命，是让所有人都能轻松安装和使用龙虾。我们相信，人工智能应该造福全人类。
 
 ## 用安装向导安装（macOS）
 
