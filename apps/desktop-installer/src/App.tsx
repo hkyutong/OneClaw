@@ -5,7 +5,12 @@ import {
   useRef,
   useState
 } from "react";
-import { createInstallPlan, type ReleaseChannel } from "@oneclaw/installer-core";
+import {
+  ONECLAW_INSTALL_BUNDLE_DOCKER_SETUP_URL,
+  ONECLAW_INSTALL_BUNDLE_LABEL,
+  ONECLAW_INSTALL_BUNDLE_REF_URL,
+  type ReleaseChannel
+} from "@oneclaw/installer-core";
 import yutoLogoUrl from "../../../yuto-macOS.png?url";
 import {
   checkMacBackendHealth,
@@ -56,14 +61,50 @@ const DEFAULT_MODEL_BY_PROVIDER: Record<GuidedProvider, string> = {
 const OFFICIAL_DOCS = {
   zh: {
     auth: "https://docs.openclaw.ai/zh-CN/gateway/authentication",
-    wizard: "https://github.com/hkyutong/OneClaw",
-    docker: "https://github.com/hkyutong/OneClaw/blob/main/docker-setup.sh"
+    wizard: ONECLAW_INSTALL_BUNDLE_REF_URL,
+    docker: ONECLAW_INSTALL_BUNDLE_DOCKER_SETUP_URL
   },
   en: {
     auth: "https://docs.openclaw.ai/gateway/authentication",
-    wizard: "https://github.com/hkyutong/OneClaw",
-    docker: "https://github.com/hkyutong/OneClaw/blob/main/docker-setup.sh"
+    wizard: ONECLAW_INSTALL_BUNDLE_REF_URL,
+    docker: ONECLAW_INSTALL_BUNDLE_DOCKER_SETUP_URL
   }
+} as const;
+const SUPPORT_SOURCES = {
+  zh: [
+    {
+      name: `${ONECLAW_INSTALL_BUNDLE_LABEL} 固定版本`,
+      url: ONECLAW_INSTALL_BUNDLE_REF_URL,
+      reason: "安装器固定使用这个 Git tag，避免跟随 main 漂移。"
+    },
+    {
+      name: "OneClaw docker-setup.sh",
+      url: ONECLAW_INSTALL_BUNDLE_DOCKER_SETUP_URL,
+      reason: "Docker 设置脚本固定绑定到同一版本。"
+    },
+    {
+      name: "OneClaw API 文档",
+      url: OFFICIAL_DOCS.zh.auth,
+      reason: "认证与 API 配置说明。"
+    }
+  ],
+  en: [
+    {
+      name: `${ONECLAW_INSTALL_BUNDLE_LABEL} pinned tag`,
+      url: ONECLAW_INSTALL_BUNDLE_REF_URL,
+      reason: "The installer is pinned to this Git tag instead of drifting with main."
+    },
+    {
+      name: "OneClaw docker-setup.sh",
+      url: ONECLAW_INSTALL_BUNDLE_DOCKER_SETUP_URL,
+      reason: "The Docker setup entry point is pinned to the same release."
+    },
+    {
+      name: "OneClaw API docs",
+      url: OFFICIAL_DOCS.en.auth,
+      reason: "Authentication and API configuration guidance."
+    }
+  ]
 } as const;
 
 const COPY = {
@@ -224,7 +265,7 @@ const COPY = {
       systemTitle: "这台 Mac",
       sourceTitle: "参考资料",
       channel: "安装方式",
-      targetVersion: "Docker 镜像",
+      targetVersion: "固定安装版本",
       managedNode: "Docker 环境",
       installPath: "应用数据目录",
       systemVersion: "系统版本",
@@ -405,7 +446,7 @@ const COPY = {
       systemTitle: "This Mac",
       sourceTitle: "References",
       channel: "Install mode",
-      targetVersion: "Docker image",
+      targetVersion: "Pinned install version",
       managedNode: "Docker environment",
       installPath: "App data path",
       systemVersion: "System version",
@@ -438,12 +479,6 @@ function App() {
   const platform = hostPlatform ?? detectLikelyPlatform();
   const isMacHost = platform === "macos";
   const supportsEmbeddedOnboarding = isMacHost && host.capabilities.embeddedOnboarding;
-  const plan = createInstallPlan({
-    platform: isMacHost ? "macos" : platform,
-    channel: INSTALL_CHANNEL,
-    hasManagedNodeRuntime: false,
-    hasWsl2: false
-  });
 
   const [language, setLanguage] = useState<Language>(readStoredLanguage);
   const [securityAcknowledged, setSecurityAcknowledged] = useState<boolean>(
@@ -466,6 +501,7 @@ function App() {
   const onboardingViewportRef = useRef<HTMLDivElement | null>(null);
 
   const text = COPY[language];
+  const supportSources = SUPPORT_SOURCES[language];
   const guidedProviderDetails = getGuidedProviderDetails(language, guidedProvider);
 
   useEffect(() => {
@@ -1845,7 +1881,7 @@ function App() {
             <details className="support-details">
               <summary>{text.details.sourceTitle}</summary>
               <div className="source-list">
-                {plan.sources.map((source) => (
+                {supportSources.map((source) => (
                   <a
                     className="source-link"
                     href={source.url}
@@ -2388,19 +2424,19 @@ function localizeCheckDetail(
 
       if (item.state === "ready") {
         return isZh
-          ? "GitHub 仓库与官方 Docker 安装包地址都可访问。"
-          : "The GitHub repository and the official Docker bundle are both reachable.";
+          ? `${ONECLAW_INSTALL_BUNDLE_LABEL} 的 Git tag 与固定安装包地址都可访问。`
+          : `The Git tag and pinned install bundle for ${ONECLAW_INSTALL_BUNDLE_LABEL} are both reachable.`;
       }
 
       if (item.state === "attention") {
         return isZh
-          ? "官方源目前只有一部分可访问。通常仍可继续准备安装资源，或稍后切换网络后再试。"
-          : "Only part of the official sources is reachable right now. You can usually continue, or retry later on another network.";
+          ? `${ONECLAW_INSTALL_BUNDLE_LABEL} 的固定源目前只有一部分可访问。通常仍可继续准备安装资源，或稍后切换网络后再试。`
+          : `Only part of the pinned sources for ${ONECLAW_INSTALL_BUNDLE_LABEL} is reachable right now. You can usually continue, or retry later on another network.`;
       }
 
       return isZh
-        ? "当前无法访问 GitHub 仓库与官方 Docker 安装包地址。"
-        : "The GitHub repository and the official Docker bundle are both unreachable right now.";
+        ? `当前无法访问 ${ONECLAW_INSTALL_BUNDLE_LABEL} 的 Git tag 与固定安装包地址。`
+        : `The Git tag and pinned install bundle for ${ONECLAW_INSTALL_BUNDLE_LABEL} are both unreachable right now.`;
     case "compose":
       return inspection.systemNode.installed
         ? isZh
@@ -2431,8 +2467,8 @@ function localizeCheckDetail(
           ? `已检测到 OneClaw Docker 工作区：${inspection.openclaw.path ?? "OneClaw"}.`
           : `Detected the OneClaw Docker workspace at ${inspection.openclaw.path ?? "OneClaw"}.`
         : isZh
-          ? `尚未准备，安装阶段会自动下载 ${inspection.latestOpenClawVersion}。`
-          : `Not prepared yet. The installer will download ${inspection.latestOpenClawVersion}.`;
+          ? `尚未准备，安装阶段会自动下载固定版本 ${inspection.latestOpenClawVersion}。`
+          : `Not prepared yet. The installer will download the pinned bundle ${inspection.latestOpenClawVersion}.`;
     default:
       return item.detail;
   }

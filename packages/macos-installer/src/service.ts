@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { appendFile, mkdir, rm, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { ONECLAW_INSTALL_BUNDLE_ARCHIVE_URL } from "@oneclaw/installer-core";
 import type { ReleaseChannel } from "@oneclaw/installer-core";
 import { DOCKER_DESKTOP_ARM64_URL, DOCKER_DESKTOP_X64_URL, LOG_TAIL_LIMIT } from "./constants.js";
 import { runGuidedDockerSetup } from "./guided-setup.js";
@@ -289,7 +290,9 @@ export class MacInstallerService {
       this.completeStep(session, "runtime", "OneClaw Docker 安装包已就绪");
 
       this.startStep(session, "openclaw", "准备 OneClaw 设置入口");
-      await this.log(session, `Docker image: ${dockerWorkspace.version}`);
+      await this.log(session, `固定安装版本：${dockerWorkspace.version}`);
+      await this.log(session, `固定安装包地址：${ONECLAW_INSTALL_BUNDLE_ARCHIVE_URL}`);
+      await this.log(session, `Docker image: ${dockerWorkspace.packageSpec}`);
       this.completeStep(session, "openclaw", "已生成 OneClaw 设置与验证脚本");
 
       this.startStep(session, "verify", "验证 OneClaw 工作区");

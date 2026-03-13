@@ -17,12 +17,14 @@ const args = parseArgs(process.argv.slice(2));
 const APP_BUNDLE_NAME = "OneClaw Installer.app";
 const LAUNCHER_NAME = "启动 OneClaw Installer.command";
 const EXECUTABLE_NAME = "OneClawInstaller";
+const GUIDE_NAME = "安装说明-未签名版.txt";
 
 await main();
 
 async function main() {
   ensureSupportedArch(args.arch);
 
+  const rootPackage = await readJson(path.join(rootDir, "package.json"));
   const desktopPackage = await readJson(
     path.join(rootDir, "apps", "desktop-installer", "package.json"),
   );
@@ -31,6 +33,7 @@ async function main() {
   );
   const electronVersion = desktopPackage.devDependencies.electron;
   const nodePtyVersion = macInstallerPackage.dependencies["@lydell/node-pty"];
+  const oneclawVersion = rootPackage.version;
 
   await verifyBuildArtifacts();
 
@@ -47,7 +50,7 @@ async function main() {
 
   await customizeMacBundle(appBundlePath);
   await mkdir(resourcesAppPath, { recursive: true });
-  await writeAppPackageJson(resourcesAppPath, desktopPackage.version);
+  await writeAppPackageJson(resourcesAppPath, oneclawVersion);
 
   await cp(
     path.join(rootDir, "apps", "desktop-installer", "dist"),
@@ -67,14 +70,17 @@ async function main() {
   await copyInstalledPackage("@lydell/node-pty", nodeModulesPath);
   await ensurePlatformSpecificNodePty(nodeModulesPath, args.arch, nodePtyVersion);
 
-  await signBundle(appBundlePath);
   await writeLauncher(outputRoot);
+  await writeInstallGuide(outputRoot, oneclawVersion);
   await zipBundle(outputRoot, appBundlePath);
   await rm(path.join(outputRoot, ".electron"), { recursive: true, force: true });
 
   console.log(`${APP_BUNDLE_NAME} 已生成：${appBundlePath}`);
   console.log(`启动脚本：${path.join(outputRoot, LAUNCHER_NAME)}`);
   console.log(`压缩包：${path.join(outputRoot, `OneClaw-Installer-${args.arch}.zip`)}`);
+  console.log(`说明文档：${path.join(outputRoot, GUIDE_NAME)}`);
+  console.log(`固定安装版本：OneClaw ${oneclawVersion} (v${oneclawVersion})`);
+  console.log("签名：已关闭（无签名版本）");
 }
 
 function parseArgs(argv) {
@@ -149,8 +155,9 @@ async function customizeMacBundle(appBundlePath) {
   await plistSet(infoPlistPath, "CFBundleName", "OneClaw Installer");
   await plistSet(infoPlistPath, "CFBundleExecutable", EXECUTABLE_NAME);
   await plistSet(infoPlistPath, "CFBundleIdentifier", "top.hkgpt.oneclaw.installer");
-  await plistSet(infoPlistPath, "CFBundleVersion", "1");
-  await plistSet(infoPlistPath, "CFBundleShortVersionString", "0.1.0");
+  const rootPackage = await readJson(path.join(rootDir, "package.json"));
+  await plistSet(infoPlistPath, "CFBundleVersion", rootPackage.version);
+  await plistSet(infoPlistPath, "CFBundleShortVersionString", rootPackage.version);
   await plistSet(infoPlistPath, "CFBundleIconFile", "yuto-macOS.icns");
   await plistSet(infoPlistPath, "LSApplicationCategoryType", "public.app-category.utilities");
   await execFileAsync("xattr", ["-cr", appBundlePath]).catch(() => undefined);
@@ -258,10 +265,6 @@ async function ensurePlatformSpecificNodePty(nodeModulesPath, arch, version) {
   }
 }
 
-async function signBundle(appBundlePath) {
-  await execFileAsync("codesign", ["--force", "--deep", "--sign", "-", appBundlePath]);
-}
-
 async function writeLauncher(outputRoot) {
   const launcherPath = path.join(outputRoot, LAUNCHER_NAME);
   const launcherScript = [
@@ -278,17 +281,67 @@ async function writeLauncher(outputRoot) {
   await chmod(launcherPath, 0o755);
 }
 
+async function writeInstallGuide(outputRoot, oneclawVersion) {
+  const guidePath = path.join(outputRoot, GUIDE_NAME);
+  const content = [
+    "OneClaw Installer 未签名安装说明",
+    "",
+    "这是一份未签名、未公证的 macOS 安装器。",
+    `它会固定下载并部署 OneClaw ${oneclawVersion}（tag: v${oneclawVersion}）。`,
+    "如果 macOS 提示“无法验证开发者”或“已阻止打开”，按下面步骤操作。",
+    "",
+    "推荐打开方式：",
+    "1. 先解压 zip。",
+    "2. 优先双击同目录里的“启动 OneClaw Installer.command”。",
+    "   它会先尝试移除隔离属性，再打开安装器。",
+    "",
+    "如果还是被拦截：",
+    "1. 在 Finder 里右键“OneClaw Installer.app”。",
+    "2. 选择“打开”。",
+    "3. 再次点“打开”。",
+    "",
+    "如果系统已经弹出“已阻止打开”：",
+    "1. 打开“系统设置”。",
+    "2. 进入“隐私与安全性”。",
+    "3. 滚动到页面底部。",
+    "4. 在 OneClaw Installer 的拦截提示旁边点“仍要打开”。",
+    "5. 返回后再次打开安装器。",
+    "",
+    "终端兜底方案：",
+    'xattr -dr com.apple.quarantine "/path/to/OneClaw Installer.app"',
+    "",
+    "注意：",
+    "- 这不是“永久允许所有不受信任软件”，而是只放行这一个安装器。",
+    "- 如果你是发给别人，建议把这份说明和 zip 一起发出去。",
+    "",
+  ].join("\n");
+
+  await writeFile(guidePath, content);
+}
+
 async function zipBundle(outputRoot, appBundlePath) {
   const zipPath = path.join(outputRoot, `OneClaw-Installer-${args.arch}.zip`);
+  const stagingRoot = await mkdtemp(path.join(os.tmpdir(), "oneclaw-installer-release-"));
+  const packageDir = path.join(stagingRoot, "OneClaw Installer");
   await rm(zipPath, { force: true });
-  await execFileAsync("ditto", [
-    "-c",
-    "-k",
-    "--sequesterRsrc",
-    "--keepParent",
-    appBundlePath,
-    zipPath,
-  ]);
+
+  try {
+    await mkdir(packageDir, { recursive: true });
+    await cp(appBundlePath, path.join(packageDir, APP_BUNDLE_NAME), { recursive: true });
+    await cp(path.join(outputRoot, LAUNCHER_NAME), path.join(packageDir, LAUNCHER_NAME));
+    await cp(path.join(outputRoot, GUIDE_NAME), path.join(packageDir, GUIDE_NAME));
+
+    await execFileAsync("ditto", [
+      "-c",
+      "-k",
+      "--sequesterRsrc",
+      "--keepParent",
+      packageDir,
+      zipPath,
+    ]);
+  } finally {
+    await rm(stagingRoot, { recursive: true, force: true });
+  }
 }
 
 async function readJson(filePath) {

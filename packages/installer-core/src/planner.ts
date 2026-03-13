@@ -9,19 +9,30 @@ import type {
   ReleaseChannel,
   StepKind,
 } from "./model.js";
+import {
+  ONECLAW_INSTALL_BUNDLE_ARCHIVE_URL,
+  ONECLAW_INSTALL_BUNDLE_DOCKER_SETUP_URL,
+  ONECLAW_INSTALL_BUNDLE_LABEL,
+  ONECLAW_INSTALL_BUNDLE_REF_URL,
+} from "./release.js";
 
 export { OPENCLAW_NODE_MIN_VERSION } from "./model.js";
 
 const DEFAULT_OFFICIAL_SOURCES: InstallSource[] = [
   {
-    name: "OneClaw GitHub",
-    url: "https://github.com/hkyutong/OneClaw",
-    reason: "OneClaw 的主仓库，包含安装说明、版本入口和项目主页。",
+    name: `${ONECLAW_INSTALL_BUNDLE_LABEL} tag`,
+    url: ONECLAW_INSTALL_BUNDLE_REF_URL,
+    reason: "安装器固定使用这个 Git tag，避免跟随 main 漂移。",
   },
   {
-    name: "OneClaw Docker Setup",
-    url: "https://github.com/hkyutong/OneClaw/blob/main/docker-setup.sh",
-    reason: "OneClaw 安装器调用的标准 Docker 安装脚本来源。",
+    name: "OneClaw docker-setup.sh",
+    url: ONECLAW_INSTALL_BUNDLE_DOCKER_SETUP_URL,
+    reason: "安装器调用的 Docker 设置脚本固定绑定到同一版本。",
+  },
+  {
+    name: "OneClaw source bundle",
+    url: ONECLAW_INSTALL_BUNDLE_ARCHIVE_URL,
+    reason: "实际下载的固定版本源码包地址。",
   },
   {
     name: "OneClaw API Docs",

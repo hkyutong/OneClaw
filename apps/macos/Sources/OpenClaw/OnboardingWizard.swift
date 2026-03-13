@@ -34,6 +34,7 @@ final class OnboardingWizardModel {
     private(set) var currentStep: WizardStep?
     private(set) var status: String?
     private(set) var errorMessage: String?
+    private(set) var activityMessage: String?
     var isStarting = false
     var isSubmitting = false
     private var lastStartMode: AppState.ConnectionMode?
@@ -54,6 +55,7 @@ final class OnboardingWizardModel {
         self.currentStep = nil
         self.status = nil
         self.errorMessage = nil
+        self.activityMessage = nil
         self.isStarting = false
         self.isSubmitting = false
         self.restartAttempts = 0
@@ -69,22 +71,18 @@ final class OnboardingWizardModel {
             self.currentStep = nil
             self.status = "done"
             self.errorMessage = nil
+            self.activityMessage = nil
             return
         }
         self.isStarting = true
         self.errorMessage = nil
+        self.activityMessage = "Preparing local setup…"
         self.lastStartMode = mode
         self.lastStartWorkspace = workspace
         defer { self.isStarting = false }
 
         do {
-            GatewayProcessManager.shared.setActive(true)
-            if await GatewayProcessManager.shared.waitForGatewayReady(timeout: 12) == false {
-                throw NSError(
-                    domain: "Gateway",
-                    code: 1,
-                    userInfo: [NSLocalizedDescriptionKey: "Gateway did not become ready. Check that it is running."])
-            }
+            try await self.ensureLocalGatewayReady()
             var params: [String: AnyCodable] = ["mode": AnyCodable("local")]
             if let workspace, !workspace.isEmpty {
                 params["workspace"] = AnyCodable(workspace)
@@ -96,6 +94,7 @@ final class OnboardingWizardModel {
         } catch {
             self.status = "error"
             self.errorMessage = error.localizedDescription
+            self.activityMessage = nil
             onboardingWizardLogger.error("start failed: \(error.localizedDescription, privacy: .public)")
         }
     }
@@ -145,6 +144,7 @@ final class OnboardingWizardModel {
         self.sessionId = res.sessionid
         self.status = wizardStatusString(res.status) ?? (res.done ? "done" : "running")
         self.errorMessage = res.error
+        self.activityMessage = nil
         self.currentStep = decodeWizardStep(res.step)
         if self.currentStep == nil, res.step != nil {
             onboardingWizardLogger.error("wizard step decode failed")
@@ -157,6 +157,9 @@ final class OnboardingWizardModel {
         let status = wizardStatusString(res.status)
         self.status = status ?? self.status
         self.errorMessage = res.error
+        if res.done || status == "done" || status == "cancelled" || status == "error" {
+            self.activityMessage = nil
+        }
         self.currentStep = decodeWizardStep(res.step)
         if self.currentStep == nil, res.step != nil {
             onboardingWizardLogger.error("wizard step decode failed")
@@ -170,6 +173,7 @@ final class OnboardingWizardModel {
     private func applyStatusResult(_ res: WizardStatusResult) {
         self.status = wizardStatusString(res.status) ?? "unknown"
         self.errorMessage = res.error
+        self.activityMessage = nil
         self.currentStep = nil
         self.sessionId = nil
     }
@@ -187,8 +191,64 @@ final class OnboardingWizardModel {
         self.currentStep = nil
         self.status = nil
         self.errorMessage = "Wizard session lost. Restarting…"
+        self.activityMessage = "Restarting setup wizard…"
         Task { await self.startIfNeeded(mode: mode, workspace: self.lastStartWorkspace) }
         return true
+    }
+
+    private func ensureLocalGatewayReady() async throws {
+        let initialEnvironment = await Task.detached(priority: .utility) {
+            GatewayEnvironment.check()
+        }.value
+
+        switch initialEnvironment.kind {
+        case .ok:
+            break
+        case .missingNode, .missingGateway, .incompatible:
+            try await self.installLocalCLI(environmentStatus: initialEnvironment)
+        case .checking:
+            break
+        case let .error(message):
+            throw NSError(
+                domain: "Gateway",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: message])
+        }
+
+        self.activityMessage = "Starting local gateway…"
+        GatewayProcessManager.shared.setActive(true)
+        if await GatewayProcessManager.shared.waitForGatewayReady(timeout: 12) == false {
+            throw NSError(
+                domain: "Gateway",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Gateway did not become ready. Check that it is running."])
+        }
+    }
+
+    private func installLocalCLI(environmentStatus: GatewayEnvironmentStatus) async throws {
+        self.activityMessage = "Installing local runtime…"
+        onboardingWizardLogger.info("auto-installing local CLI before onboarding")
+
+        await CLIInstaller.install { message in
+            self.activityMessage = message
+        }
+        let latestInstallMessage = self.activityMessage ?? environmentStatus.message
+
+        let refreshedEnvironment = await Task.detached(priority: .utility) {
+            GatewayEnvironment.check()
+        }.value
+
+        switch refreshedEnvironment.kind {
+        case .ok:
+            self.activityMessage = "Local runtime ready. Starting gateway…"
+        case .checking:
+            self.activityMessage = "Starting local gateway…"
+        case .missingNode, .missingGateway, .incompatible, .error:
+            throw NSError(
+                domain: "Gateway",
+                code: 3,
+                userInfo: [NSLocalizedDescriptionKey: latestInstallMessage + "\n" + refreshedEnvironment.message])
+        }
     }
 
     private func shouldSkipWizard() -> Bool {

@@ -1,5 +1,9 @@
 import path from "node:path";
 import {
+  ONECLAW_INSTALL_BUNDLE_LABEL,
+  ONECLAW_INSTALL_BUNDLE_REF_URL,
+} from "@oneclaw/installer-core";
+import {
   DEFAULT_NODE_VERSION,
   DEFAULT_OPENCLAW_VERSION,
   MIN_FREE_DISK_BYTES,
@@ -23,7 +27,7 @@ export async function inspectMacSystem(config: MacInstallerConfig = {}): Promise
     dockerWorkspace,
     dockerEngine,
     dockerSetupState,
-    repoReachable,
+    bundleRefReachable,
     archiveReachable,
   ] = await Promise.all([
     readMacOsVersion(),
@@ -33,25 +37,25 @@ export async function inspectMacSystem(config: MacInstallerConfig = {}): Promise
     probeDockerWorkspace(paths.packagePrefix),
     probeDockerEngine(),
     probeDockerSetup(paths.packagePrefix, paths.home),
-    checkUrlReachable("https://github.com/hkyutong/OneClaw"),
+    checkUrlReachable(ONECLAW_INSTALL_BUNDLE_REF_URL),
     checkUrlReachable(OPENCLAW_REGISTRY_URL),
   ]);
 
   const networkState = dockerWorkspace.installed
     ? "ready"
-    : repoReachable && archiveReachable
+    : bundleRefReachable && archiveReachable
       ? "ready"
-      : repoReachable || archiveReachable
+      : bundleRefReachable || archiveReachable
         ? "attention"
         : "blocked";
 
   const networkDetail = dockerWorkspace.installed
     ? "本机已经存在 OneClaw Docker 工作区，后续步骤不依赖重新下载官方源。"
-    : repoReachable && archiveReachable
-      ? "OneClaw GitHub 仓库与 Docker 安装包地址都可访问。"
-      : repoReachable || archiveReachable
-        ? "官方源只有一部分可访问。通常仍可继续准备安装资源，或稍后切换网络后再试。"
-        : "当前无法访问 OneClaw GitHub 仓库与 Docker 安装包地址。";
+    : bundleRefReachable && archiveReachable
+      ? `OneClaw 固定安装版本 ${ONECLAW_INSTALL_BUNDLE_LABEL} 与对应源码包都可访问。`
+      : bundleRefReachable || archiveReachable
+        ? `OneClaw 固定安装版本 ${ONECLAW_INSTALL_BUNDLE_LABEL} 只有一部分可访问。通常仍可继续准备安装资源，或稍后切换网络后再试。`
+        : `当前无法访问 OneClaw 固定安装版本 ${ONECLAW_INSTALL_BUNDLE_LABEL} 的 Git tag 与源码包地址。`;
 
   const checks: MacCheck[] = [
     {
@@ -194,7 +198,7 @@ async function probeDockerWorkspace(repoRoot: string): Promise<VersionProbe> {
   if ((await pathExists(setupScriptPath)) && (await pathExists(composeFilePath))) {
     return {
       installed: true,
-      version: DEFAULT_OPENCLAW_VERSION,
+      version: `${DEFAULT_OPENCLAW_VERSION}（已固定）`,
       path: repoRoot,
     };
   }

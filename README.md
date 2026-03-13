@@ -165,8 +165,8 @@ pnpm oneclaw onboard
 
 如果你使用 `OneClaw Installer` 图形化安装器：
 
-- 安装器会下载本仓库源码包
-- 安装器会调用本仓库的 `docker-setup.sh`
+- 安装器会下载本仓库的固定 tag 安装包，不直接跟随 `main` 漂移
+- 安装器会调用该固定版本对应的 `docker-setup.sh`
 - 安装器会生成 OneClaw 的图形化设置与验证入口
 
 安装器源码现在也已经并入本仓库，主要目录如下：

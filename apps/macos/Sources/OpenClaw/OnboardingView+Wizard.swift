@@ -72,7 +72,7 @@ private struct OnboardingWizardCardContent: View {
         case .starting:
             HStack(spacing: 8) {
                 ProgressView()
-                Text("Starting wizard…")
+                Text(self.wizard.activityMessage ?? "Starting wizard…")
                     .foregroundStyle(.secondary)
             }
         case let .step(step):

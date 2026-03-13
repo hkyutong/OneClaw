@@ -1,4 +1,4 @@
-import type { DesktopPlatform } from "@oneclaw/installer-core";
+import { ONECLAW_INSTALL_BUNDLE_LABEL, type DesktopPlatform } from "@oneclaw/installer-core";
 
 export type PreflightState = "ready" | "attention" | "blocked" | "pending";
 
@@ -78,7 +78,7 @@ export function createPreflightItems(
       {
         id: "network",
         title: "网络与官方源",
-        detail: "后续将从官方源拉取 OpenClaw 与相关元数据。",
+        detail: `后续将拉取固定版本 ${ONECLAW_INSTALL_BUNDLE_LABEL} 的安装包与相关元数据。`,
         state: "attention"
       }
     ];
@@ -94,7 +94,7 @@ export function createPreflightItems(
     {
       id: "runtime",
       title: "Docker 环境",
-      detail: "应用会检查 Docker Desktop、Docker Compose 和官方安装资源。",
+      detail: `应用会检查 Docker Desktop、Docker Compose 和固定版本 ${ONECLAW_INSTALL_BUNDLE_LABEL} 的安装资源。`,
       state: "attention"
     },
     {
@@ -102,14 +102,14 @@ export function createPreflightItems(
       title: "官方设置流程",
       detail:
         input.platform === "macos"
-          ? "当前 macOS 版本会承接 OpenClaw 官方 docker-setup.sh。"
-          : "当前 Linux 版本也会优先复用官方 Docker 设置流程。",
+          ? `当前 macOS 版本会承接 ${ONECLAW_INSTALL_BUNDLE_LABEL} 的 docker-setup.sh。`
+          : `当前 Linux 版本也会优先复用 ${ONECLAW_INSTALL_BUNDLE_LABEL} 的 Docker 设置流程。`,
       state: "attention"
     },
     {
       id: "network",
       title: "网络与校验",
-      detail: "安装器会记录官方来源 URL、镜像引用和日志。",
+      detail: `安装器会记录固定版本 ${ONECLAW_INSTALL_BUNDLE_LABEL} 的来源 URL、镜像引用和日志。`,
       state: "attention"
     }
   ];

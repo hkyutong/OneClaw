@@ -4,13 +4,14 @@ set -euo pipefail
 # Build the mac app bundle, then create a zip (Sparkle) + styled DMG (humans).
 #
 # Output:
-# - dist/OpenClaw.app
-# - dist/OpenClaw-<version>.zip
-# - dist/OpenClaw-<version>.dmg
+# - dist/OneClaw.app
+# - dist/OneClaw-<version>.zip
+# - dist/OneClaw-<version>.dmg
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_ROOT="$ROOT_DIR/apps/macos/.build"
-PRODUCT="OpenClaw"
+SWIFT_PRODUCT="OpenClaw"
+DIST_PRODUCT="OneClaw"
 BUILD_CONFIG="${BUILD_CONFIG:-release}"
 
 # Default to universal binary for distribution builds (supports both Apple Silicon and Intel Macs)
@@ -22,17 +23,17 @@ export BUNDLE_ID="${BUNDLE_ID:-ai.openclaw.mac}"
 
 "$ROOT_DIR/scripts/package-mac-app.sh"
 
-APP="$ROOT_DIR/dist/OpenClaw.app"
+APP="$ROOT_DIR/dist/$DIST_PRODUCT.app"
 if [[ ! -d "$APP" ]]; then
   echo "Error: missing app bundle at $APP" >&2
   exit 1
 fi
 
 VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP/Contents/Info.plist" 2>/dev/null || echo "0.0.0")
-ZIP="$ROOT_DIR/dist/OpenClaw-$VERSION.zip"
-DMG="$ROOT_DIR/dist/OpenClaw-$VERSION.dmg"
-NOTARY_ZIP="$ROOT_DIR/dist/OpenClaw-$VERSION.notary.zip"
-DSYM_ZIP="$ROOT_DIR/dist/OpenClaw-$VERSION.dSYM.zip"
+ZIP="$ROOT_DIR/dist/$DIST_PRODUCT-$VERSION.zip"
+DMG="$ROOT_DIR/dist/$DIST_PRODUCT-$VERSION.dmg"
+NOTARY_ZIP="$ROOT_DIR/dist/$DIST_PRODUCT-$VERSION.notary.zip"
+DSYM_ZIP="$ROOT_DIR/dist/$DIST_PRODUCT-$VERSION.dSYM.zip"
 SKIP_NOTARIZE="${SKIP_NOTARIZE:-0}"
 NOTARIZE=1
 SKIP_DSYM="${SKIP_DSYM:-0}"
@@ -65,16 +66,16 @@ if [[ "$NOTARIZE" == "1" ]]; then
 fi
 
 if [[ "$SKIP_DSYM" != "1" ]]; then
-  DSYM_ARM64="$(find "$BUILD_ROOT/arm64" -type d -path "*/$BUILD_CONFIG/$PRODUCT.dSYM" -print -quit)"
-  DSYM_X86="$(find "$BUILD_ROOT/x86_64" -type d -path "*/$BUILD_CONFIG/$PRODUCT.dSYM" -print -quit)"
+  DSYM_ARM64="$(find "$BUILD_ROOT/arm64" -type d -path "*/$BUILD_CONFIG/$SWIFT_PRODUCT.dSYM" -print -quit)"
+  DSYM_X86="$(find "$BUILD_ROOT/x86_64" -type d -path "*/$BUILD_CONFIG/$SWIFT_PRODUCT.dSYM" -print -quit)"
   if [[ -n "$DSYM_ARM64" || -n "$DSYM_X86" ]]; then
-    TMP_DSYM="$ROOT_DIR/dist/$PRODUCT.dSYM"
+    TMP_DSYM="$ROOT_DIR/dist/$SWIFT_PRODUCT.dSYM"
     rm -rf "$TMP_DSYM"
     if [[ -n "$DSYM_ARM64" && -n "$DSYM_X86" ]]; then
       cp -R "$DSYM_ARM64" "$TMP_DSYM"
-      DWARF_OUT="$TMP_DSYM/Contents/Resources/DWARF/$PRODUCT"
-      DWARF_ARM="$DSYM_ARM64/Contents/Resources/DWARF/$PRODUCT"
-      DWARF_X86="$DSYM_X86/Contents/Resources/DWARF/$PRODUCT"
+      DWARF_OUT="$TMP_DSYM/Contents/Resources/DWARF/$SWIFT_PRODUCT"
+      DWARF_ARM="$DSYM_ARM64/Contents/Resources/DWARF/$SWIFT_PRODUCT"
+      DWARF_X86="$DSYM_X86/Contents/Resources/DWARF/$SWIFT_PRODUCT"
       if [[ -f "$DWARF_ARM" && -f "$DWARF_X86" ]]; then
         /usr/bin/lipo -create "$DWARF_ARM" "$DWARF_X86" -output "$DWARF_OUT"
       else

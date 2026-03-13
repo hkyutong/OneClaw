@@ -1,5 +1,6 @@
 import { rm } from "node:fs/promises";
 import path from "node:path";
+import { ONECLAW_INSTALL_BUNDLE_LABEL, ONECLAW_INSTALL_BUNDLE_TAG } from "@oneclaw/installer-core";
 import {
   DEFAULT_ONECLAW_BRIDGE_PORT,
   DEFAULT_ONECLAW_GATEWAY_BIND,
@@ -29,13 +30,13 @@ export async function ensureDockerWorkspacePrepared(
   const composeFilePath = path.join(repoRoot, "docker-compose.yml");
 
   if ((await pathExists(setupScriptPath)) && (await pathExists(composeFilePath))) {
-    onLog("复用已存在的 OneClaw Docker 工作区。");
+    onLog(`复用已存在的 ${ONECLAW_INSTALL_BUNDLE_LABEL} Docker 工作区。`);
     const launchers = await createLauncherScripts(paths);
 
     return {
       packageSpec: OPENCLAW_DOCKER_IMAGE,
       openclawBin: repoRoot,
-      version: OPENCLAW_DOCKER_IMAGE,
+      version: ONECLAW_INSTALL_BUNDLE_LABEL,
       onboardScriptPath: launchers.onboardScriptPath,
       doctorScriptPath: launchers.doctorScriptPath,
     };
@@ -50,7 +51,10 @@ export async function prepareDockerWorkspace(
 ): Promise<OpenClawInstallResult> {
   const repoRoot = paths.packagePrefix;
   const repoWorkspaceRoot = path.dirname(repoRoot);
-  const archivePath = path.join(paths.downloadsRoot, "oneclaw-docker-bundle.tar.gz");
+  const archivePath = path.join(
+    paths.downloadsRoot,
+    `oneclaw-docker-bundle-${ONECLAW_INSTALL_BUNDLE_TAG}.tar.gz`,
+  );
 
   await ensureDir(paths.downloadsRoot);
   await ensureDir(repoWorkspaceRoot);
@@ -59,7 +63,7 @@ export async function prepareDockerWorkspace(
 
   await rm(repoRoot, { recursive: true, force: true });
 
-  onLog(`开始下载 OneClaw Docker 安装包：${OPENCLAW_REPO_ARCHIVE_URL}`);
+  onLog(`开始下载 ${ONECLAW_INSTALL_BUNDLE_LABEL} 固定安装包：${OPENCLAW_REPO_ARCHIVE_URL}`);
   await runCommandLogged(
     "curl",
     [
@@ -76,7 +80,7 @@ export async function prepareDockerWorkspace(
     },
   );
 
-  onLog("开始解压 OneClaw Docker 安装包。");
+  onLog(`开始解压 ${ONECLAW_INSTALL_BUNDLE_LABEL} 固定安装包。`);
   await runCommandLogged("tar", ["-xzf", archivePath, "-C", repoWorkspaceRoot], {
     onLine: (line, level) => onLog(line, level),
   });
@@ -89,12 +93,14 @@ export async function prepareDockerWorkspace(
     throw new Error("OneClaw Docker 安装文件不完整，请重新执行安装准备。");
   }
 
+  onLog(`已固定到 ${ONECLAW_INSTALL_BUNDLE_LABEL}（${ONECLAW_INSTALL_BUNDLE_TAG}）。`);
+
   const launchers = await createLauncherScripts(paths);
 
   return {
     packageSpec: OPENCLAW_DOCKER_IMAGE,
     openclawBin: repoRoot,
-    version: OPENCLAW_DOCKER_IMAGE,
+    version: ONECLAW_INSTALL_BUNDLE_LABEL,
     onboardScriptPath: launchers.onboardScriptPath,
     doctorScriptPath: launchers.doctorScriptPath,
   };

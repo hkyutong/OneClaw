@@ -4,6 +4,7 @@ import { execSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { ONECLAW_INSTALL_BUNDLE_VERSION } from "../packages/installer-core/src/release.ts";
 import {
   collectBundledExtensionManifestErrors,
   normalizeBundledExtensionMetadata,
@@ -111,7 +112,7 @@ const requiredPathGroups = [
   "dist/plugin-sdk/keyed-async-queue.d.ts",
   "dist/build-info.json",
 ];
-const forbiddenPrefixes = ["dist/OpenClaw.app/"];
+const forbiddenPrefixes = ["dist/OneClaw.app/", "dist/OpenClaw.app/"];
 const appcastPath = resolve("appcast.xml");
 const laneBuildMin = 1_000_000_000;
 const laneFloorAdoptionDateKey = 20260227;
@@ -266,6 +267,24 @@ function checkPluginVersions() {
   }
 }
 
+function checkInstallerBundleVersion() {
+  const rootPackagePath = resolve("package.json");
+  const rootPackage = JSON.parse(readFileSync(rootPackagePath, "utf8")) as PackageJson;
+  const targetVersion = rootPackage.version?.trim();
+
+  if (!targetVersion) {
+    console.error("release-check: root package.json missing version.");
+    process.exit(1);
+  }
+
+  if (targetVersion !== ONECLAW_INSTALL_BUNDLE_VERSION) {
+    console.error(
+      `release-check: installer bundle version ${ONECLAW_INSTALL_BUNDLE_VERSION} must match root package version ${targetVersion}.`,
+    );
+    process.exit(1);
+  }
+}
+
 function extractTag(item: string, tag: string): string | null {
   const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const regex = new RegExp(`<${escapedTag}>([^<]+)</${escapedTag}>`);
@@ -406,6 +425,7 @@ function checkPluginSdkExports() {
 
 function main() {
   checkPluginVersions();
+  checkInstallerBundleVersion();
   checkAppcastSparkleVersions();
   checkPluginSdkExports();
   checkBundledExtensionRootDependencyMirrors();

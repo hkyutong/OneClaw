@@ -60,7 +60,7 @@ final class DeepLinkHandler {
             return
         }
         guard !AppStateStore.shared.isPaused else {
-            self.presentAlert(title: "OpenClaw is paused", message: "Unpause OpenClaw to run agent actions.")
+            self.presentAlert(title: "OneClaw is paused", message: "Unpause OneClaw to run agent actions.")
             return
         }
 
@@ -99,7 +99,7 @@ final class DeepLinkHandler {
             let urlPreview = urlText.count > 500 ? "\(urlText.prefix(500))…" : urlText
             let body =
                 "Run the agent with this message?\n\n\(messagePreview)\n\nURL:\n\(urlPreview)"
-            guard self.confirm(title: "Run OpenClaw agent?", message: body) else { return }
+            guard self.confirm(title: "Run OneClaw agent?", message: body) else { return }
         }
 
         if AppStateStore.shared.connectionMode == .local {
