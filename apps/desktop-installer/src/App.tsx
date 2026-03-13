@@ -231,6 +231,7 @@ const COPY = {
       success: "下一步已就绪",
       error: "需要处理",
       installStarted: "正在准备安装环境，请稍候。",
+      installSkippedExisting: "已检测到现有 OneClaw 工作区，跳过安装准备，直接继续下一步。",
       installCompleted: "安装资源已经准备完成，继续配置 OneClaw。",
       guidedSetupStarted: "配置已经开始，正在初始化 OneClaw。",
       guidedSetupCompleted: "OneClaw 配置已经完成，现在可以做最后验证。",
@@ -398,6 +399,8 @@ const COPY = {
       error: "Needs attention",
       installStarted:
         "Preparing the install environment. The app is downloading the official bundle and generating the setup entry points.",
+      installSkippedExisting:
+        "An existing OneClaw workspace was detected. Skipping install preparation and continuing to the next step.",
       installCompleted:
         "The install bundle is ready. Continue to OneClaw setup.",
       guidedSetupStarted:
@@ -833,6 +836,22 @@ function App() {
     });
 
     try {
+      const latestInspection = await fetchMacInspection();
+      startTransition(() => {
+        setInspection(latestInspection);
+      });
+
+      if (latestInspection.openclaw.installed) {
+        startTransition(() => {
+          setSession(null);
+        });
+        setNotice({
+          tone: "success",
+          message: text.notices.installSkippedExisting
+        });
+        return;
+      }
+
       const nextSession = await startMacInstall(INSTALL_CHANNEL);
       setSession(nextSession);
       if (nextSession.inspection) {
