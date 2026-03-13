@@ -32,6 +32,7 @@ export const FIELD_LABELS: Record<string, string> = {
   update: "Updates",
   "update.channel": "Update Channel",
   "update.checkOnStart": "Update Check on Start",
+  "update.versionSourceUrl": "Update Version Source URL",
   "update.auto.enabled": "Auto Update Enabled",
   "update.auto.stableDelayHours": "Auto Update Stable Delay (hours)",
   "update.auto.stableJitterHours": "Auto Update Stable Jitter (hours)",

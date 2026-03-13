@@ -24,7 +24,11 @@ import { readRestartSentinel } from "../infra/restart-sentinel.js";
 import { getRemoteSkillEligibility } from "../infra/skills-remote.js";
 import { readTailscaleStatusJson } from "../infra/tailscale.js";
 import { normalizeUpdateChannel, resolveUpdateChannelDisplay } from "../infra/update-channels.js";
-import { checkUpdateStatus, formatGitInstallLabel } from "../infra/update-check.js";
+import {
+  checkUpdateStatus,
+  formatGitInstallLabel,
+  normalizeUpdateVersionSourceUrl,
+} from "../infra/update-check.js";
 import { runExec } from "../process/exec.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { VERSION } from "../version.js";
@@ -102,6 +106,7 @@ export async function statusAllCommand(
       timeoutMs: 6500,
       fetchGit: true,
       includeRegistry: true,
+      versionSourceUrl: normalizeUpdateVersionSourceUrl(cfg.update?.versionSourceUrl),
     });
     const configChannel = normalizeUpdateChannel(cfg.update?.channel);
     const channelInfo = resolveUpdateChannelDisplay({

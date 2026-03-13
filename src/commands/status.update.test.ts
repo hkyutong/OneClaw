@@ -55,7 +55,7 @@ describe("resolveUpdateAvailability", () => {
     const update = buildUpdate({
       installKind: "package",
       packageManager: "pnpm",
-      registry: { latestVersion },
+      registry: { latestVersion, source: "npm", canUpdate: true },
     });
     const availability = resolveUpdateAvailability(update);
     expect(availability.available).toBe(true);
@@ -80,7 +80,7 @@ describe("formatUpdateOneLiner", () => {
         behind: 2,
         fetchOk: true,
       },
-      registry: { latestVersion: VERSION },
+      registry: { latestVersion: VERSION, source: "npm", canUpdate: true },
       deps: {
         manager: "pnpm",
         status: "ok",
@@ -98,7 +98,7 @@ describe("formatUpdateOneLiner", () => {
     const update = buildUpdate({
       installKind: "package",
       packageManager: "npm",
-      registry: { latestVersion: null, error: "offline" },
+      registry: { latestVersion: null, source: "npm", canUpdate: true, error: "offline" },
       deps: {
         manager: "npm",
         status: "missing",
@@ -116,7 +116,7 @@ describe("formatUpdateAvailableHint", () => {
     const update = buildUpdate({
       installKind: "package",
       packageManager: "pnpm",
-      registry: { latestVersion: VERSION },
+      registry: { latestVersion: VERSION, source: "npm", canUpdate: true },
     });
 
     expect(formatUpdateAvailableHint(update)).toBeNull();
@@ -137,11 +137,32 @@ describe("formatUpdateAvailableHint", () => {
         behind: 2,
         fetchOk: true,
       },
-      registry: { latestVersion },
+      registry: { latestVersion, source: "npm", canUpdate: true },
     });
 
     expect(formatUpdateAvailableHint(update)).toBe(
-      `Update available (git behind 2 · npm ${latestVersion}). Run: openclaw update`,
+      `Update available (git behind 2 · npm ${latestVersion}). Run: oneclaw update`,
+    );
+  });
+
+  it("omits update command hint for custom version sources", () => {
+    const latestVersion = nextMajorVersion(VERSION);
+    const update = buildUpdate({
+      installKind: "package",
+      packageManager: "pnpm",
+      registry: {
+        latestVersion,
+        source: "version-source",
+        canUpdate: false,
+        url: "https://example.com/release.ts",
+      },
+    });
+
+    expect(formatUpdateAvailableHint(update)).toBe(
+      `Update available (version source ${latestVersion})`,
+    );
+    expect(formatUpdateOneLiner(update)).toBe(
+      `Update: pnpm · version source update ${latestVersion}`,
     );
   });
 });

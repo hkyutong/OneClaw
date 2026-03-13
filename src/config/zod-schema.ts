@@ -314,6 +314,7 @@ export const OpenClawSchema = z
       .object({
         channel: z.union([z.literal("stable"), z.literal("beta"), z.literal("dev")]).optional(),
         checkOnStart: z.boolean().optional(),
+        versionSourceUrl: HttpUrlSchema.optional(),
         auto: z
           .object({
             enabled: z.boolean().optional(),

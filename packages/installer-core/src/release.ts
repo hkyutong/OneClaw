@@ -1,4 +1,5 @@
 export const ONECLAW_REPOSITORY_URL = "https://github.com/hkyutong/OneClaw";
+export const ONECLAW_RAW_REPOSITORY_URL = "https://raw.githubusercontent.com/hkyutong/OneClaw/main";
 export const ONECLAW_INSTALL_BUNDLE_VERSION = "2026.3.11";
 export const ONECLAW_INSTALL_BUNDLE_TAG = `v${ONECLAW_INSTALL_BUNDLE_VERSION}`;
 export const ONECLAW_INSTALL_BUNDLE_LABEL = `OneClaw ${ONECLAW_INSTALL_BUNDLE_VERSION}`;
@@ -6,3 +7,4 @@ export const ONECLAW_INSTALL_BUNDLE_REF_URL = `${ONECLAW_REPOSITORY_URL}/tree/${
 export const ONECLAW_INSTALL_BUNDLE_DOCKER_SETUP_URL = `${ONECLAW_REPOSITORY_URL}/blob/${ONECLAW_INSTALL_BUNDLE_TAG}/docker-setup.sh`;
 export const ONECLAW_INSTALL_BUNDLE_ARCHIVE_URL = `https://codeload.github.com/hkyutong/OneClaw/tar.gz/refs/tags/${ONECLAW_INSTALL_BUNDLE_TAG}`;
 export const ONECLAW_INSTALL_BUNDLE_DIRNAME = `OneClaw-${ONECLAW_INSTALL_BUNDLE_VERSION}`;
+export const ONECLAW_INSTALL_VERSION_SOURCE_URL = `${ONECLAW_RAW_REPOSITORY_URL}/packages/installer-core/src/release.ts`;

@@ -1,8 +1,10 @@
 import { formatCliCommand } from "../cli/command-format.js";
+import { readConfigFileSnapshot } from "../config/config.js";
 import { resolveOpenClawPackageRoot } from "../infra/openclaw-root.js";
 import {
   checkUpdateStatus,
   compareSemverStrings,
+  normalizeUpdateVersionSourceUrl,
   type UpdateCheckResult,
 } from "../infra/update-check.js";
 import { VERSION } from "../version.js";
@@ -17,11 +19,17 @@ export async function getUpdateCheckResult(params: {
     argv1: process.argv[1],
     cwd: process.cwd(),
   });
+  const configSnapshot = await readConfigFileSnapshot().catch(() => null);
+  const versionSourceUrl =
+    configSnapshot?.valid === true
+      ? normalizeUpdateVersionSourceUrl(configSnapshot.config.update?.versionSourceUrl)
+      : null;
   return await checkUpdateStatus({
     root,
     timeoutMs: params.timeoutMs,
     fetchGit: params.fetchGit,
     includeRegistry: params.includeRegistry,
+    versionSourceUrl,
   });
 }
 
@@ -63,29 +71,32 @@ export function formatUpdateAvailableHint(update: UpdateCheckResult): string | n
     details.push(`git behind ${availability.gitBehind}`);
   }
   if (availability.hasRegistryUpdate && availability.latestVersion) {
-    details.push(`npm ${availability.latestVersion}`);
+    details.push(`${describeRegistrySource(update)} ${availability.latestVersion}`);
   }
   const suffix = details.length > 0 ? ` (${details.join(" · ")})` : "";
-  return `Update available${suffix}. Run: ${formatCliCommand("openclaw update")}`;
+  const canRunUpdate = availability.hasGitUpdate || update.registry?.canUpdate !== false;
+  const actionHint = canRunUpdate ? `. Run: ${formatCliCommand("openclaw update")}` : "";
+  return `Update available${suffix}${actionHint}`;
 }
 
 export function formatUpdateOneLiner(update: UpdateCheckResult): string {
   const parts: string[] = [];
 
   const appendRegistryUpdateSummary = () => {
+    const sourceLabel = describeRegistrySource(update);
     if (update.registry?.latestVersion) {
       const cmp = compareSemverStrings(VERSION, update.registry.latestVersion);
       if (cmp === 0) {
-        parts.push(`npm latest ${update.registry.latestVersion}`);
+        parts.push(`${sourceLabel} latest ${update.registry.latestVersion}`);
       } else if (cmp != null && cmp < 0) {
-        parts.push(`npm update ${update.registry.latestVersion}`);
+        parts.push(`${sourceLabel} update ${update.registry.latestVersion}`);
       } else {
-        parts.push(`npm latest ${update.registry.latestVersion} (local newer)`);
+        parts.push(`${sourceLabel} latest ${update.registry.latestVersion} (local newer)`);
       }
       return;
     }
     if (update.registry?.error) {
-      parts.push("npm latest unknown");
+      parts.push(`${sourceLabel} latest unknown`);
     }
   };
 
@@ -130,4 +141,8 @@ export function formatUpdateOneLiner(update: UpdateCheckResult): string {
     }
   }
   return `Update: ${parts.join(" · ")}`;
+}
+
+function describeRegistrySource(update: UpdateCheckResult): string {
+  return update.registry?.source === "version-source" ? "version source" : "npm";
 }

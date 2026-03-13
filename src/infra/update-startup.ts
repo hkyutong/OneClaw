@@ -9,7 +9,12 @@ import { VERSION } from "../version.js";
 import { writeJsonAtomic } from "./json-files.js";
 import { resolveOpenClawPackageRoot } from "./openclaw-root.js";
 import { normalizeUpdateChannel, DEFAULT_PACKAGE_CHANNEL } from "./update-channels.js";
-import { compareSemverStrings, resolveNpmChannelTag, checkUpdateStatus } from "./update-check.js";
+import {
+  compareSemverStrings,
+  normalizeUpdateVersionSourceUrl,
+  resolvePackageUpdateSource,
+  checkUpdateStatus,
+} from "./update-check.js";
 
 type UpdateCheckState = {
   lastCheckedAt?: string;
@@ -17,6 +22,8 @@ type UpdateCheckState = {
   lastNotifiedTag?: string;
   lastAvailableVersion?: string;
   lastAvailableTag?: string;
+  lastAvailableCanUpdate?: boolean;
+  lastVersionSourceUrl?: string;
   autoInstallId?: string;
   autoFirstSeenVersion?: string;
   autoFirstSeenTag?: string;
@@ -46,6 +53,7 @@ export type UpdateAvailable = {
   currentVersion: string;
   latestVersion: string;
   channel: string;
+  canUpdate?: boolean;
 };
 
 let updateAvailableCache: UpdateAvailable | null = null;
@@ -138,7 +146,8 @@ function sameUpdateAvailable(a: UpdateAvailable | null, b: UpdateAvailable | nul
   return (
     a.currentVersion === b.currentVersion &&
     a.latestVersion === b.latestVersion &&
-    a.channel === b.channel
+    a.channel === b.channel &&
+    a.canUpdate === b.canUpdate
   );
 }
 
@@ -153,7 +162,13 @@ function setUpdateAvailableCache(params: {
   params.onUpdateAvailableChange?.(params.next);
 }
 
-function resolvePersistedUpdateAvailable(state: UpdateCheckState): UpdateAvailable | null {
+function resolvePersistedUpdateAvailable(
+  state: UpdateCheckState,
+  versionSourceUrl: string | null,
+): UpdateAvailable | null {
+  if (normalizeUpdateVersionSourceUrl(state.lastVersionSourceUrl) !== versionSourceUrl) {
+    return null;
+  }
   const latestVersion = state.lastAvailableVersion?.trim();
   if (!latestVersion) {
     return null;
@@ -167,6 +182,7 @@ function resolvePersistedUpdateAvailable(state: UpdateCheckState): UpdateAvailab
     currentVersion: VERSION,
     latestVersion,
     channel,
+    ...(state.lastAvailableCanUpdate === false ? { canUpdate: false } : {}),
   };
 }
 
@@ -317,6 +333,7 @@ export async function runGatewayUpdateCheck(params: {
   }
   const auto = resolveAutoUpdatePolicy(params.cfg);
   const shouldRunUpdateHints = params.cfg.update?.checkOnStart !== false;
+  const versionSourceUrl = normalizeUpdateVersionSourceUrl(params.cfg.update?.versionSourceUrl);
   if (!shouldRunUpdateHints && !auto.enabled) {
     return;
   }
@@ -325,8 +342,10 @@ export async function runGatewayUpdateCheck(params: {
   const state = await readState(statePath);
   const now = Date.now();
   const lastCheckedAt = state.lastCheckedAt ? Date.parse(state.lastCheckedAt) : null;
+  const sourceConfigChanged =
+    normalizeUpdateVersionSourceUrl(state.lastVersionSourceUrl) !== versionSourceUrl;
   if (shouldRunUpdateHints) {
-    const persistedAvailable = resolvePersistedUpdateAvailable(state);
+    const persistedAvailable = resolvePersistedUpdateAvailable(state, versionSourceUrl);
     setUpdateAvailableCache({
       next: persistedAvailable,
       onUpdateAvailableChange: params.onUpdateAvailableChange,
@@ -338,7 +357,7 @@ export async function runGatewayUpdateCheck(params: {
     });
   }
   const checkIntervalMs = resolveCheckIntervalMs(params.cfg);
-  if (lastCheckedAt && Number.isFinite(lastCheckedAt)) {
+  if (!sourceConfigChanged && lastCheckedAt && Number.isFinite(lastCheckedAt)) {
     if (now - lastCheckedAt < checkIntervalMs) {
       return;
     }
@@ -354,16 +373,30 @@ export async function runGatewayUpdateCheck(params: {
     timeoutMs: 2500,
     fetchGit: false,
     includeRegistry: false,
+    versionSourceUrl,
   });
 
   const nextState: UpdateCheckState = {
     ...state,
     lastCheckedAt: new Date(now).toISOString(),
+    ...(versionSourceUrl ? { lastVersionSourceUrl: versionSourceUrl } : {}),
   };
+  if (!versionSourceUrl) {
+    delete nextState.lastVersionSourceUrl;
+  }
+  if (sourceConfigChanged) {
+    delete nextState.lastAvailableVersion;
+    delete nextState.lastAvailableTag;
+    delete nextState.lastAvailableCanUpdate;
+    delete nextState.lastNotifiedVersion;
+    delete nextState.lastNotifiedTag;
+    clearAutoState(nextState);
+  }
 
   if (status.installKind !== "package") {
     delete nextState.lastAvailableVersion;
     delete nextState.lastAvailableTag;
+    delete nextState.lastAvailableCanUpdate;
     clearAutoState(nextState);
     setUpdateAvailableCache({
       next: null,
@@ -374,9 +407,16 @@ export async function runGatewayUpdateCheck(params: {
   }
 
   const channel = normalizeUpdateChannel(params.cfg.update?.channel) ?? DEFAULT_PACKAGE_CHANNEL;
-  const resolved = await resolveNpmChannelTag({ channel, timeoutMs: 2500 });
+  const resolved = await resolvePackageUpdateSource({
+    channel,
+    timeoutMs: 2500,
+    versionSourceUrl,
+  });
   const tag = resolved.tag;
   if (!resolved.version) {
+    delete nextState.lastAvailableVersion;
+    delete nextState.lastAvailableTag;
+    delete nextState.lastAvailableCanUpdate;
     await writeState(statePath, nextState);
     return;
   }
@@ -387,6 +427,7 @@ export async function runGatewayUpdateCheck(params: {
       currentVersion: VERSION,
       latestVersion: resolved.version,
       channel: tag,
+      ...(resolved.canUpdate ? {} : { canUpdate: false }),
     };
     if (shouldRunUpdateHints) {
       setUpdateAvailableCache({
@@ -396,17 +437,19 @@ export async function runGatewayUpdateCheck(params: {
     }
     nextState.lastAvailableVersion = resolved.version;
     nextState.lastAvailableTag = tag;
+    nextState.lastAvailableCanUpdate = resolved.canUpdate;
     const shouldNotify =
       state.lastNotifiedVersion !== resolved.version || state.lastNotifiedTag !== tag;
     if (shouldRunUpdateHints && shouldNotify) {
+      const actionHint = resolved.canUpdate ? ` Run: ${formatCliCommand("openclaw update")}` : "";
       params.log.info(
-        `update available (${tag}): v${resolved.version} (current v${VERSION}). Run: ${formatCliCommand("openclaw update")}`,
+        `update available (${tag}): v${resolved.version} (current v${VERSION}).${actionHint}`,
       );
       nextState.lastNotifiedVersion = resolved.version;
       nextState.lastNotifiedTag = tag;
     }
 
-    if (auto.enabled && (channel === "stable" || channel === "beta")) {
+    if (resolved.canUpdate && auto.enabled && (channel === "stable" || channel === "beta")) {
       const runAuto = params.runAutoUpdate ?? runAutoUpdateCommand;
       const attemptIntervalMs =
         channel === "beta"
@@ -474,6 +517,9 @@ export async function runGatewayUpdateCheck(params: {
   } else {
     delete nextState.lastAvailableVersion;
     delete nextState.lastAvailableTag;
+    delete nextState.lastAvailableCanUpdate;
+    delete nextState.lastNotifiedVersion;
+    delete nextState.lastNotifiedTag;
     clearAutoState(nextState);
     setUpdateAvailableCache({
       next: null,

@@ -30,12 +30,24 @@ export type DepsStatus = {
 
 export type RegistryStatus = {
   latestVersion: string | null;
+  source?: "npm" | "version-source";
+  canUpdate?: boolean;
+  url?: string | null;
   error?: string;
 };
 
 export type NpmTagStatus = {
   tag: string;
   version: string | null;
+  error?: string;
+};
+
+export type UpdateSourceVersion = {
+  tag: string;
+  version: string | null;
+  source: "npm" | "version-source";
+  canUpdate: boolean;
+  url?: string | null;
   error?: string;
 };
 
@@ -289,8 +301,62 @@ export async function fetchNpmLatestVersion(params?: {
   const res = await fetchNpmTagVersion({ tag: "latest", timeoutMs: params?.timeoutMs });
   return {
     latestVersion: res.version,
+    source: "npm",
+    canUpdate: true,
     error: res.error,
   };
+}
+
+export function normalizeUpdateVersionSourceUrl(url: string | null | undefined): string | null {
+  const trimmed = url?.trim();
+  return trimmed ? trimmed : null;
+}
+
+export async function fetchVersionSourceVersion(params: {
+  url: string;
+  timeoutMs?: number;
+}): Promise<RegistryStatus> {
+  const url = normalizeUpdateVersionSourceUrl(params.url);
+  if (!url) {
+    return {
+      latestVersion: null,
+      source: "version-source",
+      canUpdate: false,
+      url: null,
+      error: "version source URL missing",
+    };
+  }
+
+  const timeoutMs = params.timeoutMs ?? 3500;
+  try {
+    const res = await fetchWithTimeout(url, {}, Math.max(250, timeoutMs));
+    if (!res.ok) {
+      return {
+        latestVersion: null,
+        source: "version-source",
+        canUpdate: false,
+        url,
+        error: `HTTP ${res.status}`,
+      };
+    }
+    const raw = await res.text();
+    const parsedVersion = parseVersionSourcePayload(raw);
+    return {
+      latestVersion: parsedVersion,
+      source: "version-source",
+      canUpdate: false,
+      url,
+      ...(parsedVersion ? {} : { error: "version field not found" }),
+    };
+  } catch (err) {
+    return {
+      latestVersion: null,
+      source: "version-source",
+      canUpdate: false,
+      url,
+      error: String(err),
+    };
+  }
 }
 
 export async function fetchNpmTagVersion(params: {
@@ -340,6 +406,39 @@ export async function resolveNpmChannelTag(params: {
   return { tag: channelTag, version: channelStatus.version };
 }
 
+export async function resolvePackageUpdateSource(params: {
+  channel: UpdateChannel;
+  timeoutMs?: number;
+  versionSourceUrl?: string | null;
+}): Promise<UpdateSourceVersion> {
+  const versionSourceUrl = normalizeUpdateVersionSourceUrl(params.versionSourceUrl);
+  if (versionSourceUrl) {
+    const sourceStatus = await fetchVersionSourceVersion({
+      url: versionSourceUrl,
+      timeoutMs: params.timeoutMs,
+    });
+    return {
+      tag: "version-source",
+      version: sourceStatus.latestVersion,
+      source: "version-source",
+      canUpdate: false,
+      url: sourceStatus.url,
+      error: sourceStatus.error,
+    };
+  }
+
+  const resolved = await resolveNpmChannelTag({
+    channel: params.channel,
+    timeoutMs: params.timeoutMs,
+  });
+  return {
+    tag: resolved.tag,
+    version: resolved.version,
+    source: "npm",
+    canUpdate: true,
+  };
+}
+
 export function compareSemverStrings(a: string | null, b: string | null): number | null {
   const pa = parseComparableSemver(a);
   const pb = parseComparableSemver(b);
@@ -356,6 +455,49 @@ export function compareSemverStrings(a: string | null, b: string | null): number
     return pa.patch < pb.patch ? -1 : 1;
   }
   return comparePrerelease(pa.prerelease, pb.prerelease);
+}
+
+function parseVersionSourcePayload(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed) as {
+        version?: unknown;
+        latestVersion?: unknown;
+        release?: { version?: unknown } | null;
+      };
+      const fromJson =
+        (typeof parsed.version === "string" && parsed.version.trim()) ||
+        (typeof parsed.latestVersion === "string" && parsed.latestVersion.trim()) ||
+        (typeof parsed.release?.version === "string" && parsed.release.version.trim()) ||
+        null;
+      if (fromJson) {
+        return fromJson;
+      }
+    } catch {
+      // Fall through to text parsing below.
+    }
+  }
+
+  const bundleVersionMatch = /ONECLAW_INSTALL_BUNDLE_VERSION\s*=\s*["']([^"']+)["']/.exec(trimmed);
+  if (bundleVersionMatch?.[1]) {
+    return bundleVersionMatch[1].trim();
+  }
+
+  const packageVersionMatch = /"version"\s*:\s*"([^"]+)"/.exec(trimmed);
+  if (packageVersionMatch?.[1]) {
+    return packageVersionMatch[1].trim();
+  }
+
+  if (/^v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  return null;
 }
 
 type ComparableSemver = {
@@ -451,6 +593,7 @@ export async function checkUpdateStatus(params: {
   timeoutMs?: number;
   fetchGit?: boolean;
   includeRegistry?: boolean;
+  versionSourceUrl?: string | null;
 }): Promise<UpdateCheckResult> {
   const timeoutMs = params.timeoutMs ?? 6000;
   const root = params.root ? path.resolve(params.root) : null;
@@ -459,7 +602,14 @@ export async function checkUpdateStatus(params: {
       root: null,
       installKind: "unknown",
       packageManager: "unknown",
-      registry: params.includeRegistry ? await fetchNpmLatestVersion({ timeoutMs }) : undefined,
+      registry: params.includeRegistry
+        ? normalizeUpdateVersionSourceUrl(params.versionSourceUrl)
+          ? await fetchVersionSourceVersion({
+              url: params.versionSourceUrl ?? "",
+              timeoutMs,
+            })
+          : await fetchNpmLatestVersion({ timeoutMs })
+        : undefined,
     };
   }
 
@@ -476,7 +626,14 @@ export async function checkUpdateStatus(params: {
       })
     : undefined;
   const deps = await checkDepsStatus({ root, manager: pm });
-  const registry = params.includeRegistry ? await fetchNpmLatestVersion({ timeoutMs }) : undefined;
+  const registry = params.includeRegistry
+    ? normalizeUpdateVersionSourceUrl(params.versionSourceUrl)
+      ? await fetchVersionSourceVersion({
+          url: params.versionSourceUrl ?? "",
+          timeoutMs,
+        })
+      : await fetchNpmLatestVersion({ timeoutMs })
+    : undefined;
 
   return {
     root,

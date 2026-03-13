@@ -65,6 +65,7 @@ export const SnapshotSchema = Type.Object(
         currentVersion: NonEmptyString,
         latestVersion: NonEmptyString,
         channel: NonEmptyString,
+        canUpdate: Type.Optional(Type.Boolean()),
       }),
     ),
   },

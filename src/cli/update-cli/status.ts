@@ -8,7 +8,7 @@ import {
   normalizeUpdateChannel,
   resolveUpdateChannelDisplay,
 } from "../../infra/update-channels.js";
-import { checkUpdateStatus } from "../../infra/update-check.js";
+import { checkUpdateStatus, normalizeUpdateVersionSourceUrl } from "../../infra/update-check.js";
 import { defaultRuntime } from "../../runtime.js";
 import { getTerminalTableWidth, renderTable } from "../../terminal/table.js";
 import { theme } from "../../terminal/theme.js";
@@ -47,6 +47,9 @@ export async function updateStatusCommand(opts: UpdateStatusOptions): Promise<vo
     timeoutMs: timeoutMs ?? 3500,
     fetchGit: true,
     includeRegistry: true,
+    versionSourceUrl: configSnapshot.valid
+      ? normalizeUpdateVersionSourceUrl(configSnapshot.config.update?.versionSourceUrl)
+      : null,
   });
 
   const channelInfo = resolveUpdateChannelDisplay({

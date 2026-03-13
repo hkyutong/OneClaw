@@ -27,7 +27,11 @@ vi.mock("./update-check.js", async () => {
   return {
     checkUpdateStatus: vi.fn(),
     compareSemverStrings,
-    resolveNpmChannelTag: vi.fn(),
+    normalizeUpdateVersionSourceUrl: (value: string | null | undefined) => {
+      const trimmed = value?.trim();
+      return trimmed ? trimmed : null;
+    },
+    resolvePackageUpdateSource: vi.fn(),
   };
 });
 
@@ -47,7 +51,7 @@ describe("update-startup", () => {
 
   let resolveOpenClawPackageRoot: (typeof import("./openclaw-root.js"))["resolveOpenClawPackageRoot"];
   let checkUpdateStatus: (typeof import("./update-check.js"))["checkUpdateStatus"];
-  let resolveNpmChannelTag: (typeof import("./update-check.js"))["resolveNpmChannelTag"];
+  let resolvePackageUpdateSource: (typeof import("./update-check.js"))["resolvePackageUpdateSource"];
   let runCommandWithTimeout: (typeof import("../process/exec.js"))["runCommandWithTimeout"];
   let runGatewayUpdateCheck: (typeof import("./update-startup.js"))["runGatewayUpdateCheck"];
   let scheduleGatewayUpdateCheck: (typeof import("./update-startup.js"))["scheduleGatewayUpdateCheck"];
@@ -75,7 +79,7 @@ describe("update-startup", () => {
     // Perf: load mocked modules once (after timers/env are set up).
     if (!loaded) {
       ({ resolveOpenClawPackageRoot } = await import("./openclaw-root.js"));
-      ({ checkUpdateStatus, resolveNpmChannelTag } = await import("./update-check.js"));
+      ({ checkUpdateStatus, resolvePackageUpdateSource } = await import("./update-check.js"));
       ({ runCommandWithTimeout } = await import("../process/exec.js"));
       ({
         runGatewayUpdateCheck,
@@ -87,7 +91,7 @@ describe("update-startup", () => {
     }
     vi.mocked(resolveOpenClawPackageRoot).mockClear();
     vi.mocked(checkUpdateStatus).mockClear();
-    vi.mocked(resolveNpmChannelTag).mockClear();
+    vi.mocked(resolvePackageUpdateSource).mockClear();
     vi.mocked(runCommandWithTimeout).mockClear();
     resetUpdateAvailableStateForTest();
   });
@@ -121,9 +125,11 @@ describe("update-startup", () => {
   }
 
   function mockNpmChannelTag(tag: string, version: string) {
-    vi.mocked(resolveNpmChannelTag).mockResolvedValue({
+    vi.mocked(resolvePackageUpdateSource).mockResolvedValue({
       tag,
       version,
+      source: "npm",
+      canUpdate: true,
     });
   }
 
@@ -257,14 +263,18 @@ describe("update-startup", () => {
 
   it("emits update change callback when update state clears", async () => {
     mockPackageInstallStatus();
-    vi.mocked(resolveNpmChannelTag)
+    vi.mocked(resolvePackageUpdateSource)
       .mockResolvedValueOnce({
         tag: "latest",
         version: "2.0.0",
+        source: "npm",
+        canUpdate: true,
       })
       .mockResolvedValueOnce({
         tag: "latest",
         version: "1.0.0",
+        source: "npm",
+        canUpdate: true,
       });
 
     const onUpdateAvailableChange = vi.fn();
@@ -407,6 +417,38 @@ describe("update-startup", () => {
         }),
       }),
     );
+  });
+
+  it("uses custom version source and disables direct update actions", async () => {
+    mockPackageInstallStatus();
+    vi.mocked(resolvePackageUpdateSource).mockResolvedValue({
+      tag: "version-source",
+      version: "2.0.0",
+      source: "version-source",
+      canUpdate: false,
+      url: "https://example.com/release.ts",
+    });
+
+    const onUpdateAvailableChange = vi.fn();
+    await runGatewayUpdateCheck({
+      cfg: {
+        update: {
+          channel: "stable",
+          versionSourceUrl: "https://example.com/release.ts",
+        },
+      },
+      log: { info: vi.fn() },
+      isNixMode: false,
+      allowInTests: true,
+      onUpdateAvailableChange,
+    });
+
+    expect(onUpdateAvailableChange).toHaveBeenCalledWith({
+      currentVersion: "1.0.0",
+      latestVersion: "2.0.0",
+      channel: "version-source",
+      canUpdate: false,
+    });
   });
 
   it("scheduleGatewayUpdateCheck returns a cleanup function", async () => {

@@ -68,6 +68,8 @@ export type OpenClawConfig = {
     channel?: "stable" | "beta" | "dev";
     /** Check for updates on gateway start (npm installs only). */
     checkOnStart?: boolean;
+    /** Optional version source URL used instead of npm dist-tags. */
+    versionSourceUrl?: string;
     /** Core auto-update policy for package installs. */
     auto?: {
       /** Enable background auto-update checks and apply logic. Default: false. */

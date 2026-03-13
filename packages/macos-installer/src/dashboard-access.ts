@@ -1,5 +1,5 @@
 import { buildComposeCliRunArgs } from "./compose.js";
-import { DEFAULT_ONECLAW_GATEWAY_PORT } from "./constants.js";
+import { DEFAULT_ONECLAW_GATEWAY_PORT, OPENCLAW_VERSION_SOURCE_URL } from "./constants.js";
 import { runCommand, runCommandLogged } from "./shell.js";
 
 type LogFn = (line: string, level?: "info" | "error") => void;
@@ -14,6 +14,7 @@ export async function ensureInstallerDashboardAccess(
   await ensureControlUiAllowedOrigins(repoRoot, composeEnv, onLog);
   await ensureControlUiAllowInsecureAuth(repoRoot, composeEnv, onLog);
   await ensureControlUiDeviceAuthDisabled(repoRoot, composeEnv, onLog);
+  await ensureInstallerUpdateVersionSource(repoRoot, composeEnv, onLog);
 }
 
 async function ensureControlUiAllowedOrigins(
@@ -101,6 +102,33 @@ async function ensureControlUiDeviceAuthDisabled(
       "set",
       "gateway.controlUi.dangerouslyDisableDeviceAuth",
       "true",
+    ]),
+    onLog,
+  );
+}
+
+async function ensureInstallerUpdateVersionSource(
+  repoRoot: string,
+  composeEnv: NodeJS.ProcessEnv,
+  onLog?: LogFn,
+): Promise<void> {
+  const current = (
+    await readComposeConfigValue(repoRoot, composeEnv, "update.versionSourceUrl")
+  )?.trim();
+  if (current === OPENCLAW_VERSION_SOURCE_URL) {
+    onLog?.("已确认 OneClaw 固定版本源。");
+    return;
+  }
+
+  onLog?.("正在写入 OneClaw 固定版本源。");
+  await runComposeLogged(
+    repoRoot,
+    composeEnv,
+    await buildComposeCliRunArgs(repoRoot, composeEnv, [
+      "config",
+      "set",
+      "update.versionSourceUrl",
+      OPENCLAW_VERSION_SOURCE_URL,
     ]),
     onLog,
   );

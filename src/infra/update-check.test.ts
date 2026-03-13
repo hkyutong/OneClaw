@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { compareSemverStrings, resolveNpmChannelTag } from "./update-check.js";
+import {
+  compareSemverStrings,
+  fetchVersionSourceVersion,
+  resolveNpmChannelTag,
+  resolvePackageUpdateSource,
+} from "./update-check.js";
 
 describe("compareSemverStrings", () => {
   it("handles stable and prerelease precedence for both legacy and beta formats", () => {
@@ -71,5 +76,71 @@ describe("resolveNpmChannelTag", () => {
     const resolved = await resolveNpmChannelTag({ channel: "beta", timeoutMs: 1000 });
 
     expect(resolved).toEqual({ tag: "latest", version: "1.0.1" });
+  });
+});
+
+describe("custom version sources", () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url =
+          typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+        if (url.endsWith("/release.ts")) {
+          return {
+            ok: true,
+            status: 200,
+            text: async () =>
+              'export const ONECLAW_INSTALL_BUNDLE_VERSION = "2026.3.11";\nexport const ONECLAW_INSTALL_BUNDLE_TAG = "v2026.3.11";\n',
+          } as Response;
+        }
+        if (url.endsWith("/manifest.json")) {
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({ version: "2026.3.12" }),
+          } as Response;
+        }
+        return {
+          ok: false,
+          status: 404,
+          text: async () => "",
+        } as Response;
+      }),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("parses installer release.ts as a custom version source", async () => {
+    const result = await fetchVersionSourceVersion({
+      url: "https://raw.githubusercontent.com/hkyutong/OneClaw/main/packages/installer-core/src/release.ts",
+      timeoutMs: 1000,
+    });
+
+    expect(result).toEqual({
+      latestVersion: "2026.3.11",
+      source: "version-source",
+      canUpdate: false,
+      url: "https://raw.githubusercontent.com/hkyutong/OneClaw/main/packages/installer-core/src/release.ts",
+    });
+  });
+
+  it("prefers the custom version source over npm tags", async () => {
+    const result = await resolvePackageUpdateSource({
+      channel: "stable",
+      timeoutMs: 1000,
+      versionSourceUrl: "https://example.com/manifest.json",
+    });
+
+    expect(result).toEqual({
+      tag: "version-source",
+      version: "2026.3.12",
+      source: "version-source",
+      canUpdate: false,
+      url: "https://example.com/manifest.json",
+    });
   });
 });
