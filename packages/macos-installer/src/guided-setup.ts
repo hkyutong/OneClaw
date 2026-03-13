@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { buildComposeCliRunArgs } from "./compose.js";
 import {
   DEFAULT_ANTHROPIC_MODEL_ID,
   DEFAULT_ONECLAW_BRIDGE_PORT,
@@ -57,12 +58,7 @@ export async function runGuidedDockerSetup(
   await runComposeLogged(
     repoRoot,
     composeEnv,
-    [
-      "run",
-      "--rm",
-      "-T",
-      "--no-deps",
-      "oneclaw-cli",
+    await buildComposeCliRunArgs(repoRoot, composeEnv, [
       "onboard",
       "--mode",
       "local",
@@ -77,47 +73,37 @@ export async function runGuidedDockerSetup(
       "--skip-search",
       "--skip-health",
       "--skip-ui",
-    ],
+    ]),
     onLog,
   );
 
   await runComposeLogged(
     repoRoot,
     composeEnv,
-    [
-      "run",
-      "--rm",
-      "-T",
-      "--no-deps",
-      "oneclaw-cli",
+    await buildComposeCliRunArgs(repoRoot, composeEnv, [
       "config",
       "set",
       "agents.defaults.model.primary",
       authArgs.primaryModel,
-    ],
+    ]),
     onLog,
   );
 
   await runComposeLogged(
     repoRoot,
     composeEnv,
-    ["run", "--rm", "-T", "--no-deps", "oneclaw-cli", "config", "set", "gateway.mode", "local"],
+    await buildComposeCliRunArgs(repoRoot, composeEnv, ["config", "set", "gateway.mode", "local"]),
     onLog,
   );
   await runComposeLogged(
     repoRoot,
     composeEnv,
-    [
-      "run",
-      "--rm",
-      "-T",
-      "--no-deps",
-      "oneclaw-cli",
+    await buildComposeCliRunArgs(repoRoot, composeEnv, [
       "config",
       "set",
       "gateway.bind",
       DEFAULT_ONECLAW_GATEWAY_BIND,
-    ],
+    ]),
     onLog,
   );
   await ensureInstallerDashboardAccess(repoRoot, composeEnv, onLog);
@@ -311,19 +297,17 @@ async function fixDockerPermissions(
   await runComposeLogged(
     repoRoot,
     composeEnv,
-    [
-      "run",
-      "--rm",
-      "-T",
-      "--no-deps",
-      "--user",
-      "root",
-      "--entrypoint",
-      "sh",
-      "oneclaw-cli",
-      "-c",
-      "find /home/node/.openclaw -xdev -exec chown node:node {} +; [ -d /home/node/.openclaw/workspace/.openclaw ] && chown -R node:node /home/node/.openclaw/workspace/.openclaw || true",
-    ],
+    await buildComposeCliRunArgs(
+      repoRoot,
+      composeEnv,
+      [
+        "-c",
+        "find /home/node/.openclaw -xdev -exec chown node:node {} +; [ -d /home/node/.openclaw/workspace/.openclaw ] && chown -R node:node /home/node/.openclaw/workspace/.openclaw || true",
+      ],
+      {
+        serviceArgs: ["--user", "root", "--entrypoint", "sh"],
+      },
+    ),
     onLog,
   );
 }

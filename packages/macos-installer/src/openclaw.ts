@@ -1,6 +1,7 @@
 import { rm } from "node:fs/promises";
 import path from "node:path";
 import { ONECLAW_INSTALL_BUNDLE_LABEL, ONECLAW_INSTALL_BUNDLE_TAG } from "@oneclaw/installer-core";
+import { buildComposeCliRunArgs } from "./compose.js";
 import {
   DEFAULT_ONECLAW_BRIDGE_PORT,
   DEFAULT_ONECLAW_GATEWAY_BIND,
@@ -161,7 +162,10 @@ export async function launchDashboardInBrowser(
 
   const result = await runCommandChecked(
     "docker",
-    ["compose", "run", "--rm", "-T", "--no-deps", "oneclaw-cli", "dashboard", "--no-open"],
+    [
+      "compose",
+      ...(await buildComposeCliRunArgs(repoRoot, composeEnv, ["dashboard", "--no-open"])),
+    ],
     {
       cwd: repoRoot,
       env: composeEnv,
@@ -262,7 +266,7 @@ async function listPendingDashboardRequests(
   try {
     const result = await runCommandChecked(
       "docker",
-      ["compose", "run", "--rm", "-T", "--no-deps", "oneclaw-cli", "devices", "list", "--json"],
+      ["compose", ...(await buildComposeCliRunArgs(repoRoot, env, ["devices", "list", "--json"]))],
       {
         cwd: repoRoot,
         env,
@@ -313,15 +317,12 @@ async function approveLatestLocalDashboardRequest(
     "docker",
     [
       "compose",
-      "run",
-      "--rm",
-      "-T",
-      "--no-deps",
-      "oneclaw-cli",
-      "devices",
-      "approve",
-      nextRequest.requestId,
-      "--json",
+      ...(await buildComposeCliRunArgs(repoRoot, env, [
+        "devices",
+        "approve",
+        nextRequest.requestId,
+        "--json",
+      ])),
     ],
     {
       cwd: repoRoot,
@@ -407,7 +408,11 @@ async function createLauncherScripts(paths: MacInstallerPaths): Promise<{
     envPrelude,
     "clear",
     "echo 'OneClaw 安装器正在运行 OneClaw Doctor...'",
-    "docker compose run --rm --no-deps oneclaw-cli doctor",
+    "if docker compose exec -T oneclaw-gateway true >/dev/null 2>&1; then",
+    "  docker compose run --rm -T --no-deps oneclaw-cli doctor",
+    "else",
+    "  docker compose run --rm -T oneclaw-cli doctor",
+    "fi",
     "code=$?",
     "echo ''",
     "echo '验证已结束。按回车关闭这个窗口。'",

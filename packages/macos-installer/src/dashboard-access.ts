@@ -1,3 +1,4 @@
+import { buildComposeCliRunArgs } from "./compose.js";
 import { DEFAULT_ONECLAW_GATEWAY_PORT } from "./constants.js";
 import { runCommand, runCommandLogged } from "./shell.js";
 
@@ -35,18 +36,13 @@ async function ensureControlUiAllowedOrigins(
   await runComposeLogged(
     repoRoot,
     composeEnv,
-    [
-      "run",
-      "--rm",
-      "-T",
-      "--no-deps",
-      "oneclaw-cli",
+    await buildComposeCliRunArgs(repoRoot, composeEnv, [
       "config",
       "set",
       "gateway.controlUi.allowedOrigins",
       JSON.stringify(nextOrigins),
       "--strict-json",
-    ],
+    ]),
     onLog,
   );
 }
@@ -68,17 +64,12 @@ async function ensureControlUiAllowInsecureAuth(
   await runComposeLogged(
     repoRoot,
     composeEnv,
-    [
-      "run",
-      "--rm",
-      "-T",
-      "--no-deps",
-      "oneclaw-cli",
+    await buildComposeCliRunArgs(repoRoot, composeEnv, [
       "config",
       "set",
       "gateway.controlUi.allowInsecureAuth",
       "true",
-    ],
+    ]),
     onLog,
   );
 }
@@ -90,7 +81,7 @@ async function readComposeConfigValue(
 ): Promise<string | null> {
   const result = await runCommand(
     "docker",
-    ["compose", "run", "--rm", "-T", "--no-deps", "oneclaw-cli", "config", "get", key],
+    ["compose", ...(await buildComposeCliRunArgs(repoRoot, composeEnv, ["config", "get", key]))],
     {
       cwd: repoRoot,
       env: { ...process.env, ...composeEnv },
