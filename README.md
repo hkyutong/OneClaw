@@ -1,26 +1,25 @@
 # OneClaw
 
-OneClaw 是一个面向个人设备与自托管场景的多通道 AI 网关与助理运行时。
+OneClaw 是一个自托管的多通道网关和运行时。
 
-这个仓库基于 [OpenClaw](https://github.com/openclaw/openclaw) 进行本地化与品牌化改造，目标是：
+## 用安装向导安装（macOS）
 
-- 默认面向中文用户
-- 品牌统一为 `OneClaw`
-- 保留与上游 `OpenClaw` 的兼容能力
-- 保留原始开源许可证
+如果你使用 macOS，可以直接使用图形安装向导。
 
-## 许可证
+1. 在 [GitHub Releases](https://github.com/hkyutong/OneClaw/releases) 下载并解压 macOS 安装包
+2. 双击 `启动 OneClaw Installer.command`
+3. 如果 macOS 阻止打开，到 `系统设置 -> 隐私与安全性` 里点 `仍要打开`
+4. 按向导安装 Docker Desktop
+5. 在向导里选择 API 提供商，填写 API Key 和模型 ID
+6. 完成后在安装器里打开 OneClaw 图形界面，或运行 Doctor 检查状态
 
-本仓库继续保留上游项目的 [MIT License](LICENSE)。
+说明：
 
-## 当前状态
+- 安装器会准备 OneClaw 的 Docker 工作区
+- 安装器会生成设置脚本和验证脚本
+- 如果你已经有 Docker 环境，安装器会直接复用
 
-- CLI 主命令：`oneclaw`
-- 兼容命令：`openclaw`
-- Docker 安装入口：`./docker-setup.sh`
-- 默认推荐：使用 Docker 完成本地部署
-
-## 快速开始
+## 从源码部署
 
 ### 1. 克隆仓库
 
@@ -31,37 +30,29 @@ cd OneClaw
 
 ### 2. 准备依赖
 
-- macOS / Windows / Linux
-- Docker Desktop 或可用的 Docker Engine + Docker Compose
-- Node.js 22.12 及以上（如果你要本地开发 CLI）
+- Docker Desktop，或可用的 Docker Engine + Docker Compose
+- Node.js 22.12 及以上
 
-### 3. Docker 安装
+### 3. 运行 Docker 安装脚本
 
 ```bash
 ./docker-setup.sh
 ```
 
-脚本会完成这些事情：
+这个脚本会：
 
-1. 准备配置目录与工作区
-2. 构建或拉取 Docker 运行镜像
-3. 启动 OneClaw 的初始化向导
-4. 启动 Docker Gateway 服务
+1. 准备配置目录和工作区
+2. 构建或拉取 Docker 镜像
+3. 启动初始化流程
+4. 启动 Gateway
 
-### Windows Docker 部署
+## Windows
 
-Windows 推荐统一走这条路径：
+Windows 当前按 `WSL2 + Ubuntu + Docker Desktop` 路线部署，不建议直接在 Windows 原生环境里运行。
 
-- Windows 11 / Windows 10
-- WSL2
-- Ubuntu
-- Docker Desktop
+### 1. 安装 WSL2 和 Ubuntu
 
-不要把 OneClaw 当成“原生 Windows 直装”项目来部署；推荐做法是在 `WSL2` 里的 Ubuntu 环境中运行 `docker-setup.sh`。
-
-#### 1. 安装 WSL2 和 Ubuntu
-
-请以管理员身份打开 PowerShell，执行：
+以管理员身份打开 PowerShell：
 
 ```powershell
 wsl --install -d Ubuntu
@@ -69,17 +60,15 @@ wsl --update
 wsl -l -v
 ```
 
-执行完成后，重启 Windows，然后首次打开 Ubuntu，按提示创建 Linux 用户名和密码。
+执行完成后重启 Windows，再首次打开 Ubuntu，按提示创建 Linux 用户名和密码。
 
-#### 2. 安装 Docker Desktop
+### 2. 安装 Docker Desktop
 
 - 安装并启动 Docker Desktop
-- 确认启用了 `WSL 2` 后端
-- 在 `Settings > Resources > WSL Integration` 中勾选你的 Ubuntu 发行版
+- 确认启用 `WSL 2` 后端
+- 在 `Settings -> Resources -> WSL Integration` 中勾选 Ubuntu
 
-#### 3. 在 WSL 的 Ubuntu 里部署 OneClaw
-
-打开 Ubuntu，执行：
+### 3. 在 Ubuntu 里部署
 
 ```bash
 sudo apt update
@@ -90,32 +79,9 @@ chmod +x docker-setup.sh
 ./docker-setup.sh
 ```
 
-建议：
+建议把仓库放在 Ubuntu 的 Linux 文件系统里，例如 `~/OneClaw`，不要放在 `/mnt/c/...` 这种挂载路径里。
 
-- 把仓库放在 Ubuntu 的 Linux 文件系统里，例如 `~/OneClaw`
-- 不要把运行目录放在 `/mnt/c/...` 这种 Windows 挂载路径里
-
-#### 4. 初始化时如何配置模型
-
-- 初始化向导里优先选择 `YutoAPI`
-- 填写 `YutoAPI` 发放的 `API key`
-- OneClaw 内置使用的是 `https://gptapi.asia/v1`
-- 这里使用的是 OpenAI-compatible 协议，不代表要填写 OpenAI 官方 key
-
-如果你在 Windows / WSL / Docker 里填写 YutoAPI key 时看到 `fetch` 错误，可以先在 Ubuntu 里测试连通性：
-
-```bash
-curl -I https://gptapi.asia/v1/models
-```
-
-说明：
-
-- 如果返回 `401` 或提示“未提供令牌”，通常说明网络是通的，只是你没带 key
-- 如果 `curl` 自己就报连接失败、DNS 失败、TLS 失败、超时，那问题通常在当前 Windows / WSL / Docker 的网络环境，不是 `/v1` 配错
-
-#### 5. 常用命令
-
-在 `WSL` 的 `OneClaw` 目录里执行：
+### 4. 常用命令
 
 ```bash
 docker compose ps
@@ -124,59 +90,30 @@ docker compose run --rm oneclaw-cli doctor
 docker compose run --rm oneclaw-cli dashboard --no-open
 ```
 
-如果你重启了 Windows，可以重新进入 Ubuntu 后执行：
+## API 提供商说明
+
+初始化时可以选择 `YutoAPI`、`OpenAI` 或 `Claude`。
+
+如果使用 `YutoAPI`：
+
+- 使用 YutoAPI 提供的 key
+- 安装器和向导默认接入 `https://gptapi.asia/v1`
+- 这是兼容 OpenAI 的接口格式，不代表要填写 OpenAI 官方 key
+
+如果在 WSL / Docker 环境里遇到网络问题，可以先测试：
 
 ```bash
-cd ~/OneClaw
-docker compose restart oneclaw-gateway
+curl -I https://gptapi.asia/v1/models
 ```
 
-## 推荐模型 API
+如果返回 `401` 或提示未提供令牌，通常说明网络是通的，只是没有带 key。
 
-默认推荐在初始化向导里优先选择 `YutoAPI`。
+## 命令
 
-- 统一接入 OpenAI、Claude、Gemini、GLM、Qwen、DeepSeek、Kimi、MiniMax 等主流模型
-- 初始化向导里已把 `YutoAPI API key` 放在首位
-- OneClaw 内置使用的是 `https://gptapi.asia/v1`
-- `YUTOAPI_API_KEY` 指的是 YutoAPI 发放的 key；协议兼容 OpenAI，但不要把它理解成必须填写 OpenAI 官方 key
-- 官网与购买入口：<https://gptapi.asia>
+- 主命令：`oneclaw`
+- 兼容命令：`openclaw`
 
-如果你已经有 `YUTOAPI_API_KEY`，也可以先写进环境变量，再运行：
-
-```bash
-pnpm oneclaw onboard
-```
-
-## 与上游兼容说明
-
-为了尽量减少破坏性改动，当前版本仍保留一部分上游兼容路径，例如：
-
-- 兼容 `openclaw` 命令
-- 某些内部配置和状态目录仍沿用上游约定
-- Docker 运行时与上游核心能力保持兼容
-
-这意味着：
-
-- 现有 OpenClaw 用户迁移成本更低
-- OneClaw Installer 可以直接接入本仓库的 Docker 安装流
-- 后续可以继续逐步推进更深层的品牌替换
-
-## 配合 OneClaw Installer
-
-如果你使用 `OneClaw Installer` 图形化安装器：
-
-- 安装器会下载本仓库的固定 tag 安装包，不直接跟随 `main` 漂移
-- 安装器会调用该固定版本对应的 `docker-setup.sh`
-- 安装器会生成 OneClaw 的图形化设置与验证入口
-
-安装器源码现在也已经并入本仓库，主要目录如下：
-
-- `apps/desktop-installer`
-- `packages/installer-core`
-- `packages/macos-installer`
-- `docs/installer`
-
-常用命令：
+常用安装器命令：
 
 ```bash
 pnpm installer:build
@@ -185,36 +122,20 @@ pnpm installer:dev:web
 pnpm installer:package:macos
 ```
 
-## 开发
-
-安装依赖：
+常用开发命令：
 
 ```bash
 pnpm install
-```
-
-构建：
-
-```bash
 pnpm build
-```
-
-本地运行：
-
-```bash
 pnpm oneclaw onboard --install-daemon
 ```
 
-如果你仍需要兼容上游命令：
+如果需要兼容旧命令：
 
 ```bash
 pnpm openclaw onboard --install-daemon
 ```
 
-## 仓库说明
+## 许可证
 
-这个仓库当前优先完成三件事：
-
-- OneClaw 品牌入口统一
-- 中文安装与上手体验
-- 与 OneClaw Installer 稳定对接
+本仓库保留上游项目的 [MIT License](LICENSE)。

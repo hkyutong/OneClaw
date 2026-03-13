@@ -11,7 +11,6 @@ import {
   ONECLAW_INSTALL_BUNDLE_REF_URL,
   type ReleaseChannel
 } from "@oneclaw/installer-core";
-import yutoLogoUrl from "../../../yuto-macOS.png?url";
 import {
   checkMacBackendHealth,
   fetchEmbeddedMacOnboarding,
@@ -52,7 +51,6 @@ interface NoticeState {
 }
 
 const INSTALL_CHANNEL: ReleaseChannel = "stable";
-const API_PURCHASE_URL = "https://gptapi.asia";
 const DEFAULT_MODEL_BY_PROVIDER: Record<GuidedProvider, string> = {
   yutoapi: "gpt-4o-mini",
   openai: "gpt-5.1-codex",
@@ -111,11 +109,11 @@ const COPY = {
   zh: {
     product: "OneClaw Installer",
     heading: "在 Mac 上安装 OneClaw",
-    subtitle: "检查系统、准备安装资源、一键配置 OneClaw，再做最后验证。",
+    subtitle: "检查系统、准备安装资源、写入配置并完成验证。",
     languageLabel: "语言",
     unsupportedTitle: "当前先支持 macOS",
     unsupportedBody:
-      "你现在打开的是 {platform}。当前 GUI 安装器已经完整验证的是 macOS 路线，所以这里会优先引导 macOS 用户。",
+      "你现在打开的是 {platform}。当前安装器只提供 macOS 图形界面，其他平台请改用对应的终端部署流程。",
     steps: {
       check: "检查",
       install: "安装",
@@ -144,50 +142,46 @@ const COPY = {
       done: "我已允许打开此 App"
     },
     fixes: {
-      installDocker: "一键安装 Docker Desktop",
+      installDocker: "安装 Docker Desktop",
       openDocker: "打开 Docker Desktop",
       openDockerDocs: "打开 Docker 官方安装文档",
-      resolveBlocked: "一键处理当前阻断项"
+      resolveBlocked: "处理当前阻断项"
     },
     tutorial: {
-      title: "API 配置教程",
-      intro:
-        "最简单的方式是先准备一个 API Key，再在下面的一键配置中直接使用 YutoAPI。YutoAPI 已经被放在 OneClaw 提供商列表的首位，适合大多数用户。",
-      stepOne: "先准备好 YutoAPI 的 API Key。",
-      stepTwo: "模型 ID 保持推荐值，或者改成你想用的 YutoAPI 模型。",
-      stepThree: "点击“一键配置 OneClaw”，应用会自动完成初始化和 Gateway 启动。",
-      anthroHint: "YutoAPI 支持 OpenAI、Claude、Gemini、GLM、Qwen 等主流模型，通常不需要再单独配置多个提供商。",
-      buyApi: "购买模型 API",
+      title: "API 设置说明",
+      intro: "选择一个可用的 API 提供商，然后填写对应的 API Key 和模型 ID。",
+      stepOne: "确认你要使用的 API 提供商。",
+      stepTwo: "填写 API Key 和模型 ID。",
+      stepThree: "点击“配置 OneClaw”写入设置并启动 Gateway。",
+      anthroHint: "如果后面需要更换提供商，可以回到这里重新配置。",
       openAuth: "打开官方 API 教程",
       openWizard: "打开 OneClaw 仓库",
-      promoTitle: "推荐",
-      promoBody: "如果你还没有可用的模型 API，可以先准备 YutoAPI，再继续安装流程。"
     },
     install: {
       kicker: "步骤 2",
       title: "准备 OneClaw 安装资源",
       introIdle: "点击开始后，应用会下载 OneClaw 安装资源，并准备后续设置入口。",
       introRunning: "正在准备 OneClaw 安装资源。",
-      introDone: "安装资源已准备好，可以继续一键配置。",
+      introDone: "安装资源已准备好，可以继续配置。",
       openAdvanced: "查看安装日志",
       continue: "继续",
       retry: "重新准备"
     },
     setup: {
       kicker: "步骤 3",
-      title: "一键配置 OneClaw",
-      intro: "填写 YutoAPI API Key 和模型 ID，然后让安装器自动完成 OneClaw 初始化与 Gateway 启动。",
+      title: "配置 OneClaw",
+      intro: "填写 API Key 和模型 ID，安装器会写入配置并启动 Gateway。",
       apiKeyLabel: "YutoAPI API Key",
-      apiKeyPlaceholder: "粘贴 YutoAPI 发放的 API Key",
+      apiKeyPlaceholder: "粘贴 YutoAPI 提供的 API Key",
       modelLabel: "模型 ID",
       modelPlaceholder: "例如 gpt-4o-mini",
       baseUrlTitle: "固定接入地址",
       baseUrlBody: "安装器会自动使用 https://gptapi.asia/v1，无需手动填写 Base URL。",
-      startGuided: "一键配置 OneClaw",
+      startGuided: "配置 OneClaw",
       retryGuided: "重新配置",
-      runningTitle: "OneClaw 自动配置正在进行",
-      progressTitle: "自动配置进度",
-      progressIdle: "提交后，这里会显示 OneClaw 一键配置的实时步骤和日志。",
+      runningTitle: "OneClaw 配置正在进行",
+      progressTitle: "配置进度",
+      progressIdle: "提交后，这里会显示配置步骤和日志。",
       advancedTitle: "改用官方终端流程",
       advancedBody:
         "如果自动配置失败，或者你想手动完成更复杂的选项，也可以切换到官方交互式 Docker 流程。",
@@ -202,7 +196,7 @@ const COPY = {
       kicker: "步骤 4",
       title: "做最后验证",
       intro:
-        "一键配置完成后，运行 Doctor 做最后验证。你也可以打开安装目录和日志目录查看具体文件。",
+        "配置完成后，运行 Doctor 做最后验证。你也可以打开安装目录和日志目录查看具体文件。",
       openDashboard: "打开 OneClaw 图形界面",
       runDoctor: "运行 Doctor 验证",
       refresh: "刷新状态",
@@ -236,9 +230,9 @@ const COPY = {
       success: "下一步已就绪",
       error: "需要处理",
       installStarted: "正在准备安装环境，请稍候。",
-      installCompleted: "安装资源已经准备完成，继续一键配置 OneClaw。",
-      guidedSetupStarted: "一键配置已经开始，正在初始化 OneClaw。",
-      guidedSetupCompleted: "OneClaw 一键配置已经完成，现在可以做最后验证。",
+      installCompleted: "安装资源已经准备完成，继续配置 OneClaw。",
+      guidedSetupStarted: "配置已经开始，正在初始化 OneClaw。",
+      guidedSetupCompleted: "OneClaw 配置已经完成，现在可以做最后验证。",
       guidedSetupRetry: "可以修改参数后重新配置。",
       onboardingStarted: "官方设置已经在应用内启动。",
       onboardingTerminal: "官方设置已经在 Terminal 中打开。",
@@ -278,7 +272,7 @@ const COPY = {
     product: "OneClaw Installer",
     heading: "Install OneClaw on Mac",
     subtitle:
-      "Check the system, prepare the install bundle, set up OneClaw automatically, and run the final verification.",
+      "Check the system, prepare the install bundle, apply the configuration, and run the final verification.",
     languageLabel: "Language",
     unsupportedTitle: "macOS is the current priority",
     unsupportedBody:
@@ -317,19 +311,14 @@ const COPY = {
       resolveBlocked: "Fix current blockers"
     },
     tutorial: {
-      title: "API setup guide",
-      intro:
-        "The easiest path is to prepare a YutoAPI key first, then use it directly in the guided setup below. OneClaw now places YutoAPI first in the provider list for most users.",
-      stepOne: "Prepare a YutoAPI API key.",
-      stepTwo: "Keep the recommended model ID, or replace it with the YutoAPI model you want to use.",
-      stepThree: "Click “Set up OneClaw” and let the installer finish initialization and gateway startup.",
-      anthroHint:
-        "YutoAPI covers OpenAI, Claude, Gemini, GLM, Qwen, and other mainstream model families through one gateway.",
-      buyApi: "Buy model API",
+      title: "API setup notes",
+      intro: "Choose an API provider, then enter the matching API key and model ID.",
+      stepOne: "Confirm which API provider you want to use.",
+      stepTwo: "Enter the API key and model ID.",
+      stepThree: "Click “Set up OneClaw” to save the configuration and start the Gateway.",
+      anthroHint: "You can come back here later and switch to another provider if needed.",
       openAuth: "Open official API guide",
       openWizard: "Open OneClaw repository",
-      promoTitle: "Recommended",
-      promoBody: "If you do not have a usable model API yet, prepare YutoAPI first, then continue the installer."
     },
     install: {
       kicker: "Step 2",
@@ -337,27 +326,27 @@ const COPY = {
       introIdle:
         "Once you start, the app downloads the OneClaw install bundle and prepares the setup entry points.",
       introRunning: "Preparing the OneClaw install bundle.",
-      introDone: "The install bundle is ready. Continue to guided setup.",
+      introDone: "The install bundle is ready. Continue to setup.",
       openAdvanced: "Show install logs",
       continue: "Continue",
       retry: "Prepare again"
     },
     setup: {
       kicker: "Step 3",
-      title: "Set up OneClaw automatically",
+      title: "Set up OneClaw",
       intro:
-        "Paste your YutoAPI API key and model ID, then let the installer finish OneClaw initialization and gateway startup for you.",
+        "Enter the API key and model ID. The installer saves the configuration and starts the Gateway.",
       apiKeyLabel: "YutoAPI API key",
-      apiKeyPlaceholder: "Paste the API key issued by YutoAPI",
+      apiKeyPlaceholder: "Paste the API key provided by YutoAPI",
       modelLabel: "Model ID",
       modelPlaceholder: "For example: gpt-4o-mini",
       baseUrlTitle: "Fixed endpoint",
       baseUrlBody: "The installer always uses https://gptapi.asia/v1. You do not need to enter a base URL.",
       startGuided: "Set up OneClaw",
       retryGuided: "Run setup again",
-      runningTitle: "OneClaw guided setup is running",
+      runningTitle: "OneClaw setup is running",
       progressTitle: "Guided setup progress",
-      progressIdle: "Once you submit the form, the live OneClaw setup steps and logs will appear here.",
+      progressIdle: "Once you submit the form, the setup steps and logs will appear here.",
       advancedTitle: "Switch to the official terminal flow",
       advancedBody:
         "If guided setup fails, or you need to adjust advanced options manually, you can still switch to the official interactive Docker flow.",
@@ -373,7 +362,7 @@ const COPY = {
       kicker: "Step 4",
       title: "Run the final check",
       intro:
-        "After guided setup is complete, run Doctor for the final check. You can also open the install folder and logs for troubleshooting.",
+        "After setup is complete, run Doctor for the final check. You can also open the install folder and logs for troubleshooting.",
       openDashboard: "Open OneClaw UI",
       runDoctor: "Run Doctor",
       refresh: "Refresh status",
@@ -409,11 +398,11 @@ const COPY = {
       installStarted:
         "Preparing the install environment. The app is downloading the official bundle and generating the setup entry points.",
       installCompleted:
-        "The install bundle is ready. Continue to guided OneClaw setup.",
+        "The install bundle is ready. Continue to OneClaw setup.",
       guidedSetupStarted:
-        "Guided setup has started. OneClaw is being initialized now.",
+        "Setup has started. OneClaw is being initialized now.",
       guidedSetupCompleted:
-        "Guided setup completed. You can now run the final verification.",
+        "Setup completed. You can now run the final verification.",
       guidedSetupRetry:
         "You can adjust the inputs and run the setup again.",
       onboardingStarted:
@@ -1123,7 +1112,9 @@ function App() {
           </header>
           <section className="topbar unsupported-topbar">
             <div className="brand-row unsupported-brand-row">
-              <img alt="OneClaw" className="app-logo" src={yutoLogoUrl} />
+              <div aria-hidden="true" className="app-logo app-mark">
+                1C
+              </div>
               <div className="brand-copy">
                 <h1>{text.unsupportedTitle}</h1>
                 <p className="hero-copy">
@@ -1156,7 +1147,9 @@ function App() {
           <section className="topbar">
             <div className="hero-block">
               <div className="brand-row">
-                <img alt="OneClaw" className="app-logo" src={yutoLogoUrl} />
+                <div aria-hidden="true" className="app-logo app-mark">
+                  1C
+                </div>
                 <div className="brand-copy">
                   <h1>{text.heading}</h1>
                   <p className="hero-copy">{text.subtitle}</p>
@@ -1569,9 +1562,7 @@ function App() {
                     <div className="log-panel">
                       {deferredGuidedSetupLogs.length === 0 ? (
                         <p className="empty-copy">
-                          {language === "zh"
-                            ? "一键配置日志会显示在这里。"
-                            : "Guided setup logs will appear here."}
+                          {language === "zh" ? "配置日志会显示在这里。" : "Setup logs will appear here."}
                         </p>
                       ) : (
                         deferredGuidedSetupLogs.map((line, index) => (
@@ -1592,10 +1583,8 @@ function App() {
             <section className="guide-card">
               <div className="guide-header">
                 <div>
-                  <p className="section-kicker">{text.tutorial.promoTitle}</p>
                   <h3>{text.tutorial.title}</h3>
                 </div>
-                <img alt="Yuto" className="guide-badge" src={yutoLogoUrl} />
               </div>
               <p className="details-copy">{guidedProviderDetails.guideIntro}</p>
               <ol className="guide-list">
@@ -1604,40 +1593,25 @@ function App() {
                 ))}
               </ol>
               <p className="details-copy">{guidedProviderDetails.guideHint}</p>
-              <div className="promo-strip">
-                <div>
-                  <strong>{text.tutorial.promoTitle}</strong>
-                  <p>{guidedProviderDetails.promoBody}</p>
-                </div>
-                <div className="action-row">
-                  <button
-                    className="primary-cta"
-                    onClick={() => {
-                      handleOpenExternal(API_PURCHASE_URL);
-                    }}
-                    type="button"
-                  >
-                    {text.tutorial.buyApi}
-                  </button>
-                  <button
-                    className="secondary-cta"
-                    onClick={() => {
-                      handleOpenExternal(OFFICIAL_DOCS[language].auth);
-                    }}
-                    type="button"
-                  >
-                    {text.tutorial.openAuth}
-                  </button>
-                  <button
-                    className="ghost-cta"
-                    onClick={() => {
-                      handleOpenExternal(OFFICIAL_DOCS[language].wizard);
-                    }}
-                    type="button"
-                  >
-                    {text.tutorial.openWizard}
-                  </button>
-                </div>
+              <div className="action-row">
+                <button
+                  className="secondary-cta"
+                  onClick={() => {
+                    handleOpenExternal(OFFICIAL_DOCS[language].auth);
+                  }}
+                  type="button"
+                >
+                  {text.tutorial.openAuth}
+                </button>
+                <button
+                  className="ghost-cta"
+                  onClick={() => {
+                    handleOpenExternal(OFFICIAL_DOCS[language].wizard);
+                  }}
+                  type="button"
+                >
+                  {text.tutorial.openWizard}
+                </button>
               </div>
             </section>
 
@@ -1962,7 +1936,11 @@ function CheckCard(props: {
     <article className={`check-card ${props.item.state}`}>
       <div className="row-between check-card-heading">
         <div className="check-card-title">
-          {usesIcon ? <img alt="" className="check-card-icon" src={yutoLogoUrl} /> : null}
+          {usesIcon ? (
+            <div aria-hidden="true" className="check-card-icon app-mark app-mark-compact">
+              1C
+            </div>
+          ) : null}
           <strong>{localizeCheckTitle(props.language, props.item.id)}</strong>
         </div>
         <span className={`state-chip ${props.item.state}`}>
@@ -2204,7 +2182,6 @@ function getGuidedProviderDetails(
   guideIntro: string;
   guideSteps: string[];
   guideHint: string;
-  promoBody: string;
 } {
   const label = getGuidedProviderLabel(language, provider);
   const isZh = language === "zh";
@@ -2216,36 +2193,33 @@ function getGuidedProviderDetails(
       label,
       providerLabel,
       apiKeyLabel: isZh ? "OpenAI API Key" : "OpenAI API key",
-      apiKeyPlaceholder: isZh ? "粘贴 OpenAI 官方发放的 API Key" : "Paste the API key issued by OpenAI",
+      apiKeyPlaceholder: isZh ? "粘贴 OpenAI 官方提供的 API Key" : "Paste the API key provided by OpenAI",
       modelPlaceholder: defaultModelId,
       defaultModelId,
       intro: isZh
-        ? "选择 API 提供商，填入对应的 API Key 和模型 ID，然后让安装器自动完成 OneClaw 初始化与 Gateway 启动。"
-        : "Choose a provider, enter the matching API key and model ID, then let the installer finish OneClaw initialization and gateway startup.",
+        ? "选择 API 提供商，填入对应的 API Key 和模型 ID。"
+        : "Choose a provider, then enter the matching API key and model ID.",
       endpointTitle: isZh ? "连接方式" : "Connection",
       endpointBody: isZh
-        ? "将直接连接 OpenAI 官方 API。模型 ID 留空时会自动回退到推荐默认值。"
-        : "The installer connects directly to the official OpenAI API. Leave the model blank to use the recommended default.",
+        ? "将直接连接 OpenAI 官方 API。模型 ID 留空时使用默认值。"
+        : "The installer connects directly to the official OpenAI API. Leave the model blank to use the default value.",
       guideIntro: isZh
-        ? "如果你已经有 OpenAI 官方 API Key，可以直接在这里接入；也可以随时切回 YutoAPI 或 Claude 官方。"
-        : "If you already have an official OpenAI API key, use it directly here. You can switch back to YutoAPI or Claude at any time.",
+        ? "如果使用 OpenAI，在这里填写 OpenAI 官方 API Key。"
+        : "If you use OpenAI, enter the official OpenAI API key here.",
       guideSteps: isZh
         ? [
             "粘贴 OpenAI 官方 API Key。",
             `模型 ID 可保持默认值 ${defaultModelId}，或改成你自己的 OpenAI 模型。`,
-            "点击“一键配置 OneClaw”，安装器会自动完成初始化和 Gateway 启动。"
+            "点击“配置 OneClaw”写入设置并启动 Gateway。"
           ]
         : [
             "Paste your official OpenAI API key.",
             `Keep the default model ${defaultModelId}, or replace it with your own OpenAI model.`,
-            "Click “Set up OneClaw” and let the installer finish initialization and gateway startup."
+            "Click “Set up OneClaw” to save the configuration and start the Gateway."
           ],
       guideHint: isZh
-        ? "如果你暂时没有 OpenAI 官方额度，也可以切换到 YutoAPI，通过同一入口接入更多模型。"
-        : "If you do not have OpenAI credits yet, switch to YutoAPI for broader model coverage from one entry point.",
-      promoBody: isZh
-        ? "OpenAI 官方可直接接入；如果你还没有可用额度，也可以切回 YutoAPI。"
-        : "OpenAI works directly here. If you do not have credits yet, you can switch back to YutoAPI."
+        ? "如果要改用其他提供商，可以切换上面的选项。"
+        : "Use the provider selector above if you want to switch to another provider."
     };
   }
 
@@ -2254,36 +2228,33 @@ function getGuidedProviderDetails(
       label,
       providerLabel,
       apiKeyLabel: isZh ? "Claude API Key" : "Claude API key",
-      apiKeyPlaceholder: isZh ? "粘贴 Anthropic 官方发放的 API Key" : "Paste the API key issued by Anthropic",
+      apiKeyPlaceholder: isZh ? "粘贴 Anthropic 官方提供的 API Key" : "Paste the API key provided by Anthropic",
       modelPlaceholder: defaultModelId,
       defaultModelId,
       intro: isZh
-        ? "选择 API 提供商，填入对应的 API Key 和模型 ID，然后让安装器自动完成 OneClaw 初始化与 Gateway 启动。"
-        : "Choose a provider, enter the matching API key and model ID, then let the installer finish OneClaw initialization and gateway startup.",
+        ? "选择 API 提供商，填入对应的 API Key 和模型 ID。"
+        : "Choose a provider, then enter the matching API key and model ID.",
       endpointTitle: isZh ? "连接方式" : "Connection",
       endpointBody: isZh
-        ? "将直接连接 Claude 官方 API。模型 ID 留空时会自动回退到推荐默认值。"
-        : "The installer connects directly to the official Claude API. Leave the model blank to use the recommended default.",
+        ? "将直接连接 Claude 官方 API。模型 ID 留空时使用默认值。"
+        : "The installer connects directly to the official Claude API. Leave the model blank to use the default value.",
       guideIntro: isZh
-        ? "如果你已经有 Claude 官方 API Key，可以直接在这里接入；也可以随时切回 YutoAPI 或 OpenAI 官方。"
-        : "If you already have an official Claude API key, use it directly here. You can switch back to YutoAPI or OpenAI at any time.",
+        ? "如果使用 Claude，在这里填写 Anthropic 官方 API Key。"
+        : "If you use Claude, enter the official Anthropic API key here.",
       guideSteps: isZh
         ? [
             "粘贴 Anthropic 官方 API Key。",
             `模型 ID 可保持默认值 ${defaultModelId}，或改成你自己的 Claude 模型。`,
-            "点击“一键配置 OneClaw”，安装器会自动完成初始化和 Gateway 启动。"
+            "点击“配置 OneClaw”写入设置并启动 Gateway。"
           ]
         : [
             "Paste your official Anthropic API key.",
             `Keep the default model ${defaultModelId}, or replace it with your own Claude model.`,
-            "Click “Set up OneClaw” and let the installer finish initialization and gateway startup."
+            "Click “Set up OneClaw” to save the configuration and start the Gateway."
           ],
       guideHint: isZh
-        ? "如果你想用更多模型家族，也可以切回 YutoAPI，通过同一个入口统一管理。"
-        : "If you want access to more model families, switch to YutoAPI and manage them from one entry point.",
-      promoBody: isZh
-        ? "Claude 官方可直接接入；如果你还没有官方 key，也可以切回 YutoAPI。"
-        : "Claude works directly here. If you do not have an official key yet, you can switch back to YutoAPI."
+        ? "如果要改用其他提供商，可以切换上面的选项。"
+        : "Use the provider selector above if you want to switch to another provider."
     };
   }
 
@@ -2291,36 +2262,33 @@ function getGuidedProviderDetails(
     label,
     providerLabel,
     apiKeyLabel: isZh ? "YutoAPI API Key" : "YutoAPI API key",
-    apiKeyPlaceholder: isZh ? "粘贴 YutoAPI 发放的 API Key" : "Paste the API key issued by YutoAPI",
+    apiKeyPlaceholder: isZh ? "粘贴 YutoAPI 提供的 API Key" : "Paste the API key provided by YutoAPI",
     modelPlaceholder: defaultModelId,
     defaultModelId,
     intro: isZh
-      ? "选择 API 提供商，填入对应的 API Key 和模型 ID，然后让安装器自动完成 OneClaw 初始化与 Gateway 启动。"
-      : "Choose a provider, enter the matching API key and model ID, then let the installer finish OneClaw initialization and gateway startup.",
+      ? "选择 API 提供商，填入对应的 API Key 和模型 ID。"
+      : "Choose a provider, then enter the matching API key and model ID.",
     endpointTitle: isZh ? "固定接入地址" : "Fixed endpoint",
     endpointBody: isZh
       ? "安装器会自动使用 https://gptapi.asia/v1，无需手动填写 Base URL。"
       : "The installer always uses https://gptapi.asia/v1. You do not need to enter a base URL.",
     guideIntro: isZh
-      ? "最简单的方式仍然是先准备 YutoAPI。它放在首位，适合大多数用户；如果你已经有 OpenAI 或 Claude 官方 key，也可以直接切换。"
-      : "The easiest path is still YutoAPI. It stays first for most users, but you can switch to official OpenAI or Claude whenever you want.",
+      ? "如果使用 YutoAPI，在这里填写 YutoAPI 提供的 API Key。"
+      : "If you use YutoAPI, enter the API key provided by YutoAPI here.",
     guideSteps: isZh
       ? [
           "先准备好 YutoAPI 的 API Key。",
-          `模型 ID 保持推荐值 ${defaultModelId}，或者改成你想用的 YutoAPI 模型。`,
-          "点击“一键配置 OneClaw”，应用会自动完成初始化和 Gateway 启动。"
+          `模型 ID 保持默认值 ${defaultModelId}，或者改成你要使用的模型。`,
+          "点击“配置 OneClaw”写入设置并启动 Gateway。"
         ]
       : [
           "Prepare a YutoAPI API key.",
-          `Keep the recommended model ${defaultModelId}, or replace it with the YutoAPI model you want to use.`,
-          "Click “Set up OneClaw” and let the app finish initialization and gateway startup."
+          `Keep the default model ${defaultModelId}, or replace it with the model you want to use.`,
+          "Click “Set up OneClaw” to save the configuration and start the Gateway."
         ],
     guideHint: isZh
-      ? "YutoAPI 支持 OpenAI、Claude、Gemini 以及国内外主流模型；如果你更想直连官方，也可以切换到 OpenAI 或 Claude。"
-      : "YutoAPI covers OpenAI, Claude, Gemini, and other mainstream models. If you prefer direct official APIs, switch to OpenAI or Claude.",
-    promoBody: isZh
-      ? "如果你还没有可用的模型 API，可以先到 gptapi.asia 准备 YutoAPI；也可以改用 OpenAI 或 Claude 官方。"
-      : "If you do not have a model API yet, start with YutoAPI at gptapi.asia, or switch to official OpenAI or Claude."
+      ? "如果要改用 OpenAI 或 Claude，可以切换上面的选项。"
+      : "Use the provider selector above if you want to switch to OpenAI or Claude."
   };
 }
 
@@ -2542,7 +2510,7 @@ function localizeInstallStepDetail(
     case "finalize":
       return step.status === "completed"
         ? isZh
-          ? "现在可以继续一键配置。"
+          ? "现在可以继续配置。"
           : "Everything is ready for guided setup."
         : isZh
           ? "正在收尾并保存入口。"
@@ -2559,7 +2527,7 @@ function localizeGuidedSetupStepTitle(language: Language, id: string): string {
       prepare: "准备 Docker 工作区",
       configure: "写入模型配置",
       verify: "验证 Gateway 状态",
-      finalize: "完成一键配置"
+      finalize: "完成配置"
     },
     en: {
       inspect: "Check system",

@@ -33,7 +33,7 @@ extension OnboardingView {
             VStack(spacing: 22) {
                 Text("Welcome to OneClaw")
                     .font(.largeTitle.weight(.semibold))
-                Text("OneClaw is a powerful personal AI assistant that can connect to WhatsApp or Telegram.")
+                Text("OneClaw can connect this Mac to a local Gateway and supported channels.")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -53,11 +53,9 @@ extension OnboardingView {
                             Text("Security notice")
                                 .font(.headline)
                             Text(
-                                "The connected AI agent (e.g. Claude) can trigger powerful actions on your Mac, " +
-                                    "including running commands, reading/writing files, and capturing screenshots — " +
-                                    "depending on the permissions you grant.\n\n" +
-                                    "Only enable OneClaw if you understand the risks and trust the prompts and " +
-                                    "integrations you use.")
+                                "Depending on the permissions you grant, connected tools can run commands, " +
+                                    "read and write files, and capture screenshots.\n\n" +
+                                    "Only continue if you understand these permissions and trust the workflow you use.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -764,9 +762,8 @@ extension OnboardingView {
                             .lineLimit(2)
                     } else {
                         Text(
-                            "Tip: edit AGENTS.md in this folder to shape the assistant’s behavior. " +
-                                "For backup, make the workspace a private git repo so your agent’s " +
-                                "“memory” is versioned.")
+                            "Tip: edit AGENTS.md in this folder to adjust the workspace instructions. " +
+                                "If you want backups, initialize this folder as a private git repository.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(2)
@@ -778,11 +775,11 @@ extension OnboardingView {
 
     func onboardingChatPage() -> some View {
         VStack(spacing: 16) {
-            Text("Meet your agent")
+            Text("Setup chat")
                 .font(.largeTitle.weight(.semibold))
             Text(
-                "This is a dedicated onboarding chat. Your agent will introduce itself, " +
-                    "learn who you are, and help you connect WhatsApp or Telegram if you want.")
+                "This chat is used during setup. You can use it to finish the initial configuration " +
+                    "and connect WhatsApp or Telegram if needed.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
