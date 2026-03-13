@@ -1,7 +1,18 @@
 #!/usr/bin/env node
 
 import { execFile } from "node:child_process";
-import { chmod, cp, mkdir, mkdtemp, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  cp,
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rename,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,7 +28,7 @@ const args = parseArgs(process.argv.slice(2));
 const APP_BUNDLE_NAME = "OneClaw Installer.app";
 const LAUNCHER_NAME = "启动 OneClaw Installer.command";
 const EXECUTABLE_NAME = "OneClawInstaller";
-const GUIDE_NAME = "安装说明-未签名版.txt";
+const GUIDE_NAME = "安装说明-本地签名版.txt";
 
 await main();
 
@@ -69,6 +80,7 @@ async function main() {
   await copyWorkspaceRuntimePackage("macos-installer", nodeModulesPath);
   await copyInstalledPackage("@lydell/node-pty", nodeModulesPath);
   await ensurePlatformSpecificNodePty(nodeModulesPath, args.arch, nodePtyVersion);
+  await signMacBundle(appBundlePath);
 
   await writeLauncher(outputRoot);
   await writeInstallGuide(outputRoot, oneclawVersion);
@@ -80,7 +92,7 @@ async function main() {
   console.log(`压缩包：${path.join(outputRoot, `OneClaw-Installer-${args.arch}.zip`)}`);
   console.log(`说明文档：${path.join(outputRoot, GUIDE_NAME)}`);
   console.log(`固定安装版本：OneClaw ${oneclawVersion} (v${oneclawVersion})`);
-  console.log("签名：已关闭（无签名版本）");
+  console.log("签名：已完成（本地 ad-hoc 签名）");
 }
 
 function parseArgs(argv) {
@@ -284,9 +296,9 @@ async function writeLauncher(outputRoot) {
 async function writeInstallGuide(outputRoot, oneclawVersion) {
   const guidePath = path.join(outputRoot, GUIDE_NAME);
   const content = [
-    "OneClaw Installer 未签名安装说明",
+    "OneClaw Installer 本地签名安装说明",
     "",
-    "这是一份未签名、未公证的 macOS 安装器。",
+    "这是一份使用本地 ad-hoc 签名、但未公证的 macOS 安装器。",
     `它会固定下载并部署 OneClaw ${oneclawVersion}（tag: v${oneclawVersion}）。`,
     "如果 macOS 提示“无法验证开发者”或“已阻止打开”，按下面步骤操作。",
     "",
@@ -317,6 +329,24 @@ async function writeInstallGuide(outputRoot, oneclawVersion) {
   ].join("\n");
 
   await writeFile(guidePath, content);
+}
+
+async function signMacBundle(appBundlePath) {
+  await execFileAsync("/usr/bin/codesign", [
+    "--force",
+    "--deep",
+    "--sign",
+    "-",
+    "--timestamp=none",
+    appBundlePath,
+  ]);
+  await execFileAsync("/usr/bin/codesign", [
+    "--verify",
+    "--deep",
+    "--strict",
+    "--verbose=2",
+    appBundlePath,
+  ]);
 }
 
 async function zipBundle(outputRoot, appBundlePath) {
@@ -357,7 +387,7 @@ async function resolveInstalledPackageDir(packageName) {
     const candidate = path.join(baseDir, ...packageName.split("/"));
     try {
       await readFile(path.join(candidate, "package.json"));
-      return candidate;
+      return await realpath(candidate);
     } catch {
       // Keep walking the known workspace node_modules locations.
     }
