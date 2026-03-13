@@ -49,12 +49,13 @@ async function main() {
   await verifyBuildArtifacts();
 
   const outputRoot = path.join(rootDir, "release", "macos", args.arch);
-  const appBundlePath = path.join(outputRoot, APP_BUNDLE_NAME);
+  const packageDir = path.join(outputRoot, "OneClaw Installer");
+  const appBundlePath = path.join(packageDir, APP_BUNDLE_NAME);
   const resourcesAppPath = path.join(appBundlePath, "Contents", "Resources", "app");
   const nodeModulesPath = path.join(resourcesAppPath, "node_modules");
 
   await rm(outputRoot, { recursive: true, force: true });
-  await mkdir(outputRoot, { recursive: true });
+  await mkdir(packageDir, { recursive: true });
 
   const electronAppSource = await resolveElectronApp(electronVersion, args.arch, outputRoot);
   await execFileAsync("ditto", [electronAppSource, appBundlePath]);
@@ -82,15 +83,15 @@ async function main() {
   await ensurePlatformSpecificNodePty(nodeModulesPath, args.arch, nodePtyVersion);
   await signMacBundle(appBundlePath);
 
-  await writeLauncher(outputRoot);
-  await writeInstallGuide(outputRoot, oneclawVersion);
-  await zipBundle(outputRoot, appBundlePath);
+  await writeLauncher(packageDir);
+  await writeInstallGuide(packageDir, oneclawVersion);
+  await zipBundle(outputRoot, packageDir);
   await rm(path.join(outputRoot, ".electron"), { recursive: true, force: true });
 
   console.log(`${APP_BUNDLE_NAME} 已生成：${appBundlePath}`);
-  console.log(`启动脚本：${path.join(outputRoot, LAUNCHER_NAME)}`);
+  console.log(`启动脚本：${path.join(packageDir, LAUNCHER_NAME)}`);
   console.log(`压缩包：${path.join(outputRoot, `OneClaw-Installer-${args.arch}.zip`)}`);
-  console.log(`说明文档：${path.join(outputRoot, GUIDE_NAME)}`);
+  console.log(`说明文档：${path.join(packageDir, GUIDE_NAME)}`);
   console.log(`固定安装版本：OneClaw ${oneclawVersion} (v${oneclawVersion})`);
   console.log("签名：已完成（本地 ad-hoc 签名）");
 }
@@ -277,8 +278,8 @@ async function ensurePlatformSpecificNodePty(nodeModulesPath, arch, version) {
   }
 }
 
-async function writeLauncher(outputRoot) {
-  const launcherPath = path.join(outputRoot, LAUNCHER_NAME);
+async function writeLauncher(packageDir) {
+  const launcherPath = path.join(packageDir, LAUNCHER_NAME);
   const launcherScript = [
     "#!/bin/zsh",
     "set -e",
@@ -293,8 +294,8 @@ async function writeLauncher(outputRoot) {
   await chmod(launcherPath, 0o755);
 }
 
-async function writeInstallGuide(outputRoot, oneclawVersion) {
-  const guidePath = path.join(outputRoot, GUIDE_NAME);
+async function writeInstallGuide(packageDir, oneclawVersion) {
+  const guidePath = path.join(packageDir, GUIDE_NAME);
   const content = [
     "OneClaw Installer 本地签名安装说明",
     "",
@@ -349,22 +350,11 @@ async function signMacBundle(appBundlePath) {
   ]);
 }
 
-async function zipBundle(outputRoot, appBundlePath) {
+async function zipBundle(outputRoot, packageDir) {
   const zipPath = path.join(outputRoot, `OneClaw-Installer-${args.arch}.zip`);
-  const stagingRoot = await mkdtemp(path.join(os.tmpdir(), "oneclaw-installer-release-"));
-  const packageDir = path.join(stagingRoot, "OneClaw Installer");
   await rm(zipPath, { force: true });
 
-  try {
-    await mkdir(packageDir, { recursive: true });
-    await cp(appBundlePath, path.join(packageDir, APP_BUNDLE_NAME), { recursive: true });
-    await cp(path.join(outputRoot, LAUNCHER_NAME), path.join(packageDir, LAUNCHER_NAME));
-    await cp(path.join(outputRoot, GUIDE_NAME), path.join(packageDir, GUIDE_NAME));
-
-    await execFileAsync("ditto", ["-c", "-k", "--keepParent", "--norsrc", packageDir, zipPath]);
-  } finally {
-    await rm(stagingRoot, { recursive: true, force: true });
-  }
+  await execFileAsync("ditto", ["-c", "-k", "--keepParent", "--norsrc", packageDir, zipPath]);
 }
 
 async function readJson(filePath) {
