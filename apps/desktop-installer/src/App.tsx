@@ -45,6 +45,7 @@ type Language = "zh" | "en";
 type WizardStepId = "check" | "install" | "setup" | "verify";
 type NoticeTone = "info" | "success" | "error";
 type MacActionId = "privacy-security" | "docker-install" | "docker-open";
+const YUTOAPI_WEBSITE_URL = "https://gptapi.asia";
 
 interface NoticeState {
   tone: NoticeTone;
@@ -155,8 +156,6 @@ const COPY = {
       stepTwo: "填写 API Key 和模型 ID。",
       stepThree: "点击“配置 OneClaw”写入设置并启动 Gateway。",
       anthroHint: "如果后面需要更换提供商，可以回到这里重新配置。",
-      openAuth: "打开官方 API 教程",
-      openWizard: "打开 OneClaw 仓库",
     },
     install: {
       kicker: "步骤 2",
@@ -319,8 +318,6 @@ const COPY = {
       stepTwo: "Enter the API key and model ID.",
       stepThree: "Click “Set up OneClaw” to save the configuration and start the Gateway.",
       anthroHint: "You can come back here later and switch to another provider if needed.",
-      openAuth: "Open official API guide",
-      openWizard: "Open OneClaw repository",
     },
     install: {
       kicker: "Step 2",
@@ -1522,7 +1519,23 @@ function App() {
 
                 <div className="setup-hint-card">
                   <strong>{guidedProviderDetails.endpointTitle}</strong>
-                  <p>{guidedProviderDetails.endpointBody}</p>
+                  <p>
+                    {guidedProviderDetails.endpointBody}
+                    {guidedProviderDetails.endpointLinkUrl ? (
+                      <>
+                        <button
+                          className="inline-link-button"
+                          onClick={() => {
+                            handleOpenExternal(guidedProviderDetails.endpointLinkUrl!);
+                          }}
+                          type="button"
+                        >
+                          {guidedProviderDetails.endpointLinkLabel}
+                        </button>
+                        。
+                      </>
+                    ) : null}
+                  </p>
                 </div>
 
                 <div className="action-row">
@@ -1621,26 +1634,6 @@ function App() {
                 ))}
               </ol>
               <p className="details-copy">{guidedProviderDetails.guideHint}</p>
-              <div className="action-row">
-                <button
-                  className="secondary-cta"
-                  onClick={() => {
-                    handleOpenExternal(OFFICIAL_DOCS[language].auth);
-                  }}
-                  type="button"
-                >
-                  {text.tutorial.openAuth}
-                </button>
-                <button
-                  className="ghost-cta"
-                  onClick={() => {
-                    handleOpenExternal(OFFICIAL_DOCS[language].wizard);
-                  }}
-                  type="button"
-                >
-                  {text.tutorial.openWizard}
-                </button>
-              </div>
             </section>
 
             <details className="support-details">
@@ -2206,6 +2199,8 @@ function getGuidedProviderDetails(
   intro: string;
   endpointTitle: string;
   endpointBody: string;
+  endpointLinkLabel?: string;
+  endpointLinkUrl?: string;
   guideIntro: string;
   guideSteps: string[];
   guideHint: string;
@@ -2295,10 +2290,12 @@ function getGuidedProviderDetails(
     intro: isZh
       ? "选择 API 提供商，填入对应的 API Key 和模型 ID。"
       : "Choose a provider, then enter the matching API key and model ID.",
-    endpointTitle: isZh ? "固定接入地址" : "Fixed endpoint",
+    endpointTitle: isZh ? "连接方式" : "Connection",
     endpointBody: isZh
-      ? "安装器会自动使用 https://gptapi.asia/v1，无需手动填写 Base URL。"
-      : "The installer always uses https://gptapi.asia/v1. You do not need to enter a base URL.",
+      ? "将直接连接 OpenAI、Claude、Gemini、Grok、GLM、DeepSeek 等所有主流大模型，"
+      : "Connect directly to OpenAI, Claude, Gemini, Grok, GLM, DeepSeek, and other mainstream models.",
+    endpointLinkLabel: isZh ? "点我获取 YutoAPI Key" : "Get a YutoAPI key",
+    endpointLinkUrl: YUTOAPI_WEBSITE_URL,
     guideIntro: isZh
       ? "如果使用 YutoAPI，在这里填写 YutoAPI 提供的 API Key。"
       : "If you use YutoAPI, enter the API key provided by YutoAPI here.",

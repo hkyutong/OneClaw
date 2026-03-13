@@ -8,7 +8,6 @@ import {
   DEFAULT_OPENAI_MODEL_ID,
   DEFAULT_YUTOAPI_MODEL_ID,
   OPENCLAW_DOCKER_IMAGE,
-  YUTOAPI_BASE_URL,
 } from "./constants.js";
 import { ensureInstallerDashboardAccess } from "./dashboard-access.js";
 import { ensureDockerWorkspacePrepared, type OpenClawInstallResult } from "./openclaw.js";
@@ -184,7 +183,7 @@ function resolveAuthArgs(
       return {
         providerLabel: "YutoAPI",
         primaryModel: prefixModel("yutoapi", modelId),
-        endpointHint: `安装器会自动使用 ${YUTOAPI_BASE_URL}，无需手动填写 Base URL。`,
+        endpointHint: "将直接连接 OpenAI、Claude、Gemini、Grok、GLM、DeepSeek 等所有主流大模型。",
         onboardArgs: [
           "--auth-choice",
           "yutoapi-api-key",

@@ -817,6 +817,21 @@ a {
   font-size: 0.86rem;
 }
 
+.inline-link-button {
+  margin-left: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0a84ff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inline-link-button:hover {
+  text-decoration: underline;
+}
+
 .input-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
