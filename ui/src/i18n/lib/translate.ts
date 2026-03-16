@@ -1,3 +1,4 @@
+import { getSafeLocalStorage } from "../../local-storage.ts";
 import { en } from "../locales/en.ts";
 import {
   DEFAULT_LOCALE,
@@ -105,22 +106,40 @@ class I18nManager {
     this.loadLocale();
   }
 
-  private resolveInitialLocale(): Locale {
-    const queryLocale = resolveUrlLocale();
-    const documentLocale = resolveDocumentLocale();
-    const saved =
-      localStorage.getItem(LOCALE_STORAGE_KEY) ?? localStorage.getItem(LEGACY_LOCALE_STORAGE_KEY);
-    const legacySaved = localStorage.getItem(LEGACY_LOCALE_STORAGE_KEY);
-    if (saved === legacySaved && isSupportedLocale(saved)) {
-      localStorage.setItem(LOCALE_STORAGE_KEY, saved);
-      localStorage.removeItem(LEGACY_LOCALE_STORAGE_KEY);
+  private persistLocale(locale: Locale) {
+    const storage = getSafeLocalStorage();
+    if (!storage) {
+      return;
     }
+    try {
+      storage.setItem(LOCALE_STORAGE_KEY, locale);
+      storage.setItem(LEGACY_LOCALE_STORAGE_KEY, locale);
+    } catch {
+      // Ignore storage write failures in private/blocked contexts.
+    }
+  }
+
+  private resolveInitialLocale(): Locale {
+    const storage = getSafeLocalStorage();
+    let savedLocale: string | null = null;
+    let legacySavedLocale: string | null = null;
+    if (storage) {
+      try {
+        savedLocale = storage.getItem(LOCALE_STORAGE_KEY);
+        legacySavedLocale = storage.getItem(LEGACY_LOCALE_STORAGE_KEY);
+      } catch {
+        savedLocale = null;
+        legacySavedLocale = null;
+      }
+    }
+    const navigatorLanguage =
+      typeof globalThis.navigator?.language === "string" ? globalThis.navigator.language : "";
     return resolveStartupLocale({
-      queryLocale,
-      documentLocale,
-      savedLocale: saved,
-      legacySavedLocale: legacySaved,
-      navigatorLanguage: navigator.language,
+      queryLocale: resolveUrlLocale(),
+      documentLocale: resolveDocumentLocale(),
+      savedLocale,
+      legacySavedLocale,
+      navigatorLanguage,
       testRuntime: isTestRuntime(),
     });
   }
@@ -161,9 +180,7 @@ class I18nManager {
     }
 
     this.locale = locale;
-    localStorage.setItem(LOCALE_STORAGE_KEY, locale);
-    localStorage.removeItem(LEGACY_LOCALE_STORAGE_KEY);
-    syncDocumentLocale(locale);
+    this.persistLocale(locale);
     this.notify();
   }
 

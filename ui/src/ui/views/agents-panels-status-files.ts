@@ -1,5 +1,8 @@
 import { html, nothing } from "lit";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { formatRelativeTimestamp } from "../format.ts";
+import { icons } from "../icons.ts";
+import { toSanitizedMarkdownHtml } from "../markdown.ts";
 import {
   formatCronPayload,
   formatCronSchedule,
@@ -36,8 +39,8 @@ function renderAgentContextCard(context: AgentContext, subtitle: string) {
           <div>${context.identityName}</div>
         </div>
         <div class="agent-kv">
-          <div class="label">身份表情</div>
-          <div>${context.identityEmoji}</div>
+          <div class="label">Identity Avatar</div>
+          <div>${context.identityAvatar}</div>
         </div>
         <div class="agent-kv">
           <div class="label">技能筛选</div>
@@ -180,10 +183,12 @@ export function renderAgentChannels(params: {
                   ${entries.map((entry) => {
                     const summary = summarizeChannelAccounts(entry.accounts);
                     const status = summary.total
-                      ? `${summary.connected}/${summary.total} 已连接`
-                      : "无账号";
-                    const config = summary.configured ? `${summary.configured} 已配置` : "未配置";
-                    const enabled = summary.total ? `${summary.enabled} 已启用` : "已禁用";
+                      ? `${summary.connected}/${summary.total} connected`
+                      : "no accounts";
+                    const configLabel = summary.configured
+                      ? `${summary.configured} configured`
+                      : "not configured";
+                    const enabled = summary.total ? `${summary.enabled} enabled` : "disabled";
                     const extras = resolveChannelExtrasFromConfig({
                       configForm: params.configForm,
                       channelId: entry.id,
@@ -197,8 +202,23 @@ export function renderAgentChannels(params: {
                         </div>
                         <div class="list-meta">
                           <div>${status}</div>
-                          <div>${config}</div>
+                          <div>${configLabel}</div>
                           <div>${enabled}</div>
+                          ${
+                            summary.configured === 0
+                              ? html`
+                                  <div>
+                                    <a
+                                      href="https://docs.openclaw.ai/channels"
+                                      target="_blank"
+                                      rel="noopener"
+                                      style="color: var(--accent); font-size: 12px"
+                                      >Setup guide</a
+                                    >
+                                  </div>
+                                `
+                              : nothing
+                          }
                           ${
                             extras.length > 0
                               ? extras.map(
@@ -226,6 +246,7 @@ export function renderAgentCron(params: {
   loading: boolean;
   error: string | null;
   onRefresh: () => void;
+  onRunNow: (jobId: string) => void;
 }) {
   const jobs = params.jobs.filter((job) => job.agentId === params.agentId);
   return html`
@@ -295,6 +316,12 @@ export function renderAgentCron(params: {
                       <div class="list-meta">
                         <div class="mono">${formatCronState(job)}</div>
                         <div class="muted">${formatCronPayload(job)}</div>
+                        <button
+                          class="btn btn--sm"
+                          style="margin-top: 6px;"
+                          ?disabled=${!job.enabled}
+                          @click=${() => params.onRunNow(job.id)}
+                        >Run Now</button>
                       </div>
                     </div>
                   `,
@@ -387,6 +414,21 @@ export function renderAgentFiles(params: {
                             <div class="agent-file-actions">
                               <button
                                 class="btn btn--sm"
+                                title="Preview rendered markdown"
+                                @click=${(e: Event) => {
+                                  const btn = e.currentTarget as HTMLElement;
+                                  const dialog = btn
+                                    .closest(".agent-files-editor")
+                                    ?.querySelector("dialog");
+                                  if (dialog) {
+                                    dialog.showModal();
+                                  }
+                                }}
+                              >
+                                ${icons.eye} Preview
+                              </button>
+                              <button
+                                class="btn btn--sm"
                                 ?disabled=${!isDirty}
                                 @click=${() => params.onFileReset(activeEntry.name)}
                               >
@@ -410,9 +452,10 @@ export function renderAgentFiles(params: {
                                 `
                               : nothing
                           }
-                          <label class="field" style="margin-top: 12px;">
-                            <span>内容</span>
+                          <label class="field agent-file-field" style="margin-top: 12px;">
+                            <span>Content</span>
                             <textarea
+                              class="agent-file-textarea"
                               .value=${draft}
                               @input=${(e: Event) =>
                                 params.onFileDraftChange(
@@ -421,6 +464,30 @@ export function renderAgentFiles(params: {
                                 )}
                             ></textarea>
                           </label>
+                          <dialog
+                            class="md-preview-dialog"
+                            @click=${(e: Event) => {
+                              const dialog = e.currentTarget as HTMLDialogElement;
+                              if (e.target === dialog) {
+                                dialog.close();
+                              }
+                            }}
+                          >
+                            <div class="md-preview-dialog__panel">
+                              <div class="md-preview-dialog__header">
+                                <div class="md-preview-dialog__title mono">${activeEntry.name}</div>
+                                <button
+                                  class="btn btn--sm"
+                                  @click=${(e: Event) => {
+                                    (e.currentTarget as HTMLElement).closest("dialog")?.close();
+                                  }}
+                                >${icons.x} Close</button>
+                              </div>
+                              <div class="md-preview-dialog__body sidebar-markdown">
+                                ${unsafeHTML(toSanitizedMarkdownHtml(draft))}
+                              </div>
+                            </div>
+                          </dialog>
                         `
                   }
                 </div>

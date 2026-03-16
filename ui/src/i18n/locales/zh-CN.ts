@@ -2,9 +2,9 @@ import type { TranslationMap } from "../lib/types.ts";
 
 export const zh_CN: TranslationMap = {
   common: {
-    version: "版本",
     health: "健康状况",
     ok: "正常",
+    online: "在线",
     offline: "离线",
     yes: "是",
     no: "否",
@@ -19,8 +19,8 @@ export const zh_CN: TranslationMap = {
     unknown: "未知",
     none: "无",
     na: "不适用",
+    version: "版本",
     docs: "文档",
-    theme: "主题",
     resources: "资源",
     search: "搜索",
   },
@@ -165,10 +165,6 @@ export const zh_CN: TranslationMap = {
       automation: "自动化",
       refreshAll: "全部刷新",
       terminal: "终端",
-    },
-    streamMode: {
-      active: "流模式 — 数据已隐藏",
-      disable: "禁用",
     },
     palette: {
       placeholder: "输入命令…",

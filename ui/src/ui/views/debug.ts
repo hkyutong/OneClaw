@@ -34,7 +34,7 @@ export function renderDebug(props: DebugProps) {
     critical > 0 ? `${critical} 个严重问题` : warn > 0 ? `${warn} 个警告` : "没有严重问题";
 
   return html`
-    <section class="grid grid-cols-2">
+    <section class="grid">
       <div class="card">
         <div class="row" style="justify-content: space-between;">
           <div>

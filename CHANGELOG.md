@@ -1,5 +1,11 @@
 # Local Work Progress
 
+## 2026-03-16
+
+- 同步 `openclaw/openclaw` 的 `upstream/main`，更新到 2026-03-16 的主线状态。
+- 保留 OneClaw 的仓库身份设置，包括 `oneclaw` 包名、`oneclaw` CLI 入口和 OneClaw README。
+- 保留 OneClaw 的产品化定制方向：macOS 安装器、YutoAPI 接入、中文化文案，以及 Linux/WSL 的 Docker 部署路径。
+
 ## 2026-03-15
 
 - 调研了 `https://clawhub.ai/` 的公开结构、API 和可抓取范围。

@@ -9,7 +9,8 @@ EXTRA_MOUNTS="${ONECLAW_EXTRA_MOUNTS:-${OPENCLAW_EXTRA_MOUNTS:-}}"
 HOME_VOLUME_NAME="${ONECLAW_HOME_VOLUME:-${OPENCLAW_HOME_VOLUME:-}}"
 RAW_SANDBOX_SETTING="${ONECLAW_SANDBOX:-${OPENCLAW_SANDBOX:-}}"
 SANDBOX_ENABLED=""
-DOCKER_SOCKET_PATH="${ONECLAW_DOCKER_SOCKET:-${OPENCLAW_DOCKER_SOCKET:-}}"
+DOCKER_SOCKET_PATH="${OPENCLAW_DOCKER_SOCKET:-}"
+TIMEZONE="${OPENCLAW_TZ:-}"
 
 fail() {
   echo "ERROR: $*" >&2
@@ -137,6 +138,11 @@ contains_disallowed_chars() {
   [[ "$value" == *$'\n'* || "$value" == *$'\r'* || "$value" == *$'\t'* ]]
 }
 
+is_valid_timezone() {
+  local value="$1"
+  [[ -e "/usr/share/zoneinfo/$value" && ! -d "/usr/share/zoneinfo/$value" ]]
+}
+
 validate_mount_path_value() {
   local label="$1"
   local value="$2"
@@ -206,6 +212,17 @@ fi
 if [[ -n "$SANDBOX_ENABLED" ]]; then
   validate_mount_path_value "ONECLAW_DOCKER_SOCKET / OPENCLAW_DOCKER_SOCKET" "$DOCKER_SOCKET_PATH"
 fi
+if [[ -n "$TIMEZONE" ]]; then
+  if contains_disallowed_chars "$TIMEZONE"; then
+    fail "OPENCLAW_TZ contains unsupported control characters."
+  fi
+  if [[ ! "$TIMEZONE" =~ ^[A-Za-z0-9/_+\-]+$ ]]; then
+    fail "OPENCLAW_TZ must be a valid IANA timezone string (e.g. Asia/Shanghai)."
+  fi
+  if ! is_valid_timezone "$TIMEZONE"; then
+    fail "OPENCLAW_TZ must match a timezone in /usr/share/zoneinfo (e.g. Asia/Shanghai)."
+  fi
+fi
 
 mkdir -p "$OPENCLAW_CONFIG_DIR"
 mkdir -p "$OPENCLAW_WORKSPACE_DIR"
@@ -230,11 +247,7 @@ export OPENCLAW_HOME_VOLUME="$HOME_VOLUME_NAME"
 export OPENCLAW_ALLOW_INSECURE_PRIVATE_WS="${OPENCLAW_ALLOW_INSECURE_PRIVATE_WS:-}"
 export OPENCLAW_SANDBOX="$SANDBOX_ENABLED"
 export OPENCLAW_DOCKER_SOCKET="$DOCKER_SOCKET_PATH"
-export ONECLAW_IMAGE="$OPENCLAW_IMAGE"
-export ONECLAW_EXTRA_MOUNTS="$OPENCLAW_EXTRA_MOUNTS"
-export ONECLAW_HOME_VOLUME="$OPENCLAW_HOME_VOLUME"
-export ONECLAW_SANDBOX="$OPENCLAW_SANDBOX"
-export ONECLAW_DOCKER_SOCKET="$OPENCLAW_DOCKER_SOCKET"
+export OPENCLAW_TZ="$TIMEZONE"
 
 # Detect Docker socket GID for sandbox group_add.
 DOCKER_GID=""
@@ -434,7 +447,8 @@ upsert_env "$ENV_FILE" \
   OPENCLAW_DOCKER_SOCKET \
   DOCKER_GID \
   OPENCLAW_INSTALL_DOCKER_CLI \
-  OPENCLAW_ALLOW_INSECURE_PRIVATE_WS
+  OPENCLAW_ALLOW_INSECURE_PRIVATE_WS \
+  OPENCLAW_TZ
 
 if [[ "$IMAGE_NAME" == "oneclaw:local" ]]; then
   echo "==> 构建 Docker 镜像：$IMAGE_NAME"
