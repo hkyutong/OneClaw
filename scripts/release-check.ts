@@ -7,7 +7,6 @@ import { pathToFileURL } from "node:url";
 import { ONECLAW_INSTALL_BUNDLE_VERSION } from "../packages/installer-core/src/release.ts";
 import {
   collectBundledExtensionManifestErrors,
-  normalizeBundledExtensionMetadata,
   type BundledExtension,
   type ExtensionPackageJson as PackageJson,
 } from "./lib/bundled-extension-manifest.ts";
@@ -26,7 +25,7 @@ const requiredPathGroups = [
   "dist/plugin-sdk/root-alias.cjs",
   "dist/build-info.json",
 ];
-const forbiddenPrefixes = ["dist/OpenClaw.app/"];
+const forbiddenPrefixes = ["dist-runtime/", "dist/OpenClaw.app/"];
 // 2026.3.12 ballooned to ~213.6 MiB unpacked and correlated with low-memory
 // startup/doctor OOM reports. Keep enough headroom for the current pack while
 // failing fast if duplicate/shim content sneaks back into the release artifact.
@@ -34,54 +33,6 @@ const npmPackUnpackedSizeBudgetBytes = 160 * 1024 * 1024;
 const appcastPath = resolve("appcast.xml");
 const laneBuildMin = 1_000_000_000;
 const laneFloorAdoptionDateKey = 20260227;
-
-function normalizePluginSyncVersion(version: string): string {
-  const normalized = version.trim().replace(/^v/, "");
-  const base = /^([0-9]+\.[0-9]+\.[0-9]+)/.exec(normalized)?.[1];
-  if (base) {
-    return base;
-  }
-  return normalized.replace(/[-+].*$/, "");
-}
-
-export function collectBundledExtensionRootDependencyGapErrors(params: {
-  rootPackage: PackageJson;
-  extensions: BundledExtension[];
-}): string[] {
-  const rootDeps = {
-    ...params.rootPackage.dependencies,
-    ...params.rootPackage.optionalDependencies,
-  };
-  const errors: string[] = [];
-
-  for (const extension of normalizeBundledExtensionMetadata(params.extensions)) {
-    if (!extension.npmSpec) {
-      continue;
-    }
-
-    const missing = Object.keys(extension.packageJson.dependencies ?? {})
-      .filter((dep) => dep !== "openclaw" && !rootDeps[dep])
-      .toSorted();
-    const allowlisted = extension.rootDependencyMirrorAllowlist.toSorted();
-    if (missing.join("\n") !== allowlisted.join("\n")) {
-      const unexpected = missing.filter((dep) => !allowlisted.includes(dep));
-      const resolved = allowlisted.filter((dep) => !missing.includes(dep));
-      const parts = [
-        `bundled extension '${extension.id}' root dependency mirror drift`,
-        `missing in root package: ${missing.length > 0 ? missing.join(", ") : "(none)"}`,
-      ];
-      if (unexpected.length > 0) {
-        parts.push(`new gaps: ${unexpected.join(", ")}`);
-      }
-      if (resolved.length > 0) {
-        parts.push(`remove stale allowlist entries: ${resolved.join(", ")}`);
-      }
-      errors.push(parts.join(" | "));
-    }
-  }
-
-  return errors;
-}
 
 function collectBundledExtensions(): BundledExtension[] {
   const extensionsDir = resolve("extensions");
@@ -104,24 +55,12 @@ function collectBundledExtensions(): BundledExtension[] {
   });
 }
 
-function checkBundledExtensionRootDependencyMirrors() {
-  const rootPackage = JSON.parse(readFileSync(resolve("package.json"), "utf8")) as PackageJson;
+function checkBundledExtensionMetadata() {
   const extensions = collectBundledExtensions();
   const manifestErrors = collectBundledExtensionManifestErrors(extensions);
   if (manifestErrors.length > 0) {
     console.error("release-check: bundled extension manifest validation failed:");
     for (const error of manifestErrors) {
-      console.error(`  - ${error}`);
-    }
-    process.exit(1);
-  }
-  const errors = collectBundledExtensionRootDependencyGapErrors({
-    rootPackage,
-    extensions,
-  });
-  if (errors.length > 0) {
-    console.error("release-check: bundled extension root dependency mirror validation failed:");
-    for (const error of errors) {
       console.error(`  - ${error}`);
     }
     process.exit(1);
@@ -138,11 +77,13 @@ function runPackDry(): PackResult[] {
 }
 
 export function collectForbiddenPackPaths(paths: Iterable<string>): string[] {
+  const isAllowedBundledPluginNodeModulesPath = (path: string) =>
+    /^dist\/extensions\/[^/]+\/node_modules\//.test(path);
   return [...paths]
     .filter(
       (path) =>
         forbiddenPrefixes.some((prefix) => path.startsWith(prefix)) ||
-        /(^|\/)node_modules\//.test(path),
+        (/node_modules\//.test(path) && !isAllowedBundledPluginNodeModulesPath(path)),
     )
     .toSorted();
 }
@@ -256,7 +197,6 @@ function checkInstallerBundleVersion() {
     process.exit(1);
   }
 }
-
 function extractTag(item: string, tag: string): string | null {
   const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const regex = new RegExp(`<${escapedTag}>([^<]+)</${escapedTag}>`);
@@ -360,31 +300,47 @@ const requiredPluginSdkExports = [
   "DEFAULT_GROUP_HISTORY_LIMIT",
 ];
 
-function checkPluginSdkExports() {
-  const distPath = resolve("dist", "plugin-sdk", "index.js");
-  let content: string;
+async function collectDistPluginSdkExports(): Promise<Set<string>> {
+  const pluginSdkDir = resolve("dist", "plugin-sdk");
+  let entries: string[];
   try {
-    content = readFileSync(distPath, "utf8");
+    entries = readdirSync(pluginSdkDir)
+      .filter((entry) => entry.endsWith(".js"))
+      .toSorted();
   } catch {
-    console.error("release-check: dist/plugin-sdk/index.js not found (build missing?).");
+    console.error("release-check: dist/plugin-sdk directory not found (build missing?).");
     process.exit(1);
-    return;
+    return new Set();
   }
 
-  const exportMatch = content.match(/export\s*\{([^}]+)\}\s*;?\s*$/);
-  if (!exportMatch) {
-    console.error("release-check: could not find export statement in dist/plugin-sdk/index.js.");
-    process.exit(1);
-    return;
+  const exportedNames = new Set<string>();
+  for (const entry of entries) {
+    const content = readFileSync(join(pluginSdkDir, entry), "utf8");
+    for (const match of content.matchAll(/export\s*\{([^}]+)\}(?:\s*from\s*["'][^"']+["'])?/g)) {
+      const names = match[1]?.split(",") ?? [];
+      for (const name of names) {
+        const parts = name.trim().split(/\s+as\s+/);
+        const exportName = (parts[parts.length - 1] || "").trim();
+        if (exportName) {
+          exportedNames.add(exportName);
+        }
+      }
+    }
+    for (const match of content.matchAll(
+      /export\s+(?:const|function|class|let|var)\s+([A-Za-z0-9_$]+)/g,
+    )) {
+      const exportName = match[1]?.trim();
+      if (exportName) {
+        exportedNames.add(exportName);
+      }
+    }
   }
 
-  const exportedNames = new Set(
-    exportMatch[1].split(",").map((s) => {
-      const parts = s.trim().split(/\s+as\s+/);
-      return (parts[parts.length - 1] || "").trim();
-    }),
-  );
+  return exportedNames;
+}
 
+async function checkPluginSdkExports() {
+  const exportedNames = await collectDistPluginSdkExports();
   const missingExports = requiredPluginSdkExports.filter((name) => !exportedNames.has(name));
   if (missingExports.length > 0) {
     console.error("release-check: missing critical plugin-sdk exports (#27569):");
@@ -395,12 +351,12 @@ function checkPluginSdkExports() {
   }
 }
 
-function main() {
+async function main() {
   checkPluginVersions();
   checkInstallerBundleVersion();
   checkAppcastSparkleVersions();
-  checkPluginSdkExports();
-  checkBundledExtensionRootDependencyMirrors();
+  await checkPluginSdkExports();
+  checkBundledExtensionMetadata();
 
   const results = runPackDry();
   const files = results.flatMap((entry) => entry.files ?? []);
@@ -443,5 +399,8 @@ function main() {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
-  main();
+  void main().catch((error: unknown) => {
+    console.error(error);
+    process.exit(1);
+  });
 }

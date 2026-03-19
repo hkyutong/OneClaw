@@ -29,6 +29,7 @@ import {
   formatGitInstallLabel,
   normalizeUpdateVersionSourceUrl,
 } from "../infra/update-check.js";
+import { buildPluginCompatibilityNotices } from "../plugins/status.js";
 import { runExec } from "../process/exec.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { VERSION } from "../version.js";
@@ -48,12 +49,13 @@ export async function statusAllCommand(
   await withProgress({ label: "Scanning status --all…", total: 11 }, async (progress) => {
     progress.setLabel("Loading config…");
     const loadedRaw = await readBestEffortConfig();
-    const { resolvedConfig: cfg } = await resolveCommandSecretRefsViaGateway({
-      config: loadedRaw,
-      commandName: "status --all",
-      targetIds: getStatusCommandSecretTargetIds(),
-      mode: "read_only_status",
-    });
+    const { resolvedConfig: cfg, diagnostics: secretDiagnostics } =
+      await resolveCommandSecretRefsViaGateway({
+        config: loadedRaw,
+        commandName: "status --all",
+        targetIds: getStatusCommandSecretTargetIds(),
+        mode: "read_only_status",
+      });
     const osSummary = resolveOsSummary();
     const snap = await readConfigFileSnapshot().catch(() => null);
     progress.tick();
@@ -242,6 +244,7 @@ export async function statusAllCommand(
             }
           })()
         : null;
+    const pluginCompatibility = buildPluginCompatibilityNotices({ config: cfg });
 
     const controlUiEnabled = cfg.gateway?.controlUi?.enabled ?? true;
     const dashboard = controlUiEnabled
@@ -333,6 +336,13 @@ export async function statusAllCommand(
         Item: "Agents",
         Value: `${agentStatus.agents.length} total · ${agentStatus.bootstrapPendingCount} bootstrapping · ${aliveAgents} active · ${agentStatus.totalSessions} sessions`,
       },
+      {
+        Item: "Secrets",
+        Value:
+          secretDiagnostics.length > 0
+            ? `${secretDiagnostics.length} diagnostic${secretDiagnostics.length === 1 ? "" : "s"}`
+            : "none",
+      },
     ];
 
     const lines = await buildStatusAllReportLines({
@@ -348,6 +358,7 @@ export async function statusAllCommand(
       diagnosis: {
         snap,
         remoteUrlMissing,
+        secretDiagnostics,
         sentinel,
         lastErr,
         port,
@@ -356,6 +367,7 @@ export async function statusAllCommand(
         tailscale,
         tailscaleHttpsUrl,
         skillStatus,
+        pluginCompatibility,
         channelsStatus,
         channelIssues,
         gatewayReachable,

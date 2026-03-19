@@ -13,6 +13,10 @@ import {
   writeConfigFile,
 } from "../config/config.js";
 import { normalizeSecretInputString } from "../config/types.secrets.js";
+import {
+  buildPluginCompatibilityNotices,
+  formatPluginCompatibilityNotice,
+} from "../plugins/status.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { defaultRuntime } from "../runtime.js";
 import { resolveUserPath } from "../utils.js";
@@ -76,7 +80,7 @@ export async function runSetupWizard(
 ) {
   const onboardHelpers = await import("../commands/onboard-helpers.js");
   onboardHelpers.printWizardHeader(runtime);
-  await prompter.intro("OpenClaw setup");
+  await prompter.intro("OneClaw 设置");
   await requireRiskAcknowledgement({ opts, prompter });
 
   const snapshot = await readConfigFileSnapshot();
@@ -99,6 +103,27 @@ export async function runSetupWizard(
     );
     runtime.exit(1);
     return;
+  }
+
+  const compatibilityNotices = snapshot.valid
+    ? buildPluginCompatibilityNotices({ config: baseConfig })
+    : [];
+  if (compatibilityNotices.length > 0) {
+    await prompter.note(
+      [
+        `检测到 ${compatibilityNotices.length} 条插件兼容性提示。`,
+        ...compatibilityNotices
+          .slice(0, 4)
+          .map((notice) => `- ${formatPluginCompatibilityNotice(notice)}`),
+        ...(compatibilityNotices.length > 4
+          ? [`- ... 另有 ${compatibilityNotices.length - 4} 条`]
+          : []),
+        "",
+        `检查：${formatCliCommand("oneclaw doctor")}`,
+        `详情：${formatCliCommand("oneclaw plugins inspect --all")}`,
+      ].join("\n"),
+      "插件兼容性",
+    );
   }
 
   const quickstartHint = `先快速完成初始化，细节可稍后通过 ${formatCliCommand("oneclaw configure")} 调整。`;
@@ -462,11 +487,16 @@ export async function runSetupWizard(
     }
   }
 
-  if (authChoiceFromPrompt && authChoice !== "custom-api-key" && authChoice !== "yutoapi-api-key") {
+  const shouldPromptModelSelection =
+    authChoice !== "custom-api-key" &&
+    authChoice !== "yutoapi-api-key" &&
+    (authChoiceFromPrompt || authChoice === "ollama");
+  if (shouldPromptModelSelection) {
     const modelSelection = await promptDefaultModel({
       config: nextConfig,
       prompter,
-      allowKeep: true,
+      // For ollama, don't allow "keep current" since we may need to download the selected model
+      allowKeep: authChoice !== "ollama",
       ignoreAllowlist: true,
       includeProviderPluginSetups: true,
       preferredProvider: await resolvePreferredProviderForAuthChoice({

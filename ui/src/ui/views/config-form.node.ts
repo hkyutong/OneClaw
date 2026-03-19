@@ -650,7 +650,6 @@ function renderTextInput(params: {
       // oxlint-disable typescript/no-base-to-string
       (schema.default !== undefined ? `Default: ${String(schema.default)}` : ""));
   const displayValue = sensitiveState.isRedacted ? "" : (value ?? "");
-  const effectiveDisabled = disabled || sensitiveState.isRedacted;
   const effectiveInputType =
     sensitiveState.isSensitive && !sensitiveState.isRedacted ? "text" : inputType;
 
@@ -662,11 +661,16 @@ function renderTextInput(params: {
       <div class="cfg-input-wrap">
         <input
           type=${effectiveInputType}
-          class="cfg-input"
+          class="cfg-input${sensitiveState.isRedacted ? " cfg-input--redacted" : ""}"
           placeholder=${placeholder}
           .value=${displayValue == null ? "" : String(displayValue)}
-          ?disabled=${effectiveDisabled}
+          ?disabled=${disabled}
           ?readonly=${sensitiveState.isRedacted}
+          @click=${() => {
+            if (sensitiveState.isRedacted && params.onToggleSensitivePath) {
+              params.onToggleSensitivePath(path);
+            }
+          }}
           @input=${(e: Event) => {
             if (sensitiveState.isRedacted) {
               return;
@@ -704,7 +708,7 @@ function renderTextInput(params: {
             type="button"
             class="cfg-input__reset"
             title="Reset to default"
-            ?disabled=${effectiveDisabled}
+            ?disabled=${disabled || sensitiveState.isRedacted}
             @click=${() => onPatch(path, schema.default)}
           >↺</button>
         `
@@ -834,7 +838,6 @@ function renderJsonTextarea(params: {
     isSensitivePathRevealed: params.isSensitivePathRevealed,
   });
   const displayValue = sensitiveState.isRedacted ? "" : fallback;
-  const effectiveDisabled = disabled || sensitiveState.isRedacted;
 
   return html`
     <div class="cfg-field">
@@ -843,12 +846,17 @@ function renderJsonTextarea(params: {
       ${renderTags(tags)}
       <div class="cfg-input-wrap">
         <textarea
-          class="cfg-textarea"
+          class="cfg-textarea${sensitiveState.isRedacted ? " cfg-textarea--redacted" : ""}"
           placeholder=${sensitiveState.isRedacted ? REDACTED_PLACEHOLDER : "JSON value"}
           rows="3"
           .value=${displayValue}
-          ?disabled=${effectiveDisabled}
+          ?disabled=${disabled}
           ?readonly=${sensitiveState.isRedacted}
+          @click=${() => {
+            if (sensitiveState.isRedacted && params.onToggleSensitivePath) {
+              params.onToggleSensitivePath(path);
+            }
+          }}
           @change=${(e: Event) => {
             if (sensitiveState.isRedacted) {
               return;
@@ -1266,14 +1274,19 @@ function renderMapField(params: {
                       ? html`
                         <div class="cfg-input-wrap">
                           <textarea
-                            class="cfg-textarea cfg-textarea--sm"
+                            class="cfg-textarea cfg-textarea--sm${sensitiveState.isRedacted ? " cfg-textarea--redacted" : ""}"
                             placeholder=${
                               sensitiveState.isRedacted ? REDACTED_PLACEHOLDER : "JSON value"
                             }
                             rows="2"
                             .value=${sensitiveState.isRedacted ? "" : fallback}
-                            ?disabled=${disabled || sensitiveState.isRedacted}
+                            ?disabled=${disabled}
                             ?readonly=${sensitiveState.isRedacted}
+                            @click=${() => {
+                              if (sensitiveState.isRedacted && onToggleSensitivePath) {
+                                onToggleSensitivePath(valuePath);
+                              }
+                            }}
                             @change=${(e: Event) => {
                               if (sensitiveState.isRedacted) {
                                 return;

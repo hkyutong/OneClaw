@@ -48,6 +48,10 @@
     "target": "快速开始"
   },
   {
+    "source": "Capability Cookbook",
+    "target": "能力扩展手册"
+  },
+  {
     "source": "Setup Wizard Reference",
     "target": "设置向导参考"
   },
@@ -342,5 +346,197 @@
   {
     "source": "Ollama (cloud + local models)",
     "target": "Ollama（云端 + 本地模型）"
+  },
+  {
+    "source": "Auth Credential Semantics",
+    "target": "认证凭证语义"
+  },
+  {
+    "source": "Context Engine",
+    "target": "上下文引擎"
+  },
+  {
+    "source": "OpenShell",
+    "target": "OpenShell"
+  },
+  {
+    "source": "Sandbox vs Tool Policy vs Elevated",
+    "target": "沙箱、工具策略与提权模式"
+  },
+  {
+    "source": "Multi-Agent Sandbox and Tools",
+    "target": "多智能体沙箱与工具"
+  },
+  {
+    "source": "Sandbox CLI",
+    "target": "沙箱 CLI"
+  },
+  {
+    "source": "Multi-Agent Sandbox & Tools",
+    "target": "多智能体沙箱与工具"
+  },
+  {
+    "source": "Elevated Mode",
+    "target": "提权模式"
+  },
+  {
+    "source": "General Troubleshooting",
+    "target": "常规故障排除"
+  },
+  {
+    "source": "Azure",
+    "target": "Azure"
+  },
+  {
+    "source": "Matrix migration",
+    "target": "Matrix 迁移"
+  },
+  {
+    "source": "Matrix",
+    "target": "Matrix"
+  },
+  {
+    "source": "Migrating",
+    "target": "迁移"
+  },
+  {
+    "source": "Plugins",
+    "target": "插件"
+  },
+  {
+    "source": "Testing",
+    "target": "测试"
+  },
+  {
+    "source": "Health Checks (macOS)",
+    "target": "健康检查（macOS）"
+  },
+  {
+    "source": "Skills (macOS)",
+    "target": "Skills（macOS）"
+  },
+  {
+    "source": "Voice Wake (macOS)",
+    "target": "语音唤醒（macOS）"
+  },
+  {
+    "source": "WebChat (macOS)",
+    "target": "WebChat（macOS）"
+  },
+  {
+    "source": "Plugin Architecture",
+    "target": "插件架构"
+  },
+  {
+    "source": "Building Extensions",
+    "target": "构建扩展"
+  },
+  {
+    "source": "Building extensions",
+    "target": "构建扩展"
+  },
+  {
+    "source": "Google (Gemini)",
+    "target": "Google（Gemini）"
+  },
+  {
+    "source": "Provider Directory",
+    "target": "提供商目录"
+  },
+  {
+    "source": "Model Studio (Alibaba Cloud)",
+    "target": "Model Studio（阿里云）"
+  },
+  {
+    "source": "Perplexity (web search)",
+    "target": "Perplexity（网页搜索）"
+  },
+  {
+    "source": "SGLang (local models)",
+    "target": "SGLang（本地模型）"
+  },
+  {
+    "source": "Volcengine (Doubao)",
+    "target": "Volcengine（豆包）"
+  },
+  {
+    "source": "xAI",
+    "target": "xAI"
+  },
+  {
+    "source": "Kilo Gateway",
+    "target": "Kilo Gateway"
+  },
+  {
+    "source": "LiteLLM",
+    "target": "LiteLLM"
+  },
+  {
+    "source": "Model Studio",
+    "target": "Model Studio"
+  },
+  {
+    "source": "Perplexity (Provider)",
+    "target": "Perplexity（提供商）"
+  },
+  {
+    "source": "Together AI",
+    "target": "Together AI"
+  },
+  {
+    "source": "Onboarding Reference",
+    "target": "新手引导参考"
+  },
+  {
+    "source": "Contributing to the Threat Model",
+    "target": "为威胁模型做贡献"
+  },
+  {
+    "source": "Threat Model (MITRE ATLAS)",
+    "target": "威胁模型（MITRE ATLAS）"
+  },
+  {
+    "source": "Onboarding (CLI)",
+    "target": "新手引导（CLI）"
+  },
+  {
+    "source": "Plugins overview",
+    "target": "插件总览"
+  },
+  {
+    "source": "Plugin manifest",
+    "target": "插件清单"
+  },
+  {
+    "source": "Agent tools",
+    "target": "智能体工具"
+  },
+  {
+    "source": "Plugin bundles",
+    "target": "插件 Bundles"
+  },
+  {
+    "source": "Community plugins",
+    "target": "社区插件"
+  },
+  {
+    "source": "Capability cookbook",
+    "target": "能力扩展手册"
+  },
+  {
+    "source": "Voice call plugin",
+    "target": "语音通话插件"
+  },
+  {
+    "source": "Zalo user plugin",
+    "target": "Zalo 用户插件"
+  },
+  {
+    "source": "Plugin architecture and internals",
+    "target": "插件架构与内部实现"
+  },
+  {
+    "source": "Plugin agent tools",
+    "target": "插件智能体工具"
   }
 ]
