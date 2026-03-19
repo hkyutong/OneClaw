@@ -30,14 +30,14 @@ Use **OneClaw** if you want the same self-hosted runtime category, but with:
 
 ## Decision table
 
-| Situation                                    | Better starting point | Why                                               |
-| -------------------------------------------- | --------------------- | ------------------------------------------------- |
-| You want the raw upstream project            | OpenClaw              | Closest to the source and latest upstream framing |
-| You want the easiest productized entry point | OneClaw               | Better onboarding and install-path guidance       |
-| You want the macOS GUI installer path        | OneClaw               | This is one of the main productized differences   |
-| You want the newest upstream changes first   | OpenClaw              | Upstream lands first there                        |
-| You want Chinese-first product copy          | OneClaw               | This is a OneClaw focus area                      |
-| You are contributing to the core runtime     | OpenClaw              | That is where the primary runtime evolves         |
+| Situation | Better starting point | Why |
+| --- | --- | --- |
+| You want the raw upstream project | OpenClaw | Closest to the source and latest upstream framing |
+| You want the easiest productized entry point | OneClaw | Better onboarding and install-path guidance |
+| You want the macOS GUI installer path | OneClaw | This is one of the main productized differences |
+| You want the newest upstream changes first | OpenClaw | Upstream lands first there |
+| You want Chinese-first product copy | OneClaw | This is a OneClaw focus area |
+| You are contributing to the core runtime | OpenClaw | That is where the primary runtime evolves |
 
 ## What OneClaw changes
 

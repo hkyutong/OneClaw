@@ -21,14 +21,12 @@ OneClaw is built on OpenClaw, so the strongest public proof comes from the upstr
     GitHub review output delivered back into Telegram, which is exactly the kind of chat-first assistant flow OneClaw wants to make easier to adopt.
 
     <img src="/assets/showcase/pr-review-telegram.jpg" alt="PR review feedback delivered in Telegram" />
-
   </Card>
 
   <Card title="Telegram voice notes" icon="microphone" href="https://papla.media/docs">
     Voice-first output path that sends TTS results back as Telegram voice notes.
 
     <img src="/assets/showcase/papla-tts.jpg" alt="Telegram voice note output" />
-
   </Card>
 </CardGroup>
 
@@ -39,14 +37,12 @@ OneClaw is built on OpenClaw, so the strongest public proof comes from the upstr
     A local skill created from a CSV export, showing how domain-specific personal workflows can be built quickly.
 
     <img src="/assets/showcase/wine-cellar-skill.jpg" alt="Wine cellar skill built from CSV" />
-
   </Card>
 
   <Card title="Bambu 3D printer control" icon="print" href="https://clawhub.com/tobiasbischoff/bambu-cli">
     Hardware control and troubleshooting from a chat-first workflow, backed by a real skill package.
 
     <img src="/assets/showcase/bambu-cli.png" alt="Bambu CLI skill" />
-
   </Card>
 </CardGroup>
 
@@ -57,14 +53,12 @@ OneClaw is built on OpenClaw, so the strongest public proof comes from the upstr
     Browser automation used for a weekly repeatable task, which is a strong example of why an always-on gateway matters.
 
     <img src="/assets/showcase/tesco-shop.jpg" alt="Tesco shopping automation" />
-
   </Card>
 
   <Card title="Winix air purifier control" icon="wind" href="https://x.com/antonplex/status/2010518442471006253">
     Hardware automation that keeps running outside a normal browser tab workflow.
 
     <img src="/assets/showcase/winix-air-purifier.jpg" alt="Winix air purifier control" />
-
   </Card>
 </CardGroup>
 

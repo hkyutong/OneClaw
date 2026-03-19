@@ -913,12 +913,7 @@
             "groups": [
               {
                 "group": "Install overview",
-                "pages": [
-                  "install/index",
-                  "install/installer",
-                  "install/oneclaw-install-matrix",
-                  "install/oneclaw-on-wsl2"
-                ]
+                "pages": ["install/index", "install/installer", "install/oneclaw-install-matrix", "install/oneclaw-on-wsl2"]
               },
               {
                 "group": "Other install methods",

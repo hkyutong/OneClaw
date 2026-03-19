@@ -25,14 +25,14 @@ The correct statement is:
 
 ## Support matrix
 
-| Environment        | Recommended path                    | Status          | Notes                                         |
-| ------------------ | ----------------------------------- | --------------- | --------------------------------------------- |
-| macOS              | OneClaw GUI installer               | Best path       | Most productized experience today             |
-| macOS              | Source checkout + `docker-setup.sh` | Supported       | Good for contributors and advanced users      |
-| Linux desktop      | Docker + terminal setup             | Supported       | No dedicated native GUI installer yet         |
-| Linux server / VPS | Docker + terminal setup             | Supported       | Strong fit for always-on gateway hosting      |
-| Windows            | WSL2 + Ubuntu + Docker Desktop      | Supported       | Recommended instead of native Windows runtime |
-| Windows native     | Direct native install               | Not recommended | WSL2 path is the intended route               |
+| Environment | Recommended path | Status | Notes |
+| --- | --- | --- | --- |
+| macOS | OneClaw GUI installer | Best path | Most productized experience today |
+| macOS | Source checkout + `docker-setup.sh` | Supported | Good for contributors and advanced users |
+| Linux desktop | Docker + terminal setup | Supported | No dedicated native GUI installer yet |
+| Linux server / VPS | Docker + terminal setup | Supported | Strong fit for always-on gateway hosting |
+| Windows | WSL2 + Ubuntu + Docker Desktop | Supported | Recommended instead of native Windows runtime |
+| Windows native | Direct native install | Not recommended | WSL2 path is the intended route |
 
 ## Best path by user type
 
