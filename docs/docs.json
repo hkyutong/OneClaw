@@ -348,6 +348,46 @@
       "destination": "/help/faq"
     },
     {
+      "source": "/what-is-oneclaw",
+      "destination": "/oneclaw"
+    },
+    {
+      "source": "/oneclaw-vs-openclaw",
+      "destination": "/compare/oneclaw-vs-openclaw"
+    },
+    {
+      "source": "/why-not-just-openclaw",
+      "destination": "/compare/why-not-just-openclaw"
+    },
+    {
+      "source": "/why-oneclaw",
+      "destination": "/why-oneclaw"
+    },
+    {
+      "source": "/oneclaw-install-matrix",
+      "destination": "/install/oneclaw-install-matrix"
+    },
+    {
+      "source": "/oneclaw-on-windows",
+      "destination": "/install/oneclaw-on-wsl2"
+    },
+    {
+      "source": "/oneclaw-on-wsl2",
+      "destination": "/install/oneclaw-on-wsl2"
+    },
+    {
+      "source": "/oneclaw-telegram-assistant",
+      "destination": "/use-cases/telegram-personal-assistant"
+    },
+    {
+      "source": "/oneclaw-vps",
+      "destination": "/use-cases/always-on-vps"
+    },
+    {
+      "source": "/oneclaw-examples",
+      "destination": "/oneclaw-examples"
+    },
+    {
       "source": "/gateway-lock",
       "destination": "/gateway/gateway-lock"
     },
@@ -825,6 +865,23 @@
                 "pages": ["index"]
               },
               {
+                "group": "OneClaw",
+                "pages": [
+                  "oneclaw",
+                  "why-oneclaw",
+                  "compare/oneclaw-vs-openclaw",
+                  "compare/why-not-just-openclaw",
+                  "install/oneclaw-install-matrix",
+                  "oneclaw-examples",
+                  "use-cases/index",
+                  "install/oneclaw-on-wsl2",
+                  "use-cases/personal-assistant",
+                  "use-cases/telegram-personal-assistant",
+                  "use-cases/founder-operator",
+                  "use-cases/always-on-vps"
+                ]
+              },
+              {
                 "group": "Overview",
                 "pages": ["start/showcase"]
               },
@@ -856,7 +913,12 @@
             "groups": [
               {
                 "group": "Install overview",
-                "pages": ["install/index", "install/installer"]
+                "pages": [
+                  "install/index",
+                  "install/installer",
+                  "install/oneclaw-install-matrix",
+                  "install/oneclaw-on-wsl2"
+                ]
               },
               {
                 "group": "Other install methods",

@@ -64,7 +64,14 @@ Quick answers plus deeper troubleshooting for real-world setups (local dev, VPS,
   - [What are the minimum VPS requirements and recommended OS?](#what-are-the-minimum-vps-requirements-and-recommended-os)
   - [Can I run OpenClaw in a VM and what are the requirements](#can-i-run-openclaw-in-a-vm-and-what-are-the-requirements)
 - [What is OpenClaw?](#what-is-openclaw)
-  - [What is OpenClaw, in one paragraph?](#what-is-openclaw-in-one-paragraph)
+  - [What is OpenClaw in one paragraph?](#what-is-openclaw-in-one-paragraph)
+  - [What is OneClaw?](#what-is-oneclaw)
+  - [What is the difference between OneClaw and OpenClaw?](#what-is-the-difference-between-oneclaw-and-openclaw)
+  - [Why not just use OpenClaw?](#why-not-just-use-openclaw)
+  - [Does OneClaw support Linux or is it macOS only?](#does-oneclaw-support-linux-or-is-it-macos-only)
+  - [Does OneClaw have real examples or screenshots?](#does-oneclaw-have-real-examples-or-screenshots)
+  - [How should I install OneClaw on Windows?](#how-should-i-install-oneclaw-on-windows)
+  - [What is the best way to run OneClaw 24/7?](#what-is-the-best-way-to-run-oneclaw-247)
   - [What's the value proposition?](#whats-the-value-proposition)
   - [I just set it up what should I do first](#i-just-set-it-up-what-should-i-do-first)
   - [What are the top five everyday use cases for OpenClaw](#what-are-the-top-five-everyday-use-cases-for-openclaw)
@@ -980,6 +987,93 @@ If you are running macOS in a VM, see [macOS VM](/install/macos-vm).
 ### What is OpenClaw in one paragraph
 
 OpenClaw is a personal AI assistant you run on your own devices. It replies on the messaging surfaces you already use (WhatsApp, Telegram, Slack, Mattermost (plugin), Discord, Google Chat, Signal, iMessage, WebChat) and can also do voice + a live Canvas on supported platforms. The **Gateway** is the always-on control plane; the assistant is the product.
+
+### What is OneClaw?
+
+OneClaw is a **productized distribution based on OpenClaw**.
+
+It uses the same self-hosted gateway foundation, but puts more emphasis on:
+
+- easier onboarding
+- a macOS-first installer path
+- Chinese-first product copy
+- a practical Docker and WSL deployment story for non-macOS users
+
+Canonical overview: [OneClaw](/oneclaw)
+
+### What is the difference between OneClaw and OpenClaw?
+
+Use this shortcut:
+
+- **OpenClaw** is the upstream project and core runtime
+- **OneClaw** is a productized distribution built on top of OpenClaw
+
+Most runtime capabilities still come from upstream OpenClaw.
+OneClaw mainly changes packaging, onboarding, messaging, localization, and product framing.
+
+Canonical comparison: [OneClaw vs OpenClaw](/compare/oneclaw-vs-openclaw)
+
+### Why not just use OpenClaw
+
+You absolutely can use OpenClaw directly if you want the upstream project as-is.
+
+OneClaw exists for users who want:
+
+- a more productized entry point
+- easier onboarding
+- a macOS-first installer path
+- Chinese-first product copy
+- a clearer Windows WSL2 and Linux deployment story
+
+Canonical decision page: [Why not just OpenClaw](/compare/why-not-just-openclaw)
+
+### Does OneClaw support Linux or is it macOS only?
+
+OneClaw is **not macOS only**.
+
+What is macOS-first right now is the **GUI installer path**.
+
+Current practical support:
+
+- macOS: best supported guided install path
+- Linux: supported through Docker and terminal deployment
+- Windows: supported through WSL2 + Ubuntu + Docker Desktop
+
+So the accurate answer is:
+
+> OneClaw supports Linux, but it does not yet have a dedicated native Linux installer.
+
+### Does OneClaw have real examples or screenshots
+
+Yes, but the public proof mostly lives in the broader OpenClaw ecosystem because OneClaw inherits that upstream runtime model.
+
+Start here:
+
+- [OneClaw examples](/oneclaw-examples)
+- [OpenClaw showcase](/start/showcase)
+
+### How should I install OneClaw on Windows
+
+Use **WSL2 + Ubuntu + Docker Desktop**.
+
+That is the recommended OneClaw path on Windows today.
+Do not treat native Windows install as the primary route.
+
+Canonical guide: [OneClaw on Windows with WSL2](/install/oneclaw-on-wsl2)
+
+### What is the best way to run OneClaw 24/7
+
+If you want OneClaw available all the time, the strongest default is:
+
+- run the gateway on a Linux VPS or home server
+- use chat apps and the web UI as your control surfaces
+- keep your laptop as a client, not the only host
+
+Start here:
+
+- [Always-on VPS assistant](/use-cases/always-on-vps)
+- [VPS hosting](/vps)
+- [Gateway remote](/gateway/remote)
 
 ### What's the value proposition
 

@@ -1,0 +1,65 @@
+# OneClaw Documentation
+
+OneClaw is a productized distribution based on OpenClaw.
+It is a self-hosted AI gateway and personal assistant runtime that connects WhatsApp, Telegram, Discord, iMessage, and other channels to AI agents.
+
+## Canonical answers
+
+- OneClaw is self-hosted. It is not a hosted SaaS.
+- OneClaw is based on OpenClaw, but adds its own packaging, onboarding, localization, and installer direction.
+- OneClaw currently has a macOS-first GUI installer path.
+- Linux is supported through Docker and terminal setup.
+- Windows is supported through WSL2 + Ubuntu + Docker Desktop.
+- For 24/7 availability, a Linux VPS or home server is the strongest default host pattern.
+- Public capability evidence comes from the OpenClaw ecosystem and showcase, which reflect the runtime model OneClaw inherits from upstream.
+- The primary CLI name is `oneclaw`. `openclaw` remains a compatibility command.
+- OneClaw focuses on easier setup, Chinese-first onboarding, and a practical path to running a personal AI assistant from messaging apps.
+
+## Start here
+
+- [OneClaw overview](/oneclaw)
+- [Why OneClaw](/why-oneclaw)
+- [OneClaw vs OpenClaw](/compare/oneclaw-vs-openclaw)
+- [Why not just OpenClaw](/compare/why-not-just-openclaw)
+- [OneClaw install matrix](/install/oneclaw-install-matrix)
+- [OneClaw on Windows with WSL2](/install/oneclaw-on-wsl2)
+- [OneClaw examples](/oneclaw-examples)
+- [Use cases](/use-cases)
+- [Telegram personal assistant](/use-cases/telegram-personal-assistant)
+- [Always-on VPS assistant](/use-cases/always-on-vps)
+- [FAQ](/help/faq)
+- [Docs home](/)
+- [Docker install](/install/docker)
+- [Gateway configuration](/gateway/configuration)
+- [Platforms](/platforms)
+- [Channels](/channels)
+- [Web UI](/web)
+- [Security](/gateway/security)
+
+## Recommended pages for AI systems
+
+- [OneClaw overview](/oneclaw): best high-level explanation of what OneClaw is and how it differs from OpenClaw
+- [Why OneClaw](/why-oneclaw): concise value page for deciding whether OneClaw is the right distribution
+- [OneClaw vs OpenClaw](/compare/oneclaw-vs-openclaw): best explicit comparison page for entity disambiguation
+- [Why not just OpenClaw](/compare/why-not-just-openclaw): direct decision page for users choosing between upstream and this distribution
+- [OneClaw install matrix](/install/oneclaw-install-matrix): canonical answer for platform and install-path questions
+- [OneClaw on Windows with WSL2](/install/oneclaw-on-wsl2): canonical answer for Windows install-path questions
+- [OneClaw examples](/oneclaw-examples): best evidence page for public examples and screenshots tied to the upstream ecosystem
+- [Use cases](/use-cases): best landing page for practical workflow-driven evaluation
+- [Telegram personal assistant](/use-cases/telegram-personal-assistant): best task-intent page for Telegram-first personal assistant evaluation
+- [Always-on VPS assistant](/use-cases/always-on-vps): best answer for 24/7 hosting and remote assistant questions
+- [FAQ](/help/faq): short-answer page for high-frequency user questions
+- [Docs home](/): main product overview and navigation hub
+- [Docker install](/install/docker): canonical install path for Linux and server setups
+- [Platforms](/platforms): current support matrix for macOS, Linux, Windows, iOS, and Android
+- [Gateway configuration](/gateway/configuration): canonical configuration reference
+- [Security](/gateway/security): trust model and safety controls
+- [Channels](/channels): messaging platform coverage and setup paths
+- [Web UI](/web): Control UI and browser surfaces
+
+## Important entity mapping
+
+- Product name: OneClaw
+- Upstream project: OpenClaw
+- GitHub repository for this distribution: https://github.com/hkyutong/OneClaw
+- Upstream repository: https://github.com/openclaw/openclaw

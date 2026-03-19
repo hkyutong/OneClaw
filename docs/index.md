@@ -29,7 +29,12 @@ title: "OpenClaw"
   Send a message, get an agent response from your pocket. Plugins add Mattermost and more.
 </p>
 
+> Looking for the OneClaw distribution? Start with [OneClaw](/oneclaw) for the macOS installer path, localized onboarding, and the Linux / WSL deployment guidance for this fork.
+
 <Columns>
+  <Card title="What is OneClaw?" href="/oneclaw" icon="sparkles">
+    Understand the OneClaw distribution, platform support, and install direction.
+  </Card>
   <Card title="Get Started" href="/start/getting-started" icon="rocket">
     Install OpenClaw and bring up the Gateway in minutes.
   </Card>
@@ -38,6 +43,48 @@ title: "OpenClaw"
   </Card>
   <Card title="Open the Control UI" href="/web/control-ui" icon="layout-dashboard">
     Launch the browser dashboard for chat, config, and sessions.
+  </Card>
+</Columns>
+
+## For OneClaw users
+
+<Columns>
+  <Card title="Why OneClaw" href="/why-oneclaw" icon="badge-check">
+    See why this distribution exists and who it is for.
+  </Card>
+  <Card title="Install matrix" href="/install/oneclaw-install-matrix" icon="table">
+    Pick the right path for macOS, Linux, Windows WSL2, or VPS.
+  </Card>
+  <Card title="Use cases" href="/use-cases" icon="briefcase">
+    Start from practical founder, assistant, and always-on gateway workflows.
+  </Card>
+</Columns>
+
+## High-intent entry points
+
+<Columns>
+  <Card title="Windows with WSL2" href="/install/oneclaw-on-wsl2" icon="monitor-smartphone">
+    Use the recommended Windows path instead of guessing at a native install.
+  </Card>
+  <Card title="Telegram personal assistant" href="/use-cases/telegram-personal-assistant" icon="message-circle">
+    Turn Telegram into the front door for your self-hosted assistant.
+  </Card>
+  <Card title="Always-on VPS assistant" href="/use-cases/always-on-vps" icon="server">
+    Keep OneClaw available 24/7 from a Linux VPS or home server.
+  </Card>
+</Columns>
+
+## Proof and evaluation
+
+<Columns>
+  <Card title="OneClaw examples" href="/oneclaw-examples" icon="images">
+    Review real upstream ecosystem examples that show what OneClaw can power in practice.
+  </Card>
+  <Card title="Why not just OpenClaw" href="/compare/why-not-just-openclaw" icon="git-compare">
+    Get the direct answer on when OneClaw is the better starting point and when upstream is the right choice.
+  </Card>
+  <Card title="OpenClaw showcase" href="/start/showcase" icon="gallery-vertical">
+    Browse the broader ecosystem evidence, screenshots, and community workflows.
   </Card>
 </Columns>
 

@@ -234,5 +234,113 @@
   {
     "source": "env var",
     "target": "环境变量"
+  },
+  {
+    "source": "OneClaw",
+    "target": "OneClaw"
+  },
+  {
+    "source": "Why OneClaw",
+    "target": "为什么选择 OneClaw"
+  },
+  {
+    "source": "OneClaw Install Matrix",
+    "target": "OneClaw 安装矩阵"
+  },
+  {
+    "source": "OneClaw Examples",
+    "target": "OneClaw 示例"
+  },
+  {
+    "source": "OneClaw examples",
+    "target": "OneClaw 示例"
+  },
+  {
+    "source": "OneClaw on Windows with WSL2",
+    "target": "在 Windows 上通过 WSL2 运行 OneClaw"
+  },
+  {
+    "source": "Why Not Just OpenClaw",
+    "target": "为什么不直接使用 OpenClaw"
+  },
+  {
+    "source": "Why not just OpenClaw",
+    "target": "为什么不直接使用 OpenClaw"
+  },
+  {
+    "source": "OpenClaw showcase",
+    "target": "OpenClaw 展示页"
+  },
+  {
+    "source": "Telegram Personal Assistant",
+    "target": "Telegram 个人助理"
+  },
+  {
+    "source": "Always-On VPS Assistant",
+    "target": "常驻 VPS 助手"
+  },
+  {
+    "source": "Always-on VPS assistant",
+    "target": "常驻 VPS 助手"
+  },
+  {
+    "source": "Gateway remote",
+    "target": "Gateway 远程访问"
+  },
+  {
+    "source": "Docker VM Runtime",
+    "target": "Docker VM 运行时"
+  },
+  {
+    "source": "Kubernetes",
+    "target": "Kubernetes"
+  },
+  {
+    "source": "Plugin Bundles",
+    "target": "插件 Bundles"
+  },
+  {
+    "source": "SGLang",
+    "target": "SGLang"
+  },
+  {
+    "source": "Firecrawl Extension Design",
+    "target": "Firecrawl 扩展设计"
+  },
+  {
+    "source": "BTW Side Questions",
+    "target": "BTW 侧边问题"
+  },
+  {
+    "source": "Slash commands",
+    "target": "斜杠命令"
+  },
+  {
+    "source": "Thinking Levels",
+    "target": "思考层级"
+  },
+  {
+    "source": "Session",
+    "target": "会话"
+  },
+  {
+    "source": "Bake required binaries into the image",
+    "target": "将所需二进制文件打包进镜像"
+  },
+  {
+    "source": "Build and launch",
+    "target": "构建并启动"
+  },
+  {
+    "source": "What persists where",
+    "target": "哪些内容持久化到哪里"
+  },
+  {
+    "source": "Updates",
+    "target": "更新"
+  },
+  {
+    "source": "Ollama (cloud + local models)",
+    "target": "Ollama（云端 + 本地模型）"
   }
 ]
